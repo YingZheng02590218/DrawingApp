@@ -13,6 +13,9 @@
 		F963ED692ABC3AF100B41C99 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F963ED672ABC3AF100B41C99 /* Main.storyboard */; };
 		F963ED6B2ABC3AF200B41C99 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F963ED6A2ABC3AF200B41C99 /* Assets.xcassets */; };
 		F963ED6E2ABC3AF200B41C99 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F963ED6C2ABC3AF200B41C99 /* LaunchScreen.storyboard */; };
+		F963ED762ABC4ECE00B41C99 /* 2023-Journals.pdf in Resources */ = {isa = PBXBuildFile; fileRef = F963ED752ABC4ECE00B41C99 /* 2023-Journals.pdf */; };
+		F963ED782AC2D65700B41C99 /* BackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F963ED772AC2D65700B41C99 /* BackupManager.swift */; };
+		F963ED7A2AC2D82900B41C99 /* PdfMaker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F963ED792AC2D82900B41C99 /* PdfMaker.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +27,10 @@
 		F963ED6A2ABC3AF200B41C99 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F963ED6D2ABC3AF200B41C99 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		F963ED6F2ABC3AF200B41C99 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F963ED752ABC4ECE00B41C99 /* 2023-Journals.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "2023-Journals.pdf"; sourceTree = "<group>"; };
+		F963ED772AC2D65700B41C99 /* BackupManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupManager.swift; sourceTree = "<group>"; };
+		F963ED792AC2D82900B41C99 /* PdfMaker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PdfMaker.swift; sourceTree = "<group>"; };
+		F963ED7B2AC2E05E00B41C99 /* DrawingApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DrawingApp.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,13 +63,17 @@
 		F963ED602ABC3AF100B41C99 /* DrawingApp */ = {
 			isa = PBXGroup;
 			children = (
+				F963ED7B2AC2E05E00B41C99 /* DrawingApp.entitlements */,
 				F963ED612ABC3AF100B41C99 /* AppDelegate.swift */,
 				F963ED632ABC3AF100B41C99 /* SceneDelegate.swift */,
+				F963ED772AC2D65700B41C99 /* BackupManager.swift */,
+				F963ED792AC2D82900B41C99 /* PdfMaker.swift */,
 				F963ED652ABC3AF100B41C99 /* ViewController.swift */,
 				F963ED672ABC3AF100B41C99 /* Main.storyboard */,
 				F963ED6A2ABC3AF200B41C99 /* Assets.xcassets */,
 				F963ED6C2ABC3AF200B41C99 /* LaunchScreen.storyboard */,
 				F963ED6F2ABC3AF200B41C99 /* Info.plist */,
+				F963ED752ABC4ECE00B41C99 /* 2023-Journals.pdf */,
 			);
 			path = DrawingApp;
 			sourceTree = "<group>";
@@ -128,6 +139,7 @@
 				F963ED6E2ABC3AF200B41C99 /* LaunchScreen.storyboard in Resources */,
 				F963ED6B2ABC3AF200B41C99 /* Assets.xcassets in Resources */,
 				F963ED692ABC3AF100B41C99 /* Main.storyboard in Resources */,
+				F963ED762ABC4ECE00B41C99 /* 2023-Journals.pdf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -139,8 +151,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				F963ED662ABC3AF100B41C99 /* ViewController.swift in Sources */,
+				F963ED7A2AC2D82900B41C99 /* PdfMaker.swift in Sources */,
 				F963ED622ABC3AF100B41C99 /* AppDelegate.swift in Sources */,
 				F963ED642ABC3AF100B41C99 /* SceneDelegate.swift in Sources */,
+				F963ED782AC2D65700B41C99 /* BackupManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -285,23 +299,32 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_ENTITLEMENTS = DrawingApp/DrawingApp.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = T526NZN54U;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = T526NZN54U;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DrawingApp/Info.plist;
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportsDocumentBrowser = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ikingdom.DrawingApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "DrawingApp Development Provisioning Profile";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -313,23 +336,32 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_ENTITLEMENTS = DrawingApp/DrawingApp.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = T526NZN54U;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = T526NZN54U;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DrawingApp/Info.plist;
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportsDocumentBrowser = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ikingdom.DrawingApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "DrawingApp Development Provisioning Profile";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
