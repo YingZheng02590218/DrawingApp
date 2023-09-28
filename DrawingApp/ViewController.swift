@@ -19,15 +19,35 @@ class ViewController: UIViewController {
     // 印刷機能
     let pdfMaker = PdfMaker()
 
+    // ディレクトリ監視
+    var isPresenting = false
+    // ディレクトリ監視
+    var presentedItemURL: URL? {
+        FileManager.default.url(forUbiquityContainerIdentifier: nil)?
+            .appendingPathComponent("Documents", isDirectory: true)
+    }
+    // ディレクトリ監視
+    let presentedItemOperationQueue = OperationQueue()
+    
+    deinit {
+        // ディレクトリ監視
+        removeFilePresenterIfNeeded()
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        // ディレクトリ監視
+        addFilePresenterIfNeeded()
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        // tableViewをリロード
+        reload()
+    }
+    // tableViewをリロード
+    func reload() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             BackupManager.shared.load {
                 print($0)
                 self.backupFiles = $0
@@ -111,7 +131,7 @@ extension ViewController: QLPreviewControllerDelegate {
         BackupManager.shared.backup(fileURL: fileURL, modifiedContentsURL: modifiedContentsURL,
             completion: {
             //
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 BackupManager.shared.load {
                     print($0)
                     self.backupFiles = $0
@@ -213,5 +233,114 @@ extension ViewController: UITableViewDataSource {
                 self.showQLPreview()
             }
         }
+    }
+}
+
+// 流れ
+// ファイル/ディレクトリを管理するオブジェクトにNSFilePresenterプロトコルを指定する。
+// NSFileCoordinatorのaddFilePresenter:クラスを呼び出してオブジェクトを登録する。
+// NSFilePresenterのメソッド内にそれぞれの処理を書く
+// 管理が必要なくなるタイミングでNSFileCoordinatorのremoveFilePresenterを呼び出してファイルプレゼンタの登録を解除する。
+extension ViewController: NSFilePresenter {
+    
+    // ファイルプレゼンタをシステムに登録
+    func addFilePresenterIfNeeded() {
+        if !isPresenting {
+            isPresenting = true
+            NSFileCoordinator.addFilePresenter(self)
+        }
+    }
+    
+    // ファイルプレゼンタをシステムの登録から解除
+    func removeFilePresenterIfNeeded() {
+        if isPresenting {
+            isPresenting = false
+            NSFileCoordinator.removeFilePresenter(self)
+        }
+    }
+    
+    // 提示された項目の内容または属性が変更されたことを伝える。
+    func presentedItemDidChange() {
+        print("Change item.")
+        // tableViewをリロード
+        reload()
+    }
+    
+    // ファイルまたはファイルパッケージの新しいバージョンが追加されたことをデリゲートに通知する
+    func presentedItemDidGainVersion(version: NSFileVersion) {
+        print("Update file at \(version.modificationDate).")
+    }
+    
+    // ファイルまたはファイルパッケージのバージョンが消えたことをデリゲートに通知する
+    func presentedItemDidLoseVersion(version: NSFileVersion) {
+        print("Lose file version at \(version.modificationDate).")
+    }
+    
+    // ディレクトリ内のアイテムが新しいバージョンになった（更新された）時の通知
+    func presentedSubitem(at url: URL, didGain version: NSFileVersion) {
+        
+        var isDir = ObjCBool(false)
+        if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) {
+            if Bool(isDir.boolValue) {
+                print("Update directory (\(url.path)) at \(version.modificationDate).")
+            } else {
+                print("Update file (\(url.path)) at \(version.modificationDate).")
+            }
+        }
+    }
+    
+    // ディレクトリ内のアイテムが削除された時の通知
+    func presentedSubitem(at url: URL, didLose version: NSFileVersion) {
+        print("looooooooooooose")
+        var isDir = ObjCBool(false)
+        if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) {
+            if Bool(isDir.boolValue) {
+                print("Lose directory version (\(url.path)) at \(version.modificationDate).")
+            } else {
+                print("Lose file version (\(url.path)) at \(version.modificationDate).")
+            }
+        }
+    }
+    
+    // ファイル/ディレクトリの内容変更の通知
+    func presentedSubitemDidChange(at url: URL) {
+        if FileManager.default.fileExists(atPath: url.path) {
+            print("Add subitem (\(url.path)).")
+        } else {
+            print("Remove subitem (\(url.path)).")
+        }
+        // tableViewをリロード
+        reload()
+    }
+    
+    // ファイル/ディレクトリが移動した時の通知
+    func presentedSubitemAtURL(oldURL: NSURL, didMoveToURL newURL: NSURL) {
+        var isDir = ObjCBool(false)
+        if FileManager.default.fileExists(atPath: newURL.path!, isDirectory: &isDir) {
+            if Bool(isDir.boolValue) {
+                print("Move directory from (\(oldURL.path)) to (\(newURL.path!).")
+            } else {
+                print("Move file from (\(oldURL.path)) to (\(newURL.path)).")
+            }
+        }
+    }
+    
+    // MARK: 何したら呼ばれるのか
+    
+    // 何したら呼ばれるのか
+    func accommodatePresentedItemDeletionWithCompletionHandler(completionHandler: (NSError?) -> Void) {
+        print("accommodatePresentedItemDeletionWithCompletionHandler")
+    }
+    
+    // 何したら呼ばれるのか
+    private func accommodatePresentedSubitemDeletionAtURL(url: URL, completionHandler: @escaping (NSError?) -> Void) {
+        print("accommodatePresentedSubitemDeletionAtURL")
+        print("url: \(url.path)")
+    }
+    
+    // 何したら呼ばれるのか
+    func presentedSubitemDidAppear(at url: URL) {
+        print("presentedSubitemDidAppearAtURL")
+        print("url: \(url.path)")
     }
 }
