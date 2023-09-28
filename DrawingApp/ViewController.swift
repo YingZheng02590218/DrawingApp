@@ -14,7 +14,7 @@ class ViewController: UIViewController {
     @IBOutlet var tableView: UITableView!
     // コンテナ　ファイル
     var backupFiles: [(String, NSNumber?, Bool)] = []
-
+    // iCloud Container に保存しているPDFファイルのパス
     var fileURL: URL?
     // 印刷機能
     let pdfMaker = PdfMaker()
@@ -27,7 +27,7 @@ class ViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             BackupManager.shared.load {
                 print($0)
                 self.backupFiles = $0
@@ -37,7 +37,14 @@ class ViewController: UIViewController {
     }
     
     @IBAction func pdfButtonTapped(_ sender: Any) {
-            
+        // iCloud Container に保存しているPDFファイルのパス
+        self.fileURL = nil
+        // QLPreview画面を表示させる
+        showQLPreview()
+    }
+    
+    // QLPreview画面を表示させる
+    func showQLPreview() {
         if BackupManager.shared.isiCloudEnabled {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 let previewController = QLPreviewController()
@@ -66,31 +73,45 @@ class ViewController: UIViewController {
 extension ViewController: QLPreviewControllerDataSource {
     
     func numberOfPreviewItems(in controller: QLPreviewController) -> Int {
-        if let PDFpath = Bundle.main.url(forResource: "2023-Journals", withExtension: "pdf") {
-            print(PDFpath)
+        
+        if let fileURL = fileURL {
+            // iCloud Container に保存しているPDFファイルのパス
+            print(fileURL)
             return 1
         } else {
-            return 0
+            if let pdfFilePath = Bundle.main.url(forResource: "2023-Journals", withExtension: "pdf") {
+                print(pdfFilePath)
+                return 1
+            } else {
+                return 0
+            }
         }
     }
     
     func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
-        
-        guard let pdfFilePath = Bundle.main.url(forResource: "2023-Journals", withExtension: "pdf") else {
-            return "" as! QLPreviewItem
+        if let fileURL = fileURL {
+            // iCloud Container に保存しているPDFファイルのパス
+            return fileURL as QLPreviewItem
+        } else {
+            guard let pdfFilePath = Bundle.main.url(forResource: "2023-Journals", withExtension: "pdf") else {
+                return "" as! QLPreviewItem
+            }
+            return pdfFilePath as QLPreviewItem
         }
-        return pdfFilePath as QLPreviewItem
     }
 }
 
 extension ViewController: QLPreviewControllerDelegate {
 
+    // マークアップを終了した際にコールされる
     func previewController(_ controller: QLPreviewController, didSaveEditedCopyOf previewItem: QLPreviewItem, at modifiedContentsURL: URL) {
+        // ここでPDFファイルを上書き保存するかどうかをたずねる
+        
         // iCloud Documents にバックアップを作成する
-        BackupManager.shared.backup(modifiedContentsURL: modifiedContentsURL,
+        BackupManager.shared.backup(fileURL: fileURL, modifiedContentsURL: modifiedContentsURL,
             completion: {
-                //
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            //
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                 BackupManager.shared.load {
                     print($0)
                     self.backupFiles = $0
@@ -105,15 +126,20 @@ extension ViewController: QLPreviewControllerDelegate {
     }
 
     func previewController(_ controller: QLPreviewController, editingModeFor previewItem: QLPreviewItem) -> QLPreviewItemEditingMode {
+        // QuickLook　コンテンツを編集する方法を示す値を返します。
+        // .updateContent　元のファイルを上書きして編集を処理します。
+        // .createCopy　または編集したコピーを作成して、
+        // .disabled ユーザーにそのファイルを編集させたくない場合。QuickLookは編集ボタンを表示しません。
         return .createCopy
     }
     
     func previewController(_ controller: QLPreviewController, shouldOpen url: URL, for item: QLPreviewItem) -> Bool {
         true
     }
-    
+    // QLPreview画面へ遷移前と、Done ボタンを押下時にコールされる
     func previewController(_ controller: QLPreviewController, transitionViewFor item: QLPreviewItem) -> UIView? {
         // (QLPreviewItem) item = (object = "file:///private/var/containers/Bundle/Application/7AD9B624-37B6-4CBD-957F-6590FD8C3200/DrawingApp.app/2023-Journals.pdf")
+        // サムネイル画像
         UIView()
     }
     
@@ -142,6 +168,7 @@ extension ViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell()
+        cell.backgroundColor = .brown
 //        cell.largeContentTitle = pdfMaker.PDFpath?[indexPath.row].lastPathComponent
         
         // バックアップファイル一覧　時刻　バージョン　ファイルサイズMB
@@ -178,16 +205,12 @@ extension ViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         DispatchQueue.global(qos: .default).async {
             // iCloud Documents からデータベースを復元する
-            BackupManager.shared.restore(folderName: self.backupFiles[indexPath.row].0) {
+            BackupManager.shared.restore(folderName: self.backupFiles[indexPath.row].0) { path in
                 print("restore")
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    BackupManager.shared.load {
-                        print($0)
-                        self.backupFiles = $0
-                        self.tableView.reloadData()
-                    }
-                }
-
+                // iCloud Container に保存しているPDFファイルのパス
+                self.fileURL = path
+                // QLPreview画面を表示させる
+                self.showQLPreview()
             }
         }
     }

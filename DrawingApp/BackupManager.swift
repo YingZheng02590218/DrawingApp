@@ -49,7 +49,7 @@ class BackupManager {
     
     /// バックアップデータ作成処理
     /// RealmのデータをiCloudにコピー
-    func backup(modifiedContentsURL: URL, completion: @escaping () -> Void, errorHandler: @escaping () -> Void) {
+    func backup(fileURL: URL? = nil, modifiedContentsURL: URL, completion: @escaping () -> Void, errorHandler: @escaping () -> Void) {
         do {
             // iCloud Drive / Paciolist フォルダ作成　ユーザーがFileアプリから削除したケースに対応
             if FileManager.default.fileExists(atPath: documentsFolderUrl.path) {
@@ -74,7 +74,7 @@ class BackupManager {
             // バックアップファイル名
             let fileName = mBackupFileNamePre + fileNameDateformater.string(from: Date()) + ".pdf" // 日付
             // バックアップファイルの格納場所
-            let fileUrl = backupFolderUrl.appendingPathComponent(fileName)
+            let fileUrl = fileURL ?? backupFolderUrl.appendingPathComponent(fileName)
              // PDFデータをディレクトリに保存する
             if let fileName = saveToTempDirectory(backupFileUrl: fileUrl, modifiedContentsURL: modifiedContentsURL) {
                 print(fileName)
@@ -113,6 +113,12 @@ class BackupManager {
         }
         let filePath = backupFileUrl.appendingPathComponent(modifiedContentsURL.lastPathComponent)
         do {
+            // コピーの前にはチェック&削除が必要
+            if FileManager.default.fileExists(atPath: backupFileUrl.path) {
+                // すでに backupFileUrl が存在する場合はファイルを削除する
+                try FileManager.default.removeItem(at: backupFileUrl)
+            }
+            
             try FileManager.default.copyItem(at: modifiedContentsURL, to: backupFileUrl)
 //            try FileManager.default.moveItem(at: modifiedContentsURL, to: backupFileUrl)
 
@@ -269,7 +275,7 @@ class BackupManager {
     }
     
     /// Realmのデータを復元
-    func restore(folderName: String, completion: @escaping () -> Void) {
+    func restore(folderName: String, completion: @escaping (URL) -> Void) {
         // バックアップファイルの格納場所
         let folderUrl = documentsFolderUrl.appendingPathComponent(folderName)
         // ダウンロードする前にiCloudとの同期を行う
@@ -312,8 +318,10 @@ class BackupManager {
 //                    )
 //                    Realm.Configuration.defaultConfiguration = config
 //                    print(config) // schemaVersion を確認できる
-                    Thread.sleep(forTimeInterval: 3.0)
-                    completion()
+                    Thread.sleep(forTimeInterval: 0.3)
+                    print(folderUrl.appendingPathComponent(files[files.count - 1]))
+                    // 編集するPDFファイルのパスを返す
+                    completion(folderUrl.appendingPathComponent(files[files.count - 1]))
                     //　abort()   // 既存のRealmを開放させるため
                 } catch {
                     print(error.localizedDescription)
