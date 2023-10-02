@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F91345242ACA8B150034AD03 /* IconTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = F91345232ACA8B150034AD03 /* IconTableViewCell.swift */; };
+		F91345262ACA8B380034AD03 /* IconTableViewCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F91345252ACA8B380034AD03 /* IconTableViewCell.xib */; };
 		F963ED622ABC3AF100B41C99 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F963ED612ABC3AF100B41C99 /* AppDelegate.swift */; };
 		F963ED642ABC3AF100B41C99 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F963ED632ABC3AF100B41C99 /* SceneDelegate.swift */; };
 		F963ED662ABC3AF100B41C99 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F963ED652ABC3AF100B41C99 /* ViewController.swift */; };
@@ -19,6 +21,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		F91345232ACA8B150034AD03 /* IconTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconTableViewCell.swift; sourceTree = "<group>"; };
+		F91345252ACA8B380034AD03 /* IconTableViewCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = IconTableViewCell.xib; sourceTree = "<group>"; };
 		F963ED5E2ABC3AF100B41C99 /* DrawingApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DrawingApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F963ED612ABC3AF100B41C99 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		F963ED632ABC3AF100B41C99 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -70,6 +74,8 @@
 				F963ED792AC2D82900B41C99 /* PdfMaker.swift */,
 				F963ED652ABC3AF100B41C99 /* ViewController.swift */,
 				F963ED672ABC3AF100B41C99 /* Main.storyboard */,
+				F91345232ACA8B150034AD03 /* IconTableViewCell.swift */,
+				F91345252ACA8B380034AD03 /* IconTableViewCell.xib */,
 				F963ED6A2ABC3AF200B41C99 /* Assets.xcassets */,
 				F963ED6C2ABC3AF200B41C99 /* LaunchScreen.storyboard */,
 				F963ED6F2ABC3AF200B41C99 /* Info.plist */,
@@ -137,6 +143,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F963ED6E2ABC3AF200B41C99 /* LaunchScreen.storyboard in Resources */,
+				F91345262ACA8B380034AD03 /* IconTableViewCell.xib in Resources */,
 				F963ED6B2ABC3AF200B41C99 /* Assets.xcassets in Resources */,
 				F963ED692ABC3AF100B41C99 /* Main.storyboard in Resources */,
 				F963ED762ABC4ECE00B41C99 /* 2023-Journals.pdf in Resources */,
@@ -152,6 +159,7 @@
 			files = (
 				F963ED662ABC3AF100B41C99 /* ViewController.swift in Sources */,
 				F963ED7A2AC2D82900B41C99 /* PdfMaker.swift in Sources */,
+				F91345242ACA8B150034AD03 /* IconTableViewCell.swift in Sources */,
 				F963ED622ABC3AF100B41C99 /* AppDelegate.swift in Sources */,
 				F963ED642ABC3AF100B41C99 /* SceneDelegate.swift in Sources */,
 				F963ED782AC2D65700B41C99 /* BackupManager.swift in Sources */,

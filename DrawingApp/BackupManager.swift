@@ -220,7 +220,7 @@ class BackupManager {
         return ""
     }
     
-    func load(completion: @escaping ([(String, NSNumber?, Bool)]) -> Void) {
+    func load(completion: @escaping ([(String, NSNumber?, Bool, URL)]) -> Void) {
         metadataQuery = NSMetadataQuery()
         // フォルダとファイルを取得して、ファイルのサイズを取得するため、絞り込まない
         // metadataQuery.predicate = NSPredicate(format: "%K like 'public.folder'", NSMetadataItemContentTypeKey)
@@ -232,7 +232,7 @@ class BackupManager {
         NotificationCenter.default.addObserver(forName: .NSMetadataQueryDidFinishGathering, object: metadataQuery, queue: nil) { notification in
             if let query = notification.object as? NSMetadataQuery {
                 
-                var backupFiles: [(String, NSNumber?, Bool)] = []
+                var backupFiles: [(String, NSNumber?, Bool, URL)] = []
                 // Documents内のフォルダとファイルにアクセス
                 for result in query.results {
                     // print((result as AnyObject).values(forAttributes: [NSMetadataItemFSContentChangeDateKey, NSMetadataItemDisplayNameKey, NSMetadataItemFSNameKey, NSMetadataItemContentTypeKey, NSMetadataItemFSSizeKey, NSMetadataItemPathKey]))
@@ -252,16 +252,20 @@ class BackupManager {
                             if fileName == name {
                                 let size = (result as AnyObject).value(forAttribute: NSMetadataItemFSSizeKey) as? NSNumber
                                 let isOniCloud = false
+                                // サムネイル　URL
+                                let url = (result as AnyObject).value(forAttribute: NSMetadataItemURLKey) as! URL
                                 // フォルダ名、ファイルサイズ
-                                backupFiles.append((dysplayName, size, isOniCloud))
+                                backupFiles.append((dysplayName, size, isOniCloud, url))
                             }
                             // デバイス間の共有　iCloud経由の場合、ファイル名が変わる！！！復元する際に、ダウンロードをしないと復元できない。
                             if fileName == "." + name + ".icloud" {
                                 print("." + name + ".icloud", "加工した　.icloud　です。")
                                 let size = (result as AnyObject).value(forAttribute: NSMetadataItemFSSizeKey) as? NSNumber
                                 let isOniCloud = true
+                                // サムネイル　URL
+                                let url = (result as AnyObject).value(forAttribute: NSMetadataItemURLKey) as! URL
                                 // フォルダ名、ファイルサイズ、iCloudからダウンロードされていないか
-                                backupFiles.append((dysplayName, size, isOniCloud))
+                                backupFiles.append((dysplayName, size, isOniCloud, url))
                             }
                         }
                     }

@@ -6,19 +6,19 @@
 //
 
 import UIKit
-import PencilKit
+//import PencilKit
 import QuickLook
 
 class ViewController: UIViewController {
-
+    
     @IBOutlet var tableView: UITableView!
     // コンテナ　ファイル
-    var backupFiles: [(String, NSNumber?, Bool)] = []
+    var backupFiles: [(String, NSNumber?, Bool, URL?)] = []
     // iCloud Container に保存しているPDFファイルのパス
     var fileURL: URL?
     // 印刷機能
     let pdfMaker = PdfMaker()
-
+    
     // ディレクトリ監視
     var isPresenting = false
     // ディレクトリ監視
@@ -38,8 +38,10 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         // ディレクトリ監視
         addFilePresenterIfNeeded()
+        
+        tableView.register(UINib(nibName: "IconTableViewCell", bundle: nil), forCellReuseIdentifier: "cell")
     }
-
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         // tableViewをリロード
@@ -122,14 +124,14 @@ extension ViewController: QLPreviewControllerDataSource {
 }
 
 extension ViewController: QLPreviewControllerDelegate {
-
+    
     // マークアップを終了した際にコールされる
     func previewController(_ controller: QLPreviewController, didSaveEditedCopyOf previewItem: QLPreviewItem, at modifiedContentsURL: URL) {
         // ここでPDFファイルを上書き保存するかどうかをたずねる
         
         // iCloud Documents にバックアップを作成する
         BackupManager.shared.backup(fileURL: fileURL, modifiedContentsURL: modifiedContentsURL,
-            completion: {
+                                    completion: {
             //
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 BackupManager.shared.load {
@@ -138,13 +140,13 @@ extension ViewController: QLPreviewControllerDelegate {
                     self.tableView.reloadData()
                 }
             }
-            },
-            errorHandler: {
-                //
-            }
+        },
+                                    errorHandler: {
+            //
+        }
         )
     }
-
+    
     func previewController(_ controller: QLPreviewController, editingModeFor previewItem: QLPreviewItem) -> QLPreviewItemEditingMode {
         // QuickLook　コンテンツを編集する方法を示す値を返します。
         // .updateContent　元のファイルを上書きして編集を処理します。
@@ -176,23 +178,23 @@ extension ViewController: QLPreviewControllerDelegate {
     }
 }
 extension ViewController: UITableViewDelegate {
-    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        120
+    }
 }
 
 extension ViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-//        pdfMaker.PDFpath?.count ?? 0
-        print(backupFiles.count)
+        
         return backupFiles.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = UITableViewCell()
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as? IconTableViewCell else { return UITableViewCell() }
         cell.backgroundColor = .brown
-//        cell.largeContentTitle = pdfMaker.PDFpath?[indexPath.row].lastPathComponent
         
         // バックアップファイル一覧　時刻　バージョン　ファイルサイズMB
-//        cell.textLabel?.text = "\(backupFiles[indexPath.row].0)"
+        cell.centerLabel.text = "\(backupFiles[indexPath.row].0)"
         if let size = backupFiles[indexPath.row].1 {
             let byteCountFormatter = ByteCountFormatter()
             byteCountFormatter.allowedUnits = [.useKB] // 使用する単位を選択
@@ -204,8 +206,7 @@ extension ViewController: UITableViewDataSource {
             byteCountFormatter.countStyle = .decimal // 1 KB = 1000 bytes
             print(byteCountFormatter.string(from: byte)) // 1,024 KB
             
-            cell.textLabel?.text = "\(backupFiles[indexPath.row].0)  \(byteCountFormatter.string(from: byte))"
-//            cell.detailTextLabel?.textColor = .blue
+            cell.subLabel.text = "\(byteCountFormatter.string(from: byte))"
         }
         // 未ダウンロードアイコン
         let isOniCloud = backupFiles[indexPath.row].2
@@ -217,7 +218,25 @@ extension ViewController: UITableViewDataSource {
         } else {
             cell.accessoryView = nil
         }
-
+        // サムネイル画像
+        if let url = backupFiles[indexPath.row].3 {
+            getThumbnailImage(url: url) { image in
+                DispatchQueue.main.async {
+                    cell.leftImageView.image = image
+                }
+            }
+            cell.leftImageView.backgroundColor = UIColor.systemGray
+            cell.leftImageView.contentMode = .scaleAspectFit
+        }
+        // サムネイル画像
+        func getThumbnailImage(url: URL, completion: @escaping (_ image: UIImage?) -> Void) {
+            guard let doc = PDFDocument(url: url) else { return }
+            guard let page = doc.page(at: 0) else { fatalError() }
+            let image = page.thumbnail(of: CGSize(width: 1000, height: 1000), for: PDFDisplayBox.trimBox)
+            
+            completion(image)
+        }
+        
         
         return cell
     }
