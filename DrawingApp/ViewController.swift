@@ -69,6 +69,7 @@ class ViewController: UIViewController {
     func showQLPreview() {
         if BackupManager.shared.isiCloudEnabled {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                // QuickLook のパターン
                 let previewController = QLPreviewController()
                 previewController.delegate = self
                 previewController.dataSource = self
@@ -83,6 +84,30 @@ class ViewController: UIViewController {
                     print(previewController.presentingViewController) // Optional(<DrawingApp.ViewController: 0x104007830>)
                     print(previewController.presentedViewController)
                 })
+            }
+        }
+    }
+
+    // マーカー画面を表示させる
+    func showMarkerView() {
+        if BackupManager.shared.isiCloudEnabled {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                // PDFKit のパターン
+                if let viewController = UIStoryboard(
+                    name: "DrawingViewController",
+                    bundle: nil
+                ).instantiateInitialViewController() as? DrawingViewController {
+                    // iCloud Container に保存しているPDFファイルのパス
+                    viewController.fileURL = self.fileURL
+
+                    if let navigator = self.navigationController {
+                        navigator.pushViewController(viewController, animated: true)
+                    } else {
+                        let navigation = UINavigationController(rootViewController: viewController)
+                        self.present(navigation, animated: true, completion: nil)
+                    }
+                }
+
             }
         }
     }
@@ -184,6 +209,7 @@ extension ViewController: UITableViewDelegate {
 }
 
 extension ViewController: UITableViewDataSource {
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
         return backupFiles.count
@@ -248,8 +274,8 @@ extension ViewController: UITableViewDataSource {
                 print("restore")
                 // iCloud Container に保存しているPDFファイルのパス
                 self.fileURL = path
-                // QLPreview画面を表示させる
-                self.showQLPreview()
+                // マーカー画面を表示させる
+                self.showMarkerView()
             }
         }
     }

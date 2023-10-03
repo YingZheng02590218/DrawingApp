@@ -69,45 +69,32 @@ class BackupManager {
                 try FileManager.default.createDirectory(atPath: backupFolderUrl.path, withIntermediateDirectories: false)
             }
             // 既存バックアップファイル（iCloud）の削除
-//            deleteBackup()
+            deleteBackup()
                         
             // バックアップファイル名
             let fileName = mBackupFileNamePre + fileNameDateformater.string(from: Date()) + ".pdf" // 日付
             // バックアップファイルの格納場所
             let fileUrl = fileURL ?? backupFolderUrl.appendingPathComponent(fileName)
-             // PDFデータをディレクトリに保存する
-            if let fileName = saveToTempDirectory(backupFileUrl: fileUrl, modifiedContentsURL: modifiedContentsURL) {
+            // PDFファイルを iCloud Container に保存する
+            if let fileName = saveToDocumentsDirectory(backupFileUrl: fileUrl, modifiedContentsURL: modifiedContentsURL) {
                 print(fileName)
                 completion()
             }
-//            completion()
         } catch {
             print(error.localizedDescription)
             errorHandler()
         }
     }
     
-    /*
-     この関数は、特定の `data` をアプリの一時ストレージに保存します。さらに、そのファイルが存在する場所のパスを返します。
-     */
-    func saveToTempDirectory(backupFileUrl: URL, modifiedContentsURL: URL) -> URL? {
+    // PDFファイルを iCloud Container に保存する
+    func saveToDocumentsDirectory(backupFileUrl: URL, modifiedContentsURL: URL) -> URL? {
         do {
             let directoryContents = try FileManager.default.contentsOfDirectory(at: modifiedContentsURL.deletingLastPathComponent(), includingPropertiesForKeys: nil) // ファイル一覧を取得
             // if you want to filter the directory contents you can do like this:
             let pdfFiles = directoryContents.filter { $0.pathExtension == "pdf" }
-//            PDFpath = pdfFiles
             print("pdf urls: ", pdfFiles)
             let pdfFileNames = pdfFiles.map { $0.deletingPathExtension().lastPathComponent }
             print("pdf list: ", pdfFileNames)
-            // ファイルのデータを取得
-//            for fileName in pdfFileNames {
-//                let content = pDFsDirectory.appendingPathComponent(fileName + ".pdf")
-//                do {
-//                    try FileManager.default.removeItem(at: content)
-//                } catch let error {
-//                    print(error)
-//                }
-//            }
         } catch {
             print(error)
         }
@@ -120,7 +107,7 @@ class BackupManager {
             }
             
             try FileManager.default.copyItem(at: modifiedContentsURL, to: backupFileUrl)
-//            try FileManager.default.moveItem(at: modifiedContentsURL, to: backupFileUrl)
+            // try FileManager.default.moveItem(at: modifiedContentsURL, to: backupFileUrl)
 
             print("modifiedContentsURL", modifiedContentsURL)
             print("backupFileUrl      ", backupFileUrl)
