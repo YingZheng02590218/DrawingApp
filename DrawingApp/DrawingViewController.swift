@@ -75,6 +75,27 @@ class DrawingViewController: UIViewController {
         self.pdfView.addGestureRecognizer(singleTapGesture)
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        // マーカーを追加しPDFを上書き保存する
+        save()
+    }
+        
+    // 編集モード切り替え
+    override func setEditing(_ editing: Bool, animated: Bool) {
+        super.setEditing(editing, animated: animated)
+        // 編集中
+        if isEditing {
+            // title設定
+            navigationItem.title = "マーカーを削除する"
+        } else {
+            // title設定
+            navigationItem.title = "マーカーを追加する"
+        }
+    }
+    
+    // MARK: PDF ファイル　マークアップ　編集中の一時ファイル
+
     // 一時ファイルを削除する
     func deleteTempDirectory() {
         guard let tempDirectory = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false) else { return }
@@ -135,56 +156,8 @@ class DrawingViewController: UIViewController {
             return nil
         }
     }
-    // 編集モード切り替え
-    override func setEditing(_ editing: Bool, animated: Bool) {
-        super.setEditing(editing, animated: animated)
-        // 編集中
-        if isEditing {
-            // title設定
-            navigationItem.title = "マーカーを削除する"
-        } else {
-            // title設定
-            navigationItem.title = "マーカーを追加する"
-        }
-    }
     
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        // マーカーを追加しPDFを上書き保存する
-        save()
-    }
-    // PDFAnnotationがタップされた
-    @objc
-    func action(_ sender: Any) {
-        // タップされたPDFAnnotationを取得する
-        guard let notification = sender as? Notification,
-              let annotation = notification.userInfo?["PDFAnnotationHit"] as? PDFAnnotation else {
-            return
-        }
-        // タップされたPDFAnnotationに対する処理
-        // 編集中
-        if isEditing {
-            print(annotation)
-            // 現在開いているページを取得
-            if let page = pdfView.currentPage {
-                print(PDFAnnotationSubtype(rawValue: annotation.type!).rawValue)
-                print(PDFAnnotationSubtype.stamp.rawValue.self)
-                // freeText
-                if PDFAnnotationSubtype(rawValue: "/\(annotation.type!)") == PDFAnnotationSubtype.stamp.self {
-                    // 対象のページの注釈を削除
-                    page.removeAnnotation(annotation)
-                }
-            }
-        }
-    }
-    
-    // マーカーを追加しPDFを上書き保存する
-    func save() {
-        if let fileURL = fileURL {
-            // 一時ファイルをiCloud Container に保存しているPDFファイルへ上書き保存する
-            pdfView.document?.write(to: fileURL)
-        }
-    }
+    // MARK: PDF ファイル　マーカー　Annotation
     
     // PDF 全てのpageに存在するAnnotationを保持する
     func getAllAnnotations(completion: @escaping () -> Void) {
@@ -203,22 +176,6 @@ class DrawingViewController: UIViewController {
         }
         print(annotationsInAllPages.count)
         completion()
-    }
-    
-    // 写真選択画面を表示させる
-    func showPickingPhotoScreen() {
-        // インスタンス生成
-        imagePickerController = UIImagePickerController()
-        // デリゲート設定
-        imagePickerController.delegate = self
-        // 画像の取得先はフォトライブラリ
-        imagePickerController.sourceType = UIImagePickerController.SourceType.photoLibrary
-        // 画像取得後の編集を不可に
-        imagePickerController.allowsEditing = false
-        
-        DispatchQueue.main.async {
-            self.present(self.imagePickerController, animated: true, completion: nil)
-        }
     }
     
     // マーカーを追加する
@@ -242,6 +199,49 @@ class DrawingViewController: UIViewController {
         }
     }
     
+    // マーカーを削除する
+    func removeMarkerAnotation(annotation: PDFAnnotation) {
+        // 現在開いているページを取得
+        if let page = pdfView.currentPage {
+            print(PDFAnnotationSubtype(rawValue: annotation.type!).rawValue)
+            print(PDFAnnotationSubtype.stamp.rawValue.self)
+            // freeText
+            if PDFAnnotationSubtype(rawValue: "/\(annotation.type!)") == PDFAnnotationSubtype.stamp.self {
+                // 対象のページの注釈を削除
+                page.removeAnnotation(annotation)
+            }
+        }
+    }
+    
+    // PDFAnnotationがタップされた
+    @objc
+    func action(_ sender: Any) {
+        // タップされたPDFAnnotationを取得する
+        guard let notification = sender as? Notification,
+              let annotation = notification.userInfo?["PDFAnnotationHit"] as? PDFAnnotation else {
+            return
+        }
+        // タップされたPDFAnnotationに対する処理
+        // 編集中
+        if isEditing {
+            print(annotation)
+            // マーカーを削除する
+            removeMarkerAnotation(annotation: annotation)
+            // iCloud Container に保存した写真を削除する
+            removePhotoToProjectFolder(contents: annotation.contents)
+        }
+    }
+    
+    // マーカーを追加しPDFを上書き保存する
+    func save() {
+        if let fileURL = fileURL {
+            // 一時ファイルをiCloud Container に保存しているPDFファイルへ上書き保存する
+            pdfView.document?.write(to: fileURL)
+        }
+    }
+    
+    // MARK: フォトライブラリ
+
     // 写真をカメラロールからiCloud Container にコピーする
     func addPhotoToProjectFolder() {
         
@@ -256,6 +256,37 @@ class DrawingViewController: UIViewController {
                    print(fileName)
                }
            }
+    }
+    
+    // iCloud Container に保存した写真を削除する
+    func removePhotoToProjectFolder(contents: String?) {
+        
+        if let contents = contents {
+            // 写真を iCloud Container から削除する
+            let result = BackupManager.shared.deletePhotoFromDocumentsDirectory(
+                contents: contents,
+                fileURL: fileURL
+            )
+            print("写真を削除", result)
+        }
+    }
+    
+    // MARK: フォトライブラリ
+
+    // 写真選択画面を表示させる
+    func showPickingPhotoScreen() {
+        // インスタンス生成
+        imagePickerController = UIImagePickerController()
+        // デリゲート設定
+        imagePickerController.delegate = self
+        // 画像の取得先はフォトライブラリ
+        imagePickerController.sourceType = UIImagePickerController.SourceType.photoLibrary
+        // 画像取得後の編集を不可に
+        imagePickerController.allowsEditing = false
+        
+        DispatchQueue.main.async {
+            self.present(self.imagePickerController, animated: true, completion: nil)
+        }
     }
 }
 

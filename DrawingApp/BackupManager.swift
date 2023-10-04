@@ -407,4 +407,39 @@ class BackupManager {
         }
     }
 
+    // 写真を iCloud Container から削除する
+    func deletePhotoFromDocumentsDirectory(contents: String, fileURL: URL? = nil) -> Bool {
+        // iCloud Drive / DrawingApp / Photos フォルダ作成 PDFファイルの格納場所 に写真フォルダを作成する
+        guard let fileURL = fileURL else { return false }
+        let photosDirectory = fileURL.deletingLastPathComponent().appendingPathComponent("Photos", isDirectory: true)
+        if FileManager.default.fileExists(atPath: photosDirectory.path) {
+            print(photosDirectory.path)
+        } else {
+            do {
+                try FileManager.default.createDirectory(at: photosDirectory, withIntermediateDirectories: true, attributes: nil)
+            } catch {
+                print("失敗した")
+            }
+        }
+        
+        // 写真名
+        let fileName = "\(contents)" + ".\(fileExtension)"
+        let fileUrl = photosDirectory.appendingPathComponent(fileName)
+
+        do {
+            // コピーの前にはチェック&削除が必要
+            if FileManager.default.fileExists(atPath: fileUrl.path) {
+                print("fileUrl            ", fileUrl)
+                // すでに fileUrl が存在する場合はファイルを削除する
+                try FileManager.default.removeItem(at: fileUrl)
+                return true
+            } else {
+                return false
+            }
+        } catch {
+            print(error.localizedDescription)
+            return false
+        }
+    }
+
 }
