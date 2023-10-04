@@ -12,7 +12,8 @@ import UIKit
 
 class DrawingViewController: UIViewController {
     
-    @IBOutlet weak var pdfView: PDFView!
+    @IBOutlet var imageView: UIImageView!
+    @IBOutlet weak var pdfView: NonSelectablePDFView!
     // iCloud Container に保存しているPDFファイルのパス
     var fileURL: URL?
     // ローカル Container に保存している編集中のPDFファイルのパス
@@ -34,9 +35,11 @@ class DrawingViewController: UIViewController {
     var imageURL: URL?
     // PDFのタップされた位置の座標
     var point: CGPoint?
-    
+    // 選択されたマーカー
+    var selectedAnnotation: PDFAnnotation?
+
     var imagePickerController: UIImagePickerController!
-    
+        
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -237,6 +240,36 @@ class DrawingViewController: UIViewController {
             removeMarkerAnotation(annotation: annotation)
             // iCloud Container に保存した写真を削除する
             removePhotoToProjectFolder(contents: annotation.contents)
+        } else {
+            // 選択したマーカーの画像を表示させる
+            selectedAnnotation = annotation
+            // マーカーに紐付けされた画像
+            if let fileURL = fileURL,
+            let contents = annotation.contents {
+            // 写真を iCloud Container から取得する
+                if let photoUrl = BackupManager.shared.getPhotoFromDocumentsDirectory(contents: contents, fileURL: fileURL) {
+                    // マーカーに紐付けされた画像
+                    getThumbnailImage(url: photoUrl) { image in
+                        if let image = image {
+                            DispatchQueue.main.async {
+                                self.imageView.image = image
+                                self.imageView.isHidden = false
+                            }
+                        }
+                    }
+                }
+            }
+            // マーカーに紐付けされた画像
+            func getThumbnailImage(url: URL, completion: @escaping (_ image: UIImage?) -> Void) {
+                do {
+                    let data = try Data(contentsOf: url)
+                    let image = UIImage(data: data)
+                    completion(image)
+                } catch let err {
+                    print("Error : \(err.localizedDescription)")
+                }
+                completion(nil)
+            }
         }
     }
     
@@ -475,32 +508,42 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
     func tappedView(_ sender: UITapGestureRecognizer){
         // 編集 終了時
         if !isEditing {
-            // ①PDFに対してPDFAnnotationを設定する
-            
-            // PDF 全てのpageに存在するAnnotationを保持する
-            getAllAnnotations() {
-                // 現在開いているページを取得
-                if let page = self.pdfView.currentPage,
-                   // 使用していない連番を取得する
-                   let unusedNumber = self.getUnusedNumber(),
-                   // TODO: SF Symbols は50までしか存在しない
-                   let image = UIImage(systemName: "\(unusedNumber).square") {
-                    // 使用していない連番
-                    self.unusedNumber = unusedNumber
-                    // マーカー画像
-                    self.image = image
-                    // UIViewからPDFの座標へ変換する
-                    let point = self.pdfView.convert(sender.location(in: self.pdfView), to: page) // 座標系がUIViewとは異なるので気をつけましょう。
-                    // PDFのタップされた位置の座標
-                    self.point = point
-                    // 写真選択画面を表示させる
-                    self.showPickingPhotoScreen()
-                } else {
-                    print("SF Symbols に画像が存在しない")
+            if let selectedAnnotation = selectedAnnotation {
+                // 選択したマーカーの画像を表示させる
+                self.selectedAnnotation = nil
+            } else {
+                // 選択したマーカーの画像を非表示させる
+                self.imageView.image = nil
+                self.imageView.isHidden = true
+
+                // ①PDFに対してPDFAnnotationを設定する
+                
+                // PDF 全てのpageに存在するAnnotationを保持する
+                getAllAnnotations() {
+                    // 現在開いているページを取得
+                    if let page = self.pdfView.currentPage,
+                       // 使用していない連番を取得する
+                       let unusedNumber = self.getUnusedNumber(),
+                       // TODO: SF Symbols は50までしか存在しない
+                       let image = UIImage(systemName: "\(unusedNumber).square") {
+                        // 使用していない連番
+                        self.unusedNumber = unusedNumber
+                        // マーカー画像
+                        self.image = image
+                        // UIViewからPDFの座標へ変換する
+                        let point = self.pdfView.convert(sender.location(in: self.pdfView), to: page) // 座標系がUIViewとは異なるので気をつけましょう。
+                        // PDFのタップされた位置の座標
+                        self.point = point
+                        // 写真選択画面を表示させる
+                        self.showPickingPhotoScreen()
+                    } else {
+                        print("SF Symbols に画像が存在しない")
+                    }
                 }
             }
         }
     }
+    
     // 使用していない連番を取得する
     func getUnusedNumber() -> Int? {
         for number in numbersList {
@@ -515,5 +558,24 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
     
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
         return true
+    }
+}
+
+
+class NonSelectablePDFView: PDFView {
+    
+    override func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
+        super.canPerformAction(action, withSender: sender)
+        self.currentSelection = nil
+        self.clearSelection()
+        return false
+    }
+    
+    override func addGestureRecognizer(_ gestureRecognizer: UIGestureRecognizer) {
+        if gestureRecognizer is UILongPressGestureRecognizer {
+            gestureRecognizer.isEnabled = false
+        }
+        
+        super.addGestureRecognizer(gestureRecognizer)
     }
 }

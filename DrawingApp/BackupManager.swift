@@ -406,6 +406,40 @@ class BackupManager {
             return nil
         }
     }
+    
+    // 写真を iCloud Container から取得する
+    func getPhotoFromDocumentsDirectory(contents: String, fileURL: URL) -> URL? {
+        // iCloud Drive / DrawingApp / Photos フォルダ作成 PDFファイルの格納場所 に写真フォルダを作成する
+        let photosDirectory = fileURL.deletingLastPathComponent().appendingPathComponent("Photos", isDirectory: true)
+        if FileManager.default.fileExists(atPath: photosDirectory.path) {
+            print(photosDirectory.path)
+        } else {
+            do {
+                try FileManager.default.createDirectory(at: photosDirectory, withIntermediateDirectories: true, attributes: nil)
+            } catch {
+                print("失敗した")
+            }
+        }
+        
+        // 写真名
+        let fileName = "\(contents)" + ".\(fileExtension)"
+        let fileUrl = photosDirectory.appendingPathComponent(fileName)
+
+        do {
+            let directoryContents = try FileManager.default.contentsOfDirectory(at: fileUrl.deletingLastPathComponent(), includingPropertiesForKeys: nil) // ファイル一覧を取得
+            // if you want to filter the directory contents you can do like this:
+            let photoFiles = directoryContents.filter { $0.pathExtension == fileExtension }
+            print("\(fileExtension) urls: ", photoFiles)
+            let photoFileNames = photoFiles.map { $0.deletingPathExtension().lastPathComponent }
+            print("\(fileExtension) list: ", photoFileNames)
+            
+            print("fileUrl            ", fileUrl)
+            return fileUrl
+        } catch {
+            print(error.localizedDescription)
+            return nil
+        }
+    }
 
     // 写真を iCloud Container から削除する
     func deletePhotoFromDocumentsDirectory(contents: String, fileURL: URL? = nil) -> Bool {
