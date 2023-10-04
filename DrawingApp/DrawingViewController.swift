@@ -6,6 +6,8 @@
 //
 
 import PDFKit
+import Photos
+import PhotosUI
 import UIKit
 
 class DrawingViewController: UIViewController {
@@ -34,7 +36,7 @@ class DrawingViewController: UIViewController {
     var point: CGPoint?
     
     var imagePickerController: UIImagePickerController!
-
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -63,7 +65,7 @@ class DrawingViewController: UIViewController {
         // pdfView.displayMode = .singlePage
         // 現在開いているページ currentPage にのみマーカーを追加
         pdfView.autoScales = true
-
+        
         // ②PDF Annotationがタップされたかを監視、タップに対する処理を行う
         //　PDFAnnotationがタップされたかを監視する
         NotificationCenter.default.addObserver(self, selector: #selector(action(_:)), name: .PDFViewAnnotationHit, object: nil)
@@ -80,7 +82,13 @@ class DrawingViewController: UIViewController {
         // マーカーを追加しPDFを上書き保存する
         save()
     }
-        
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        // 写真のアクセス権限
+        albumAction()
+    }
+    
     // 編集モード切り替え
     override func setEditing(_ editing: Bool, animated: Bool) {
         super.setEditing(editing, animated: animated)
@@ -95,7 +103,7 @@ class DrawingViewController: UIViewController {
     }
     
     // MARK: PDF ファイル　マークアップ　編集中の一時ファイル
-
+    
     // 一時ファイルを削除する
     func deleteTempDirectory() {
         guard let tempDirectory = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false) else { return }
@@ -190,12 +198,12 @@ class DrawingViewController: UIViewController {
             // 対象のページへ注釈を追加
             page.addAnnotation(imageStamp)
             
-//                        // freeText
-//                        let freeText = PDFAnnotation(bounds: CGRect(x: point.x, y: point.y, width: 25, height: 25), forType: .freeText, withProperties: [:])
-//                        freeText.contents = "\(self.annotationsInAllPages.count ?? 0)"
-//                        freeText.color = .green
-//                        // 対象のページへ注釈を追加
-//                        page.addAnnotation(freeText)
+            //                        // freeText
+            //                        let freeText = PDFAnnotation(bounds: CGRect(x: point.x, y: point.y, width: 25, height: 25), forType: .freeText, withProperties: [:])
+            //                        freeText.contents = "\(self.annotationsInAllPages.count ?? 0)"
+            //                        freeText.color = .green
+            //                        // 対象のページへ注釈を追加
+            //                        page.addAnnotation(freeText)
         }
     }
     
@@ -241,21 +249,21 @@ class DrawingViewController: UIViewController {
     }
     
     // MARK: フォトライブラリ
-
+    
     // 写真をカメラロールからiCloud Container にコピーする
     func addPhotoToProjectFolder() {
         
         if let unusedNumber = unusedNumber,
            let fileURL = fileURL,
            let imageURL = imageURL {
-               // 写真を iCloud Container に保存する
-               if let fileName = BackupManager.shared.savePhotoToDocumentsDirectory(
+            // 写真を iCloud Container に保存する
+            if let fileName = BackupManager.shared.savePhotoToDocumentsDirectory(
                 unusedNumber: unusedNumber,
                 fileURL: fileURL,
                 modifiedContentsURL: imageURL) {
-                   print(fileName)
-               }
-           }
+                print(fileName)
+            }
+        }
     }
     
     // iCloud Container に保存した写真を削除する
@@ -272,21 +280,93 @@ class DrawingViewController: UIViewController {
     }
     
     // MARK: フォトライブラリ
-
+    
     // 写真選択画面を表示させる
     func showPickingPhotoScreen() {
-        // インスタンス生成
-        imagePickerController = UIImagePickerController()
-        // デリゲート設定
-        imagePickerController.delegate = self
-        // 画像の取得先はフォトライブラリ
-        imagePickerController.sourceType = UIImagePickerController.SourceType.photoLibrary
-        // 画像取得後の編集を不可に
-        imagePickerController.allowsEditing = false
-        
-        DispatchQueue.main.async {
-            self.present(self.imagePickerController, animated: true, completion: nil)
+        if #available(iOS 14, *) {
+            // iOS14以降の設定
+            var configuration = PHPickerConfiguration()
+            configuration.filter = PHPickerFilter.images
+            configuration.selectionLimit = 1
+            let picker = PHPickerViewController(configuration: configuration)
+            picker.delegate = self
+            DispatchQueue.main.async {
+                self.present(picker, animated: true, completion: nil)
+            }
+        } else {
+            // インスタンス生成
+            imagePickerController = UIImagePickerController()
+            // デリゲート設定
+            imagePickerController.delegate = self
+            // 画像の取得先はフォトライブラリ
+            imagePickerController.sourceType = UIImagePickerController.SourceType.photoLibrary
+            // 画像取得後の編集を不可に
+            imagePickerController.allowsEditing = false
+            
+            DispatchQueue.main.async {
+                self.present(self.imagePickerController, animated: true, completion: nil)
+            }
         }
+    }
+    
+    // 写真のアクセス権限
+    private func albumAction() {
+        // 端末にアルバムがあるかを確認
+        if UIImagePickerController.isSourceTypeAvailable(UIImagePickerController.SourceType.photoLibrary) {
+            if #available(iOS 14, *) {
+                // iOS14以降の設定
+                let authorizationStatus = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+                self.albumCommonAction(authorizationStatus)
+            } else {
+                // iOS14より前の設定
+                let authorizationStatus = PHPhotoLibrary.authorizationStatus()
+                self.albumCommonAction(authorizationStatus)
+            }
+        }
+    }
+    
+    private func albumCommonAction(_ authorizationStatus: PHAuthorizationStatus) {
+        
+        switch authorizationStatus {
+        case .notDetermined:
+            // 初回起動時アルバムアクセス権限確認
+            PHPhotoLibrary.requestAuthorization { status in
+                switch status {
+                case .authorized:
+                    // アクセスを許可するとカメラロールが出てくるようにもできる
+                    break
+                case .denied:
+                    // エラーダイアログを表示させる
+                    self.showAlert()
+                default:
+                    break
+                }
+            }
+        case .denied:
+            // アクセス権限がないとき
+            // エラーダイアログを表示させる
+            showAlert()
+        case .authorized, .restricted, .limited:
+            // アクセス権限があるとき
+            break
+        @unknown default:
+            break
+        }
+    }
+    
+    // エラーダイアログを表示させる
+    func showAlert() {
+        let alert = UIAlertController(title: "", message: "写真へのアクセスを許可してください", preferredStyle: .alert)
+        let settingsAction = UIAlertAction(title: "設定", style: .default, handler: { (_) -> Void in
+            guard let settingsURL = URL(string: UIApplication.openSettingsURLString ) else {
+                return
+            }
+            UIApplication.shared.open(settingsURL, options: [:], completionHandler: nil)
+        })
+        let closeAction: UIAlertAction = UIAlertAction(title: "キャンセル", style: .cancel, handler: nil)
+        alert.addAction(settingsAction)
+        alert.addAction(closeAction)
+        self.present(alert, animated: true, completion: nil)
     }
 }
 
@@ -315,7 +395,7 @@ extension DrawingViewController: UIImagePickerControllerDelegate {
         //            ▿ key : UIImagePickerControllerInfoKey
         //              - _rawValue : UIImagePickerControllerReferenceURL
         //            - value : assets-library://asset/asset.HEIC?id=49B92187-72A5-41BD-B1EE-1718C2F0F1A9&ext=HEIC
-
+        
         // モーダルビューを閉じる
         self.dismiss(animated: true) {
             // 選択された画像のURL
@@ -326,13 +406,62 @@ extension DrawingViewController: UIImagePickerControllerDelegate {
             self.addPhotoToProjectFolder()
         }
     }
-
+    
     /**
      画像選択がキャンセルされた時に呼ばれる.
      */
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         // モーダルビューを閉じる
         self.dismiss(animated: true, completion: nil)
+    }
+}
+
+extension DrawingViewController: PHPickerViewControllerDelegate {
+    
+    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        guard let provider = results.first?.itemProvider else {
+            picker.dismiss(animated: true, completion: nil)
+            return
+        }
+        guard let typeIdentifer = provider.registeredTypeIdentifiers.first else { return }
+        // 判定可能な識別子であるかチェック
+        if provider.hasItemConformingToTypeIdentifier(typeIdentifer) {
+            //Live Photoとして取得可能化
+            if provider.canLoadObject(ofClass: PHLivePhoto.self) {
+                //LivePhotoはClassを指定してLoadObjectで読み込み
+                provider.loadObject(ofClass: PHLivePhoto.self) { (livePhotoObject, error) in
+                    do {
+                        if let livePhoto:PHLivePhoto = livePhotoObject as? PHLivePhoto {
+                            // Live Photoのプロパティから静止画を抜き出す(HEIC形式)
+                            if let imageUrl = livePhoto.value(forKey: "imageURL") as? URL {
+                                // URLからDataを生成（HEIC内のデータを参照してるため取得できる
+                                // let data: Data = try Data(contentsOf: imageUrl)
+                                // パスを生成して画像を保存する
+                                // 選択された画像のURL
+                                self.imageURL = imageUrl // imageUrl    Foundation.URL    "file:///private/var/mobile/Containers/Data/Application/D7A1BFB4-0443-473F-9154-0E93D2D2766A/tmp/live-photo-bundle/53151B11-9D5F-407E-AEE3-CE515F2A7659.pvt/IMG_2099.HEIC"
+                            }
+                        }
+                    } catch let error {
+                        print(error)
+                    }
+                }
+            } else if provider.canLoadObject(ofClass: UIImage.self) {
+                provider.loadItem(forTypeIdentifier: typeIdentifer) { imageURL, error  in
+                    guard let imageURL = imageURL as? URL else {
+                        return
+                    }
+                    // 選択された画像のURL
+                    self.imageURL = imageURL // imageURL    Foundation.URL    "file:///private/var/mobile/Containers/Shared/AppGroup/53934DC7-1B16-461D-81AB-C6A8E9A6C473/File%20Provider%20Storage/photospicker/version=1&uuid=1D5FF822-7CF5-48CA-A1F9-E0C04A4CB1BD&mode=compatible&noloc=0.jpeg"
+                }
+            }
+            
+            picker.dismiss(animated: true, completion: {
+                // マーカーを追加する
+                self.addMarkerAnotation()
+                // 写真をカメラロールからiCloud Container にコピーする
+                self.addPhotoToProjectFolder()
+            })
+        }
     }
 }
 
