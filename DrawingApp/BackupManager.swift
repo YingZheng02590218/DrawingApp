@@ -45,13 +45,15 @@ class BackupManager {
     /// バックアップファイル名（前部）
     private let mBackupFileNamePre = "drawing_"
     
+    private let fileExtension = "jpeg"
+    
     // MARK: バックアップ
     
     /// バックアップデータ作成処理
     /// RealmのデータをiCloudにコピー
     func backup(fileURL: URL? = nil, modifiedContentsURL: URL, completion: @escaping () -> Void, errorHandler: @escaping () -> Void) {
         do {
-            // iCloud Drive / Paciolist フォルダ作成　ユーザーがFileアプリから削除したケースに対応
+            // iCloud Drive / DrawingApp フォルダ作成　ユーザーがFileアプリから削除したケースに対応
             if FileManager.default.fileExists(atPath: documentsFolderUrl.path) {
                 print(documentsFolderUrl.path)
                 // /private/var/mobile/Library/Mobile Documents/iCloud~com~ikingdom778~DrawingApp/Documents
@@ -70,7 +72,7 @@ class BackupManager {
             }
             // 既存バックアップファイル（iCloud）の削除
             deleteBackup()
-                        
+            
             // バックアップファイル名
             let fileName = mBackupFileNamePre + fileNameDateformater.string(from: Date()) + ".pdf" // 日付
             // バックアップファイルの格納場所
@@ -108,7 +110,7 @@ class BackupManager {
             
             try FileManager.default.copyItem(at: modifiedContentsURL, to: backupFileUrl)
             // try FileManager.default.moveItem(at: modifiedContentsURL, to: backupFileUrl)
-
+            
             print("modifiedContentsURL", modifiedContentsURL)
             print("backupFileUrl      ", backupFileUrl)
             print("filePath           ", filePath)
@@ -354,4 +356,55 @@ class BackupManager {
             }
         }
     }
+    
+    // MARK: 写真
+
+    // 写真を iCloud Container に保存する
+    func savePhotoToDocumentsDirectory(unusedNumber: Int, fileURL: URL? = nil, modifiedContentsURL: URL) -> URL? {
+        // iCloud Drive / DrawingApp / Photos フォルダ作成 PDFファイルの格納場所 に写真フォルダを作成する
+        guard let fileURL = fileURL else { return nil }
+        let photosDirectory = fileURL.deletingLastPathComponent().appendingPathComponent("Photos", isDirectory: true)
+        if FileManager.default.fileExists(atPath: photosDirectory.path) {
+            print(photosDirectory.path)
+        } else {
+            do {
+                try FileManager.default.createDirectory(at: photosDirectory, withIntermediateDirectories: true, attributes: nil)
+            } catch {
+                print("失敗した")
+            }
+        }
+        
+        // 写真名
+        let fileName = "\(unusedNumber)" + ".\(fileExtension)"
+        let fileUrl = photosDirectory.appendingPathComponent(fileName)
+
+        do {
+            let directoryContents = try FileManager.default.contentsOfDirectory(at: modifiedContentsURL.deletingLastPathComponent(), includingPropertiesForKeys: nil) // ファイル一覧を取得
+            // if you want to filter the directory contents you can do like this:
+            let photoFiles = directoryContents.filter { $0.pathExtension == fileExtension }
+            print("\(fileExtension) urls: ", photoFiles)
+            let photoFileNames = photoFiles.map { $0.deletingPathExtension().lastPathComponent }
+            print("\(fileExtension) list: ", photoFileNames)
+        } catch {
+            print(error)
+        }
+        do {
+            // コピーの前にはチェック&削除が必要
+            if FileManager.default.fileExists(atPath: fileUrl.path) {
+                // すでに fileUrl が存在する場合はファイルを削除する
+                try FileManager.default.removeItem(at: fileUrl)
+            }
+            
+            try FileManager.default.copyItem(at: modifiedContentsURL, to: fileUrl)
+            // try FileManager.default.moveItem(at: modifiedContentsURL, to: backupFileUrl)
+            
+            print("modifiedContentsURL", modifiedContentsURL)
+            print("fileUrl            ", fileUrl)
+            return fileUrl
+        } catch {
+            print(error.localizedDescription)
+            return nil
+        }
+    }
+
 }

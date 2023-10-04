@@ -17,6 +17,24 @@ class DrawingViewController: UIViewController {
     var tempFilePath: URL?
     // PDF 全てのpageに存在するAnnotationを保持する
     var annotationsInAllPages: [PDFAnnotation] = []
+    // 連番 // TODO: SF Symbols は50までしか存在しない
+    var numbersList = [0,1,2,3,4,5,6,7,8,9,
+                       10,11,12,13,14,15,16,17,18,19,
+                       20,21,22,23,24,25,26,27,28,29,
+                       30,31,32,33,34,35,36,37,38,39,
+                       40,41,42,43,44,45,46,47,48,49,
+                       50]
+    // 使用していない連番
+    var unusedNumber: Int?
+    // マーカー画像
+    var image: UIImage?
+    // 選択された画像のURL
+    var imageURL: URL?
+    // PDFのタップされた位置の座標
+    var point: CGPoint?
+    
+    var imagePickerController: UIImagePickerController!
+
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -186,6 +204,109 @@ class DrawingViewController: UIViewController {
         print(annotationsInAllPages.count)
         completion()
     }
+    
+    // 写真選択画面を表示させる
+    func showPickingPhotoScreen() {
+        // インスタンス生成
+        imagePickerController = UIImagePickerController()
+        // デリゲート設定
+        imagePickerController.delegate = self
+        // 画像の取得先はフォトライブラリ
+        imagePickerController.sourceType = UIImagePickerController.SourceType.photoLibrary
+        // 画像取得後の編集を不可に
+        imagePickerController.allowsEditing = false
+        
+        DispatchQueue.main.async {
+            self.present(self.imagePickerController, animated: true, completion: nil)
+        }
+    }
+    
+    // マーカーを追加する
+    func addMarkerAnotation() {
+        // 現在開いているページを取得
+        if let page = self.pdfView.currentPage,
+           let point = point,
+           let unusedNumber = unusedNumber {
+            // 中央部に座標を指定
+            let imageStamp = ImageAnnotation(with: image, forBounds: CGRect(x: point.x, y: point.y, width: 15, height: 15), withProperties: [:])
+            imageStamp.contents = "\(unusedNumber)"
+            // 対象のページへ注釈を追加
+            page.addAnnotation(imageStamp)
+            
+//                        // freeText
+//                        let freeText = PDFAnnotation(bounds: CGRect(x: point.x, y: point.y, width: 25, height: 25), forType: .freeText, withProperties: [:])
+//                        freeText.contents = "\(self.annotationsInAllPages.count ?? 0)"
+//                        freeText.color = .green
+//                        // 対象のページへ注釈を追加
+//                        page.addAnnotation(freeText)
+        }
+    }
+    
+    // 写真をカメラロールからiCloud Container にコピーする
+    func addPhotoToProjectFolder() {
+        
+        if let unusedNumber = unusedNumber,
+           let fileURL = fileURL,
+           let imageURL = imageURL {
+               // 写真を iCloud Container に保存する
+               if let fileName = BackupManager.shared.savePhotoToDocumentsDirectory(
+                unusedNumber: unusedNumber,
+                fileURL: fileURL,
+                modifiedContentsURL: imageURL) {
+                   print(fileName)
+               }
+           }
+    }
+}
+
+extension DrawingViewController: UIImagePickerControllerDelegate {
+    /**
+     画像が選択された時に呼ばれる.
+     */
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        // 選択された画像のURL
+        let imageURL: AnyObject?  = info[UIImagePickerController.InfoKey.imageURL] as AnyObject
+        //        Printing description of info:
+        //        ▿ 4 elements
+        //          ▿ 0 : 2 elements
+        //            ▿ key : UIImagePickerControllerInfoKey
+        //              - _rawValue : UIImagePickerControllerImageURL
+        //            - value : file:///private/var/mobile/Containers/Data/Application/26495648-C0BE-4E00-8413-DEAD08D7690F/tmp/7FA25608-1700-4A19-8A9C-CB13AA1CA0DD.jpeg
+        //          ▿ 1 : 2 elements
+        //            ▿ key : UIImagePickerControllerInfoKey
+        //              - _rawValue : UIImagePickerControllerMediaType
+        //            - value : public.image
+        //          ▿ 2 : 2 elements
+        //            ▿ key : UIImagePickerControllerInfoKey
+        //              - _rawValue : UIImagePickerControllerOriginalImage
+        //            - value : <UIImage:0x281927180 anonymous {3024, 4032} renderingMode=automatic(original)>
+        //          ▿ 3 : 2 elements
+        //            ▿ key : UIImagePickerControllerInfoKey
+        //              - _rawValue : UIImagePickerControllerReferenceURL
+        //            - value : assets-library://asset/asset.HEIC?id=49B92187-72A5-41BD-B1EE-1718C2F0F1A9&ext=HEIC
+
+        // モーダルビューを閉じる
+        self.dismiss(animated: true) {
+            // 選択された画像のURL
+            self.imageURL = imageURL as? URL // imageURL    AnyObject?    "file:///private/var/mobile/Containers/Data/Application/1786FFAB-B2B2-418B-963E-04C2EC8AE382/tmp/4F5EC81E-7D85-437B-857C-6B6369915BDB.jpeg"    0x0000000280a5d080
+            // マーカーを追加する
+            self.addMarkerAnotation()
+            // 写真をカメラロールからiCloud Container にコピーする
+            self.addPhotoToProjectFolder()
+        }
+    }
+
+    /**
+     画像選択がキャンセルされた時に呼ばれる.
+     */
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        // モーダルビューを閉じる
+        self.dismiss(animated: true, completion: nil)
+    }
+}
+
+extension DrawingViewController: UINavigationControllerDelegate {
+    
 }
 
 extension DrawingViewController: UIGestureRecognizerDelegate {
@@ -199,30 +320,37 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
             // PDF 全てのpageに存在するAnnotationを保持する
             getAllAnnotations() {
                 // 現在開いているページを取得
-                if let page = self.pdfView.currentPage {
-                    if let image = UIImage(systemName: "\(self.annotationsInAllPages.count ?? 0).square") {
-                        // TODO: SF Symbols は50までしか存在しない
-                        // 対象のページのサイズをCGRectで取得
-                        let pageBounds = page.bounds(for: .cropBox)
-                        // UIViewからPDFの座標へ変換する
-                        let point = self.pdfView.convert(sender.location(in: self.pdfView), to: page) // 座標系がUIViewとは異なるので気をつけましょう。
-                        // 中央部に座標を指定
-                        let imageStamp = ImageAnnotation(with: image, forBounds: CGRect(x: point.x, y: point.y, width: 15, height: 15), withProperties: [:])
-                        // 対象のページへ注釈を追加
-                        page.addAnnotation(imageStamp)
-                        
-//                        // freeText
-//                        let freeText = PDFAnnotation(bounds: CGRect(x: point.x, y: point.y, width: 25, height: 25), forType: .freeText, withProperties: [:])
-//                        freeText.contents = "\(self.annotationsInAllPages.count ?? 0)"
-//                        freeText.color = .green
-//                        // 対象のページへ注釈を追加
-//                        page.addAnnotation(freeText)
-                    } else {
-                        print("SF Symbols に画像が存在しない")
-                    }
+                if let page = self.pdfView.currentPage,
+                   // 使用していない連番を取得する
+                   let unusedNumber = self.getUnusedNumber(),
+                   // TODO: SF Symbols は50までしか存在しない
+                   let image = UIImage(systemName: "\(unusedNumber).square") {
+                    // 使用していない連番
+                    self.unusedNumber = unusedNumber
+                    // マーカー画像
+                    self.image = image
+                    // UIViewからPDFの座標へ変換する
+                    let point = self.pdfView.convert(sender.location(in: self.pdfView), to: page) // 座標系がUIViewとは異なるので気をつけましょう。
+                    // PDFのタップされた位置の座標
+                    self.point = point
+                    // 写真選択画面を表示させる
+                    self.showPickingPhotoScreen()
+                } else {
+                    print("SF Symbols に画像が存在しない")
                 }
             }
         }
+    }
+    // 使用していない連番を取得する
+    func getUnusedNumber() -> Int? {
+        for number in numbersList {
+            if let annotation = self.annotationsInAllPages.first(where: { $0.contents == "\(number)" }) {
+                print("annotation.contents", annotation.contents)
+            } else {
+                return number
+            }
+        }
+        return nil
     }
     
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
