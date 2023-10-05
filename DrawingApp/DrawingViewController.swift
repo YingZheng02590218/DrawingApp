@@ -452,6 +452,7 @@ extension DrawingViewController: UIImagePickerControllerDelegate {
 extension DrawingViewController: PHPickerViewControllerDelegate {
     
     func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        // キャンセル
         guard let provider = results.first?.itemProvider else {
             picker.dismiss(animated: true, completion: nil)
             return

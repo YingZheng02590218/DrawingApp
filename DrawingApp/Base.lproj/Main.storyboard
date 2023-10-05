@@ -17,6 +17,18 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
+                            <navigationBar contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="GvV-mT-coC">
+                                <rect key="frame" x="0.0" y="59" width="393" height="44"/>
+                                <items>
+                                    <navigationItem title="Title" id="5jr-hX-dTi">
+                                        <barButtonItem key="rightBarButtonItem" systemItem="add" id="GFX-9v-wqb">
+                                            <connections>
+                                                <action selector="tapFileReadButton:" destination="BYZ-38-t0r" id="MVK-BX-msq"/>
+                                            </connections>
+                                        </barButtonItem>
+                                    </navigationItem>
+                                </items>
+                            </navigationBar>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="dEq-al-dfY">
                                 <rect key="frame" x="47.333333333333343" y="195.66666666666666" width="298.33333333333326" height="35"/>
                                 <state key="normal" title="Button"/>
@@ -37,6 +49,9 @@
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" systemColor="systemGreenColor"/>
                         <constraints>
+                            <constraint firstItem="GvV-mT-coC" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="3zg-dU-rc5"/>
+                            <constraint firstItem="GvV-mT-coC" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="5Lp-gR-kzr"/>
+                            <constraint firstItem="GvV-mT-coC" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" id="7iv-ee-GZF"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="Uhl-R1-WJm" secondAttribute="bottom" id="INJ-v8-2hS"/>
                             <constraint firstItem="Uhl-R1-WJm" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="Kxu-1n-cvv"/>
                             <constraint firstItem="Uhl-R1-WJm" firstAttribute="height" secondItem="6Tk-OE-BBY" secondAttribute="height" multiplier="0.5" id="QbE-vC-I22"/>

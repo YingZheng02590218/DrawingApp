@@ -99,6 +99,8 @@ class BackupManager {
             print("pdf list: ", pdfFileNames)
         } catch {
             print(error)
+            // Desktop のPDFファイルを共有しようとすると、エラーが発生する → USBメモリなど外部記憶装置内のファイルにアクセスするにはセキュリティで保護されたリソースへのアクセス許可が必要 url.startAccessingSecurityScopedResource()
+//            Error Domain=NSCocoaErrorDomain Code=257 "The file “Desktop” couldn’t be opened because you don’t have permission to view it." UserInfo={NSURL=file:///private/var/mobile/Library/Mobile%20Documents/com~apple~CloudDocs/Desktop/, NSFilePath=/private/var/mobile/Library/Mobile Documents/com~apple~CloudDocs/Desktop, NSUnderlyingError=0x280072850 {Error Domain=NSPOSIXErrorDomain Code=1 "Operation not permitted"}}
         }
         let filePath = backupFileUrl.appendingPathComponent(modifiedContentsURL.lastPathComponent)
         do {
@@ -125,6 +127,9 @@ class BackupManager {
             return backupFileUrl
         } catch {
             print(error.localizedDescription)
+            // ファイルアプリからPDFファイルを共有しようとすると、エラーとなる　→ Lucidchart　アプリがアクセスを許可していないことが原因と思われる。 → USBメモリなど外部記憶装置内のファイルにアクセスするにはセキュリティで保護されたリソースへのアクセス許可が必要 url.startAccessingSecurityScopedResource()
+//            Error Domain=NSCocoaErrorDomain Code=257 "The file “20200211” couldn’t be opened because you don’t have permission to view it." UserInfo={NSURL=file:///private/var/mobile/Library/Mobile%20Documents/com~apple~CloudDocs/Lucidchart/20200211/, NSFilePath=/private/var/mobile/Library/Mobile Documents/com~apple~CloudDocs/Lucidchart/20200211, NSUnderlyingError=0x280ef38d0 {Error Domain=NSPOSIXErrorDomain Code=1 "Operation not permitted"}}
+             
             return nil
         }
     }

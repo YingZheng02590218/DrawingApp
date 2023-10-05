@@ -58,6 +58,28 @@ class ViewController: UIViewController {
         }
     }
     
+    // MARK: 図面PDFファイルを取り込む　iCloud Container にプロジェクトフォルダを作成
+
+    /// 外部アプリ　ファイル読み込みボタンをタップ
+    @IBAction func tapFileReadButton(_ sender: Any) {
+        // PDFのみ選択できるドキュメントピッカーを作成
+        if #available(iOS 14.0, *) {
+            let documentPicker = UIDocumentPickerViewController(
+                forOpeningContentTypes: [.pdf] // PDFファイルのみを対象とする
+            )
+            documentPicker.delegate = self
+            present(documentPicker, animated: true, completion: nil)
+        } else {
+            let documentPicker = UIDocumentPickerViewController(documentTypes: [UTType.pdf.description], in: .open)
+            
+            documentPicker.delegate = self
+            present(documentPicker, animated: true, completion: nil)
+        }
+    }
+    
+    // MARK: 図面PDFファイルにお絵描きする　iCloud Container にプロジェクトフォルダを作成
+
+    // ローカルに用意したPDFファイル　お絵描き
     @IBAction func pdfButtonTapped(_ sender: Any) {
         // iCloud Container に保存しているPDFファイルのパス
         self.fileURL = nil
@@ -65,7 +87,7 @@ class ViewController: UIViewController {
         showQLPreview()
     }
     
-    // QLPreview画面を表示させる
+    // お絵描き　QLPreview画面を表示させる
     func showQLPreview() {
         if BackupManager.shared.isiCloudEnabled {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -387,5 +409,57 @@ extension ViewController: NSFilePresenter {
     func presentedSubitemDidAppear(at url: URL) {
         print("presentedSubitemDidAppearAtURL")
         print("url: \(url.path)")
+    }
+}
+
+// MARK: 図面PDFファイルを取り込む　iCloud Container にプロジェクトフォルダを作成
+
+/// UIDocumentPickerDelegate
+extension ViewController: UIDocumentPickerDelegate {
+    /// ファイル選択後に呼ばれる
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        // URLを取得
+        guard let url = urls.first else { return }
+        // 困ったところ
+        // USBメモリからのファイル読み込みができない。
+        // USBメモリ内からParameter選択した場合のURL
+        // 例）"file:/// ~ /Parameter" ←これだとディレクトリとして認識されない
+        // iPad内からParameter選択した場合のURL
+        // 例）"file:/// ~ /Parameter/" ←これはディレクトリとして認識される
+        // 選択したURLがディレクトリかどうか
+        if url.hasDirectoryPath {
+            // ここで読み込む処理
+            // 対応
+            // 対応として、ディレクトリチェックのif文を削除しました。
+            // 元々ドキュメントピッカーで選択できる対象をフォルダに限定していたため、よくよく考えてみると不要な処理でした。
+            // 結果
+            // 上記の対応を行うことで無事USBメモリからもファイルが読み込めるようになりました。
+        }
+        // USBメモリなど外部記憶装置内のファイルにアクセスするにはセキュリティで保護されたリソースへのアクセス許可が必要
+        guard url.startAccessingSecurityScopedResource() else {
+            // ここで選択したURLでファイルを処理する
+            return
+        }
+        
+        // iCloud Documents にバックアップを作成する
+        BackupManager.shared.backup(
+            fileURL: nil, // プロジェクトフォルダを新規作成する
+            modifiedContentsURL: url,
+            completion: {
+                //
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    BackupManager.shared.load {
+                        print($0)
+                        self.backupFiles = $0
+                        self.tableView.reloadData()
+                    }
+                }
+            },
+            errorHandler: {
+                //
+            }
+        )
+        // ファイルの処理が終わったら、セキュリティで保護されたリソースを解放
+        defer { url.stopAccessingSecurityScopedResource() }
     }
 }
