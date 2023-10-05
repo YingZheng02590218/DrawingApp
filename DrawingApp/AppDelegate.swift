@@ -29,7 +29,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if let _ = options[.openInPlace] {
             // ファイルが共有されたときの処理
             
-            // 識別子の取得
+            // 拡張子の取得
             print(url.pathExtension)
             
             if url.pathExtension == "pdf" {

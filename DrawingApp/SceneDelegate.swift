@@ -65,7 +65,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         if let _ = URLContexts.first?.options.openInPlace {
             // ファイルが共有されたときの処理
             
-            // 識別子の取得
+            // 拡張子の取得
             guard let components = URLComponents(string: url.absoluteString),
                     let pathExtension = components.url?.pathExtension else {
                 return
