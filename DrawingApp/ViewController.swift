@@ -71,12 +71,16 @@ class ViewController: UIViewController {
                 forOpeningContentTypes: [.pdf] // PDFファイルのみを対象とする
             )
             documentPicker.delegate = self
-            present(documentPicker, animated: true, completion: nil)
+            DispatchQueue.main.async {
+                self.present(documentPicker, animated: false, completion: nil)
+            }
         } else {
             let documentPicker = UIDocumentPickerViewController(documentTypes: [UTType.pdf.description], in: .open)
             
             documentPicker.delegate = self
-            present(documentPicker, animated: true, completion: nil)
+            DispatchQueue.main.async {
+                self.present(documentPicker, animated: false, completion: nil)
+            }
         }
     }
     
