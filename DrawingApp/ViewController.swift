@@ -284,7 +284,11 @@ extension ViewController: UITableViewDataSource {
             
             completion(image)
         }
-        
+        // 写真データ数
+        let (exists, files) = BackupManager.shared.photosIsExists(folderName: backupFiles[indexPath.row].0)
+        if exists {
+            files.count
+        }
         
         return cell
     }

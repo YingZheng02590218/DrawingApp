@@ -198,6 +198,30 @@ class BackupManager {
         return (exists, files)
     }
     
+    /// 写真フォルダに写真ファイルがあるか、ある場合、そのファイル名を取得
+    /// - Returns: 写真ファイルの有無、そのファイル名
+    func photosIsExists(folderName: String) -> (Bool, [String]) {
+        var exists = false
+        var files: [String] = []
+        var allFiles: [String] = []
+        // 写真フォルダのファイル取得
+        do {
+            // 写真ファイルの格納場所
+            let folderUrl = documentsFolderUrl.appendingPathComponent(folderName).appendingPathComponent("Photos")
+            // ダウンロードする前にiCloudとの同期を行う
+            try FileManager.default.startDownloadingUbiquitousItem(at: folderUrl)
+            allFiles = try FileManager.default.contentsOfDirectory(atPath: folderUrl.path)
+        } catch {
+            return (exists, files)
+        }
+        // 写真ファイル名を選別
+        for file in allFiles {
+            exists = true
+            files.append(file)
+        }
+        return (exists, files)
+    }
+    
     // MARK: バックアップファイル取得
     private var metadataQuery: NSMetadataQuery // 参照を保持するため、メンバとして持っておく。load()内のローカル変数にするとうまく動かない。
     
