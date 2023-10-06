@@ -12,6 +12,8 @@ import QuickLook
 class ViewController: UIViewController {
     
     @IBOutlet var tableView: UITableView!
+
+    var cellHeightList: [IndexPath: CGFloat] = [:]
     // コンテナ　ファイル
     var backupFiles: [(String, NSNumber?, Bool, URL?)] = []
     // iCloud Container に保存しているPDFファイルのパス
@@ -49,10 +51,11 @@ class ViewController: UIViewController {
     }
     // tableViewをリロード
     func reload() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        DispatchQueue.main.async {
             BackupManager.shared.load {
                 print($0)
                 self.backupFiles = $0
+                self.cellHeightList = [:]
                 self.tableView.reloadData()
             }
         }
@@ -179,14 +182,8 @@ extension ViewController: QLPreviewControllerDelegate {
         // iCloud Documents にバックアップを作成する
         BackupManager.shared.backup(fileURL: fileURL, modifiedContentsURL: modifiedContentsURL,
                                     completion: {
-            //
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                BackupManager.shared.load {
-                    print($0)
-                    self.backupFiles = $0
-                    self.tableView.reloadData()
-                }
-            }
+            // tableViewをリロード
+            self.reload()
         },
                                     errorHandler: {
             //
@@ -224,10 +221,23 @@ extension ViewController: QLPreviewControllerDelegate {
         UIImage()
     }
 }
+
 extension ViewController: UITableViewDelegate {
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        120
+    
+    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
+        guard let cellHeight = self.cellHeightList[indexPath] else {
+            //取得できなかった場合に自動計算
+            return UITableView.automaticDimension
+        }
+        return cellHeight
     }
+    
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        if self.cellHeightList.keys.contains(indexPath) != true {
+            self.cellHeightList[indexPath] = cell.frame.height
+        }
+    }
+    
 }
 
 extension ViewController: UITableViewDataSource {
@@ -456,14 +466,8 @@ extension ViewController: UIDocumentPickerDelegate {
             fileURL: nil, // プロジェクトフォルダを新規作成する
             modifiedContentsURL: url,
             completion: {
-                //
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    BackupManager.shared.load {
-                        print($0)
-                        self.backupFiles = $0
-                        self.tableView.reloadData()
-                    }
-                }
+                // tableViewをリロード
+                self.reload()
             },
             errorHandler: {
                 //
