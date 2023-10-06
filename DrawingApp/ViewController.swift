@@ -325,6 +325,26 @@ extension ViewController: UITableViewDataSource {
             }
         }
     }
+    
+    // 削除機能
+    func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
+        .delete
+    }
+    
+    // 削除機能 セルを左へスワイプ
+    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let action = UIContextualAction(style: .destructive, title: "削除") { (action, view, completionHandler) in
+            // プロジェクトファイルを削除
+            BackupManager.shared.deleteBackupFolder(
+                folderName: self.backupFiles[indexPath.row].0
+            )
+            completionHandler(true) // 処理成功時はtrue/失敗時はfalseを設定する
+        }
+        action.image = UIImage(systemName: "trash.fill") // 画像設定（タイトルは非表示になる？）
+        let configuration = UISwipeActionsConfiguration(actions: [action])
+        return configuration
+    }
+
 }
 
 // 流れ

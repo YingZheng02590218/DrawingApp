@@ -142,7 +142,7 @@ class BackupManager {
             return [:]
         }
     }
-    /// バックアップフォルダ削除
+    /// プロジェクトフォルダ削除
     func deleteBackupFolder(folderName: String? = nil) {
         let (exists, files) = isBackupFileExists(folderName: folderName)
         if exists {
