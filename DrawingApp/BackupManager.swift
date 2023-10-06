@@ -200,7 +200,7 @@ class BackupManager {
     
     /// 写真フォルダに写真ファイルがあるか、ある場合、そのファイル名を取得
     /// - Returns: 写真ファイルの有無、そのファイル名
-    func photosIsExists(folderName: String) -> (Bool, [String]) {
+    func photosIsExists(folderName: String, completion: @escaping (Bool, [String]) -> Void) {
         var exists = false
         var files: [String] = []
         var allFiles: [String] = []
@@ -212,14 +212,14 @@ class BackupManager {
             try FileManager.default.startDownloadingUbiquitousItem(at: folderUrl)
             allFiles = try FileManager.default.contentsOfDirectory(atPath: folderUrl.path)
         } catch {
-            return (exists, files)
+            completion(exists, files)
         }
         // 写真ファイル名を選別
         for file in allFiles {
             exists = true
             files.append(file)
         }
-        return (exists, files)
+        completion(exists, files)
     }
     
     // MARK: バックアップファイル取得

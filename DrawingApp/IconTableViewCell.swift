@@ -11,7 +11,7 @@ class IconTableViewCell: UITableViewCell {
     @IBOutlet var leftImageView: UIImageView!
     @IBOutlet var centerLabel: UILabel!
     @IBOutlet var subLabel: UILabel!
-
+    @IBOutlet var lowerLabel: UILabel!
     
     override func awakeFromNib() {
         super.awakeFromNib()

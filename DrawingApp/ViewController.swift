@@ -239,7 +239,6 @@ extension ViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as? IconTableViewCell else { return UITableViewCell() }
-        cell.backgroundColor = .brown
         
         // バックアップファイル一覧　時刻　バージョン　ファイルサイズMB
         cell.centerLabel.text = "\(backupFiles[indexPath.row].0)"
@@ -285,9 +284,16 @@ extension ViewController: UITableViewDataSource {
             completion(image)
         }
         // 写真データ数
-        let (exists, files) = BackupManager.shared.photosIsExists(folderName: backupFiles[indexPath.row].0)
-        if exists {
-            files.count
+        BackupManager.shared.photosIsExists(folderName: backupFiles[indexPath.row].0) { (exists, files) in
+            DispatchQueue.main.async {
+                if exists {
+                    cell.lowerLabel.isHidden = false
+                    cell.lowerLabel.text = "Photos: \(files.count)."
+                } else {
+                    cell.lowerLabel.isHidden = true
+                    cell.lowerLabel.text = nil
+                }
+            }
         }
         
         return cell
