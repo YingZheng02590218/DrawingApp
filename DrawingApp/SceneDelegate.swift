@@ -28,6 +28,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             // ここで url.path を参照すると渡されたファイルの場所がわかる
             print(url.path) // /private/var/mobile/Library/Mobile Documents/com~apple~CloudDocs/Desktop/R5seikatupanfu_kojin.pdf
             
+            // iCloud Container のプロジェクトフォルダ内のPDFファイルは受け取れないように弾く
+            guard !url.path.contains("iCloud~com~ikingdom778~DrawingApp/Documents") else {
+                return
+            }
+            
             // この手法でアプリが起動した場合はoptionsにUIApplication.OpenURLOptionsKey.openInPlaceというキーで値が入っているので、別の処理と混合しないようにこれを使ってうまく切り分けてやる必要もありそうです。
             let sourceApplication = connectionOptions.urlContexts.first?.options.sourceApplication
             let annotation = connectionOptions.urlContexts.first?.options.annotation
@@ -108,6 +113,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         }
         // ここで url.path を参照すると渡されたファイルの場所がわかる
         print(url.path) // /private/var/mobile/Library/Mobile Documents/com~apple~CloudDocs/Desktop/R5seikatupanfu_kojin.pdf
+        
+        // iCloud Container のプロジェクトフォルダ内のPDFファイルは受け取れないように弾く
+        guard !url.path.contains("iCloud~com~ikingdom778~DrawingApp/Documents") else {
+            return
+        }
         
         // この手法でアプリが起動した場合はoptionsにUIApplication.OpenURLOptionsKey.openInPlaceというキーで値が入っているので、別の処理と混合しないようにこれを使ってうまく切り分けてやる必要もありそうです。
         let sourceApplication = URLContexts.first?.options.sourceApplication

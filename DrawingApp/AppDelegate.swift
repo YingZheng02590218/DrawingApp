@@ -22,8 +22,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
         // ここで url.path を参照すると渡されたファイルの場所がわかる
         print(url.path)
-        // url.pathを見てみると「インボックス」と呼ばれる端末上のファイル置き場にあるファイルパスが取得できるので、 FileManagerを使用してファイルを然るべき場所にコピーします。
-        // 渡されたファイルを使ってそのまま破棄するのであれば「一時ディレクトリ」、恒久的に保存するのであれば「ドキュメントディレクトリ」などが適しているかと思います。
+        
+        // iCloud Container のプロジェクトフォルダ内のPDFファイルは受け取れないように弾く
+        guard !url.path.contains("iCloud~com~ikingdom778~DrawingApp/Documents") else {
+            return false
+        }
         
         // この手法でアプリが起動した場合はoptionsにUIApplication.OpenURLOptionsKey.openInPlaceというキーで値が入っているので、別の処理と混合しないようにこれを使ってうまく切り分けてやる必要もありそうです。
         if let _ = options[.openInPlace] {
