@@ -464,6 +464,12 @@ extension ViewController: UIDocumentPickerDelegate {
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         // URLを取得
         guard let url = urls.first else { return }
+        
+        // iCloud Container のプロジェクトフォルダ内のPDFファイルは受け取れないように弾く
+        guard !url.path.contains("iCloud~com~ikingdom778~DrawingApp/Documents") else {
+            return
+        }
+        
         // 困ったところ
         // USBメモリからのファイル読み込みができない。
         // USBメモリ内からParameter選択した場合のURL
