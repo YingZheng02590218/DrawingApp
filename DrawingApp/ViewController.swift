@@ -341,7 +341,21 @@ extension ViewController: UITableViewDataSource {
             completionHandler(true) // 処理成功時はtrue/失敗時はfalseを設定する
         }
         action.image = UIImage(systemName: "trash.fill") // 画像設定（タイトルは非表示になる？）
-        let configuration = UISwipeActionsConfiguration(actions: [action])
+        
+        // 編集ボタン
+        let actionEdit = UIContextualAction(style: .normal, title: "編集") { _, _, completionHandler in
+            print("cellのindexPath:\(String(describing: indexPath.row))")
+            // iCloud Container に保存しているPDFファイルのパス
+            self.fileURL = self.backupFiles[indexPath.row].3
+            // QLPreview画面を表示させる
+            self.showQLPreview()
+            completionHandler(true) // 処理成功時はtrue/失敗時はfalseを設定する
+        }
+        actionEdit.backgroundColor = .green
+        actionEdit.image = UIImage(systemName: "pencil.line") // 画像設定（タイトルは非表示になる）
+        
+        let configuration = UISwipeActionsConfiguration(actions: [action, actionEdit])
+
         return configuration
     }
 
