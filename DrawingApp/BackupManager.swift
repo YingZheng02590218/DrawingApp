@@ -298,16 +298,6 @@ class BackupManager {
     func restore(folderName: String, completion: @escaping (URL) -> Void) {
         // バックアップファイルの格納場所
         let folderUrl = documentsFolderUrl.appendingPathComponent(folderName)
-        // ダウンロードする前にiCloudとの同期を行う
-        // This simple code launch the download
-        do {
-            let urls = try? FileManager.default.contentsOfDirectory(at: folderUrl, includingPropertiesForKeys: nil, options: [])
-            if let url = urls?.first {
-                try FileManager.default.startDownloadingUbiquitousItem(at: url)
-            }
-        } catch {
-            print("Unexpected error: \(error).")
-        }
         // iCloudからファイルをダウンロード
         downloadFileFromiCloud(folderName: folderName, completion: {
             // バックアップファイルの有無チェック
@@ -357,11 +347,55 @@ class BackupManager {
             let fileManager = FileManager.default
             // Browse your icloud container to find the file you want
             if let icloudFolderURL = fileManager.url(forUbiquityContainerIdentifier: nil)?.appendingPathComponent("Documents").appendingPathComponent(folderName),
-               let urls = try? fileManager.contentsOfDirectory(at: icloudFolderURL, includingPropertiesForKeys: nil, options: []) {
+               var urls = try? fileManager.contentsOfDirectory(at: icloudFolderURL, includingPropertiesForKeys: nil, options: []) {
+                // 先に写真をダウンロードする 降順
+                urls.sort { $0.lastPathComponent > $1.lastPathComponent }
                 // Here select the file url you are interested in (for the exemple we take the first)
-                if let myURL = urls.first {
+                print(urls)
+                for myURL in urls {
                     // We have our url
                     var lastPathComponent = myURL.lastPathComponent
+                    print(lastPathComponent)
+                    // 写真
+                    if lastPathComponent == "Photos" {
+                        if let urls = try? fileManager.contentsOfDirectory(at: myURL, includingPropertiesForKeys: nil, options: []) {
+                            for myURL in urls {
+                                // ダウンロードする前にiCloudとの同期を行う
+                                // This simple code launch the download
+                                do {
+                                    try FileManager.default.startDownloadingUbiquitousItem(at: myURL)
+                                } catch {
+                                    print("Unexpected error: \(error).")
+                                }
+                                var lastPathComponent = myURL.lastPathComponent
+                                print(lastPathComponent)
+                                if lastPathComponent.contains(".icloud") {
+                                    // Delete the "." which is at the beginning of the file name
+                                    lastPathComponent.removeFirst()
+                                    let folderPath = myURL.deletingLastPathComponent().path
+                                    let downloadedFilePath = folderPath + "/" + lastPathComponent.replacingOccurrences(of: ".icloud", with: "")
+                                    var isDownloaded = false
+                                    while !isDownloaded {
+                                        if fileManager.fileExists(atPath: downloadedFilePath) {
+                                            isDownloaded = true
+                                        }
+                                    }
+                                    // Do what you want with your downloaded file at path contains in variable "downloadedFilePath"
+                                } else {
+                                    // ダウンロード済みの場合
+                                }
+                            }
+                        }
+                    } else {
+                        // ダウンロードする前にiCloudとの同期を行う
+                        // This simple code launch the download
+                        do {
+                            try FileManager.default.startDownloadingUbiquitousItem(at: myURL)
+                        } catch {
+                            print("Unexpected error: \(error).")
+                        }
+                    }
+                    // PDF
                     if lastPathComponent.contains(".icloud") {
                         // Delete the "." which is at the beginning of the file name
                         lastPathComponent.removeFirst()
