@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="21507" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="22154" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
     <device id="retina6_12" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21505"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22130"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -27,7 +27,7 @@
                         </constraints>
                     </imageView>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Ltg-qz-9pP">
-                        <rect key="frame" x="166.33333333333334" y="109" width="324.66666666666663" height="0.0"/>
+                        <rect key="frame" x="166.33333333333334" y="5" width="324.66666666666663" height="0.0"/>
                         <fontDescription key="fontDescription" type="system" weight="heavy" pointSize="23"/>
                         <color key="textColor" systemColor="systemRedColor"/>
                         <nil key="highlightedColor"/>
@@ -50,6 +50,7 @@
                     <constraint firstItem="RfP-rq-d0z" firstAttribute="top" relation="greaterThanOrEqual" secondItem="X3b-Zw-idb" secondAttribute="top" constant="8" id="3D0-Vn-3Ut"/>
                     <constraint firstItem="Yot-NT-ARZ" firstAttribute="leading" secondItem="RfP-rq-d0z" secondAttribute="trailing" constant="10" id="6dE-xr-Y6j"/>
                     <constraint firstAttribute="trailing" secondItem="Ltg-qz-9pP" secondAttribute="trailing" constant="50" id="EPq-2h-VnW"/>
+                    <constraint firstItem="Yot-NT-ARZ" firstAttribute="top" relation="greaterThanOrEqual" secondItem="Ltg-qz-9pP" secondAttribute="bottom" id="Rhb-wV-eSQ"/>
                     <constraint firstItem="Yot-NT-ARZ" firstAttribute="width" relation="greaterThanOrEqual" secondItem="X3b-Zw-idb" secondAttribute="width" multiplier="0.6" id="VVc-4L-bh4"/>
                     <constraint firstAttribute="bottom" secondItem="LHw-OT-q5M" secondAttribute="bottom" constant="5" id="WRh-Pu-yAi"/>
                     <constraint firstItem="LHw-OT-q5M" firstAttribute="leading" secondItem="RfP-rq-d0z" secondAttribute="trailing" constant="10" id="bA3-eG-cJ7"/>
@@ -57,8 +58,8 @@
                     <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="RfP-rq-d0z" secondAttribute="trailing" id="gik-po-ZvV"/>
                     <constraint firstItem="RfP-rq-d0z" firstAttribute="leading" secondItem="X3b-Zw-idb" secondAttribute="leading" constant="10" id="har-CU-2ci"/>
                     <constraint firstItem="RfP-rq-d0z" firstAttribute="centerY" secondItem="X3b-Zw-idb" secondAttribute="centerY" id="ij0-He-pw9"/>
+                    <constraint firstItem="Ltg-qz-9pP" firstAttribute="top" secondItem="X3b-Zw-idb" secondAttribute="top" constant="5" id="noG-9c-Tov"/>
                     <constraint firstItem="Yot-NT-ARZ" firstAttribute="centerY" secondItem="X3b-Zw-idb" secondAttribute="centerY" id="q4v-lW-oCH"/>
-                    <constraint firstItem="Ltg-qz-9pP" firstAttribute="centerY" secondItem="Yot-NT-ARZ" secondAttribute="centerY" id="t2H-Vr-1Hp"/>
                     <constraint firstItem="Ltg-qz-9pP" firstAttribute="width" relation="greaterThanOrEqual" secondItem="X3b-Zw-idb" secondAttribute="width" multiplier="0.6" id="uU0-F1-SS7"/>
                     <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="RfP-rq-d0z" secondAttribute="bottom" constant="8" id="wwx-hA-Rsf"/>
                     <constraint firstItem="LHw-OT-q5M" firstAttribute="top" relation="greaterThanOrEqual" secondItem="Yot-NT-ARZ" secondAttribute="bottom" id="xaQ-ah-HN6"/>
@@ -88,13 +89,13 @@
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>
         <systemColor name="systemIndigoColor">
-            <color red="0.34509803921568627" green="0.33725490196078434" blue="0.83921568627450982" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.34509803919999998" green="0.33725490200000002" blue="0.83921568629999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemOrangeColor">
-            <color red="1" green="0.58431372549019611" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="1" green="0.58431372550000005" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemRedColor">
-            <color red="1" green="0.23137254901960785" blue="0.18823529411764706" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="1" green="0.23137254900000001" blue="0.18823529410000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
     </resources>
 </document>
