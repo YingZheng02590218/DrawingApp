@@ -51,22 +51,26 @@ class BackupManager {
     /// RealmのデータをiCloudにコピー
     func backup(fileURL: URL? = nil, modifiedContentsURL: URL, completion: @escaping () -> Void, errorHandler: @escaping () -> Void) {
         do {
-            // iCloud Drive / DrawingApp フォルダ作成　ユーザーがFileアプリから削除したケースに対応
-            if FileManager.default.fileExists(atPath: documentsFolderUrl.path) {
-                print(documentsFolderUrl.path)
-                // /private/var/mobile/Library/Mobile Documents/iCloud~com~ikingdom778~DrawingApp/Documents
-            } else {
-                print(documentsFolderUrl.path)
-                // /private/var/mobile/Library/Mobile Documents/iCloud~com~ikingdom778~AccountantSTG/Documents
-                try FileManager.default.createDirectory(atPath: documentsFolderUrl.path, withIntermediateDirectories: true)
-            }
-            /// iCloudにフォルダ作成
-            if FileManager.default.fileExists(atPath: backupFolderUrl.path) {
-                print(backupFolderUrl.path)
-            } else {
-                print(backupFolderUrl.path)
-                // /private/var/mobile/Library/Mobile Documents/iCloud~com~ikingdom778~DrawingApp/Documents/202309281822
-                try FileManager.default.createDirectory(atPath: backupFolderUrl.path, withIntermediateDirectories: false)
+            if let fileURL = fileURL { // 編集
+                // フォルダは作成しない
+            } else { // 新規作成
+                // iCloud Drive / DrawingApp フォルダ作成　ユーザーがFileアプリから削除したケースに対応
+                if FileManager.default.fileExists(atPath: documentsFolderUrl.path) {
+                    print(documentsFolderUrl.path)
+                    // /private/var/mobile/Library/Mobile Documents/iCloud~com~ikingdom778~DrawingApp/Documents
+                } else {
+                    print(documentsFolderUrl.path)
+                    // /private/var/mobile/Library/Mobile Documents/iCloud~com~ikingdom778~AccountantSTG/Documents
+                    try FileManager.default.createDirectory(atPath: documentsFolderUrl.path, withIntermediateDirectories: true)
+                }
+                /// iCloudにフォルダ作成
+                if FileManager.default.fileExists(atPath: backupFolderUrl.path) {
+                    print(backupFolderUrl.path)
+                } else {
+                    print(backupFolderUrl.path)
+                    // /private/var/mobile/Library/Mobile Documents/iCloud~com~ikingdom778~DrawingApp/Documents/202309281822
+                    try FileManager.default.createDirectory(atPath: backupFolderUrl.path, withIntermediateDirectories: false)
+                }
             }
             // 既存バックアップファイル（iCloud）の削除
             deleteBackup()
@@ -184,6 +188,7 @@ class BackupManager {
                 try FileManager.default.startDownloadingUbiquitousItem(at: folderUrl)
                 allFiles = try FileManager.default.contentsOfDirectory(atPath: folderUrl.path)
             } else {
+                // フォルダがないので、新規作成する
                 allFiles = try FileManager.default.contentsOfDirectory(atPath: backupFolderUrl.path)
                 // fileName    String    ".default.realm_bk_2023-02-02-10-30-00.icloud"
             }
