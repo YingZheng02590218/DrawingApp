@@ -105,6 +105,36 @@ class DrawingViewController: UIViewController {
         }
     }
     
+    // ダイアログ
+    func showDialogForSucceed(message: String, color: UIColor, frame: CGRect) {
+        let actionSheet = UIAlertController(title: "Annotation", message: message, preferredStyle: .actionSheet)
+        actionSheet.view.backgroundColor = color
+        // iPad の場合のみ、ActionSheetを表示するための必要な設定
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            actionSheet.popoverPresentationController?.sourceView = pdfView
+            actionSheet.popoverPresentationController?.sourceRect = frame
+//            CGRect(
+//                x: frame.origin.x - frame.width,
+//                y: frame.origin.y - frame.height,
+//                width: 0,
+//                height: 0
+//            )
+            // iPadの場合、アクションシートの背後の画面をタップできる
+        } else {
+            // ③表示するViewと表示位置を指定する
+            actionSheet.popoverPresentationController?.sourceView = pdfView
+            actionSheet.popoverPresentationController?.sourceRect = frame
+        }
+        
+        actionSheet.popoverPresentationController?.permittedArrowDirections = UIPopoverArrowDirection.any
+
+        self.present(actionSheet, animated: true) { () -> Void in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.dismiss(animated: true, completion: nil)
+            }
+        }
+    }
+    
     // MARK: PDF ファイル　マークアップ　編集中の一時ファイル
     
     // 一時ファイルを削除する
@@ -232,6 +262,8 @@ class DrawingViewController: UIViewController {
               let annotation = notification.userInfo?["PDFAnnotationHit"] as? PDFAnnotation else {
             return
         }
+        // ダイアログ
+        showDialogForSucceed(message: "/\(annotation.type!) \n\(annotation.bounds)", color: annotation.color, frame: annotation.bounds) // Type: '/Square', Bounds: (214, 530) [78, 59]
         // タップされたPDFAnnotationに対する処理
         // 編集中
         if isEditing {
