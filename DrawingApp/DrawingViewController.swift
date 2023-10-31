@@ -51,7 +51,14 @@ class DrawingViewController: UIViewController {
         editButtonItem.tintColor = .black
         navigationItem.rightBarButtonItem = editButtonItem
         navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: nil, action: #selector(doSomething))
-
+        // Annotation設定スイッチ
+        let switchButton = UISwitch(frame: CGRect(x: 0, y: 0, width: 0, height: 0))
+        switchButton.onTintColor = .green
+        switchButton.isOn = true
+        switchButton.addTarget(self, action: #selector(switchTriggered), for: .valueChanged)
+        let switchBarButtonItem = UIBarButtonItem(customView: switchButton)
+        navigationItem.rightBarButtonItems?.append(switchBarButtonItem)
+        
         // title設定
         navigationItem.title = "マーカーを追加する"
         
@@ -217,7 +224,30 @@ class DrawingViewController: UIViewController {
         }
     }
     
+    
     // MARK: PDF ファイル　マーカー　Annotation
+    
+    // Annotation設定スイッチ 切り替え
+    @objc
+    func switchTriggered(sender: UISwitch) {
+        // PDF 全てのpageに存在するAnnotationを表示非表示を切り替える
+        changeAllAnnotationsVisibility(shouldDisplay: sender.isOn)
+    }
+    
+    // PDF 全てのpageに存在するAnnotationを表示非表示を切り替える
+    func changeAllAnnotationsVisibility(shouldDisplay: Bool) {
+        guard let document = pdfView.document else { return }
+        for i in 0..<document.pageCount {
+            if let page = document.page(at: i) {
+                //
+                let annotations = page.annotations
+                for annotation in annotations {
+                    
+                    annotation.shouldDisplay = shouldDisplay
+                }
+            }
+        }
+    }
     
     // PDF 全てのpageに存在するAnnotationを保持する
     func getAllAnnotations(completion: @escaping () -> Void) {
