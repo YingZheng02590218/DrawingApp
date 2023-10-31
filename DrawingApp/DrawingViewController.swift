@@ -50,7 +50,8 @@ class DrawingViewController: UIViewController {
         // setEditingメソッドを使用するため、Storyboard上の編集ボタンを上書きしてボタンを生成する
         editButtonItem.tintColor = .black
         navigationItem.rightBarButtonItem = editButtonItem
-        
+        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: nil, action: #selector(doSomething))
+
         // title設定
         navigationItem.title = "マーカーを追加する"
         
@@ -118,6 +119,11 @@ class DrawingViewController: UIViewController {
         }
     }
     
+    @objc
+    func doSomething() {
+        // 戻るボタンの動作処理
+        self.dismiss(animated: true)
+    }
     // ダイアログ
     func showDialogForSucceed(message: String, color: UIColor, frame: CGRect) {
         let actionSheet = UIAlertController(title: "Annotation", message: message, preferredStyle: .actionSheet)

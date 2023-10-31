@@ -133,6 +133,7 @@ class ViewController: UIViewController {
                         navigator.pushViewController(viewController, animated: true)
                     } else {
                         let navigation = UINavigationController(rootViewController: viewController)
+                        navigation.modalPresentationStyle = .fullScreen
                         self.present(navigation, animated: true, completion: nil)
                     }
                 }
