@@ -21,6 +21,8 @@ class DrawingViewController: UIViewController {
     var tempFilePath: URL?
     // PDF 全てのpageに存在するAnnotationを保持する
     var annotationsInAllPages: [PDFAnnotation] = []
+    // 選択しているAnnotation
+    var currentlySelectedAnnotation: PDFAnnotation?
     // 連番 // TODO: SF Symbols は50までしか存在しない
     var numbersList = [0,1,2,3,4,5,6,7,8,9,
                        10,11,12,13,14,15,16,17,18,19,
@@ -66,7 +68,7 @@ class DrawingViewController: UIViewController {
         guard let document = PDFDocument(url: tempFilePath) else { return }
         pdfView.document = document
         // 単一ページのみ
-        // pdfView.displayMode = .singlePage
+        pdfView.displayMode = .singlePage
         // 現在開いているページ currentPage にのみマーカーを追加
         pdfView.autoScales = true
         
@@ -79,7 +81,11 @@ class DrawingViewController: UIViewController {
         singleTapGesture.numberOfTapsRequired = 1
         singleTapGesture.delegate = self
         self.pdfView.addGestureRecognizer(singleTapGesture)
-        
+        // 移動
+        let panAnnotationGesture = UIPanGestureRecognizer(target: self, action: #selector(didPanAnnotation(sender:)))
+        panAnnotationGesture.delegate = self
+        pdfView.addGestureRecognizer(panAnnotationGesture)
+
         // サムネイル
         pdfThumbnailView.pdfView = pdfView
         pdfThumbnailView.layoutMode = .vertical
@@ -631,6 +637,34 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
                     }
                 }
             }
+        }
+    }
+    
+    // 移動
+    @objc func didPanAnnotation(sender: UIPanGestureRecognizer) {
+        let touchLocation = sender.location(in: pdfView)
+        guard let page = pdfView.page(for: touchLocation, nearest: true)
+        else {
+            return
+        }
+        let locationOnPage = pdfView.convert(touchLocation, to:  page)
+        
+        switch sender.state {
+        case .began:
+            guard let annotation = page.annotation(at: locationOnPage) else {   return }
+            if annotation.isKind(of: PDFAnnotation.self) ||
+                annotation.isKind(of: ImageAnnotation.self) {
+                currentlySelectedAnnotation = annotation
+            }
+        case .changed:
+            guard let annotation = currentlySelectedAnnotation else {return }
+            let initialBounds = annotation.bounds
+            // Set the center of the annotation to the spot of our finger
+            annotation.bounds = CGRect(x: locationOnPage.x - (initialBounds.width / 2), y: locationOnPage.y - (initialBounds.height / 2), width: initialBounds.width, height: initialBounds.height)
+        case .ended, .cancelled, .failed:
+            currentlySelectedAnnotation = nil
+        default:
+            break
         }
     }
     
