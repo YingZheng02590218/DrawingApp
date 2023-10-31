@@ -13,6 +13,7 @@ import UIKit
 class DrawingViewController: UIViewController {
     
     @IBOutlet var imageView: UIImageView!
+    @IBOutlet weak var pdfThumbnailView: PDFThumbnailView!
     @IBOutlet weak var pdfView: NonSelectablePDFView!
     // iCloud Container に保存しているPDFファイルのパス
     var fileURL: URL?
@@ -78,6 +79,12 @@ class DrawingViewController: UIViewController {
         singleTapGesture.numberOfTapsRequired = 1
         singleTapGesture.delegate = self
         self.pdfView.addGestureRecognizer(singleTapGesture)
+        
+        // サムネイル
+        pdfThumbnailView.pdfView = pdfView
+        pdfThumbnailView.layoutMode = .vertical
+        pdfThumbnailView.backgroundColor = UIColor.gray
+        pdfThumbnailView.thumbnailSize = CGSize(width: 40, height: 60)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
