@@ -12,6 +12,11 @@ import UIKit
 
 class DrawingViewController: UIViewController {
     
+    // セグメントコントロール
+    let segmentedControl = UISegmentedControl(items: ["写真マーカー", "矢印", "移動"])
+    // モード
+    var drawingMode: DrawingMode = .photoMarker
+    
     @IBOutlet var imageView: UIImageView!
     @IBOutlet weak var pdfThumbnailView: PDFThumbnailView!
     @IBOutlet weak var pdfView: NonSelectablePDFView!
@@ -38,6 +43,12 @@ class DrawingViewController: UIViewController {
     var imageURL: URL?
     // PDFのタップされた位置の座標
     var point: CGPoint?
+    // 起点
+    var beganLocation: CGPoint?
+    // 途中点
+    var changedLocation: CGPoint?
+    // 終点
+    var endLocation: CGPoint?
     // 選択されたマーカー
     var selectedAnnotation: PDFAnnotation?
 
@@ -58,7 +69,19 @@ class DrawingViewController: UIViewController {
         switchButton.addTarget(self, action: #selector(switchTriggered), for: .valueChanged)
         let switchBarButtonItem = UIBarButtonItem(customView: switchButton)
         navigationItem.rightBarButtonItems?.append(switchBarButtonItem)
-        
+        // セグメントコントロール
+        segmentedControl.sizeToFit()
+        if #available(iOS 13.0, *) {
+            segmentedControl.selectedSegmentTintColor = UIColor.red
+        } else {
+            segmentedControl.tintColor = UIColor.red
+        }
+        segmentedControl.selectedSegmentIndex = 0
+        segmentedControl.addTarget(self, action: #selector(segmentedControlChanged), for: .valueChanged)
+//        segment.setTitleTextAttributes([NSAttributedString.Key.font : UIFont(name: "ProximaNova-Light", size: 15)!], for: .normal)
+        let segmentBarButtonItem = UIBarButtonItem(customView: segmentedControl)
+        navigationItem.rightBarButtonItems?.append(segmentBarButtonItem)
+
         // title設定
         navigationItem.title = "マーカーを追加する"
         
@@ -130,6 +153,30 @@ class DrawingViewController: UIViewController {
     func doSomething() {
         // 戻るボタンの動作処理
         self.dismiss(animated: true)
+    }
+    
+    @objc
+    func segmentedControlChanged() {
+        drawingMode = DrawingMode(index: segmentedControl.selectedSegmentIndex)
+    }
+    
+    enum DrawingMode {
+        case photoMarker
+        case arrow
+        case move
+        // 引数ありコンストラクタ
+        init(index: Int) {
+            switch index {
+            case 0:
+                 self = .photoMarker
+            case 1:
+                 self = .arrow
+            case 2:
+                self = .move
+            default:
+                self = .move
+            }
+        }
     }
     // ダイアログ
     func showDialogForSucceed(message: String, color: UIColor, frame: CGRect) {
@@ -286,6 +333,37 @@ class DrawingViewController: UIViewController {
             //                        freeText.color = .green
             //                        // 対象のページへ注釈を追加
             //                        page.addAnnotation(freeText)
+        }
+    }
+    
+    // マーカーを追加する 矢印
+    func addLineMarkerAnotation() {
+        // 現在開いているページを取得
+        if let page = self.pdfView.currentPage,
+           let beganLocation = beganLocation,
+           let changedLocation = changedLocation,
+           let endLocation = endLocation {
+            
+            let boundsX = beganLocation.x > endLocation.x ? endLocation.x : beganLocation.x
+            let boundsY = beganLocation.y > endLocation.y ? endLocation.y : beganLocation.y
+            
+            let width = beganLocation.x > endLocation.x ? beganLocation.x - endLocation.x : endLocation.x - beganLocation.x
+            let height = beganLocation.y > endLocation.y ? beganLocation.y - endLocation.y : endLocation.y - beganLocation.y
+            
+            // Create dictionary of annotation properties
+            let lineAttributes: [PDFAnnotationKey: Any] = [
+                .linePoints: [beganLocation.x, beganLocation.y, endLocation.x, endLocation.y],
+                .lineEndingStyles: [PDFAnnotationLineEndingStyle.none,
+                                    PDFAnnotationLineEndingStyle.closedArrow],
+                .color: UIColor.red,
+                .border: PDFBorder()
+            ]
+            let lineAnnotation = PDFAnnotation(
+                bounds: CGRect(x: boundsX, y: boundsY, width: width, height: height),
+                forType: .line,
+                withProperties: lineAttributes
+            )
+            page.addAnnotation(lineAnnotation)
         }
     }
     
@@ -647,60 +725,85 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
                 // 選択したマーカーの画像を非表示させる
                 self.imageView.image = nil
                 self.imageView.isHidden = true
-
-                // ①PDFに対してPDFAnnotationを設定する
                 
-                // PDF 全てのpageに存在するAnnotationを保持する
-                getAllAnnotations() {
-                    // 現在開いているページを取得
-                    if let page = self.pdfView.currentPage,
-                       // 使用していない連番を取得する
-                       let unusedNumber = self.getUnusedNumber(),
-                       // TODO: SF Symbols は50までしか存在しない
-                       let image = UIImage(systemName: "\(unusedNumber).square") {
-                        // 使用していない連番
-                        self.unusedNumber = unusedNumber
-                        // マーカー画像
-                        self.image = image
-                        // UIViewからPDFの座標へ変換する
-                        let point = self.pdfView.convert(sender.location(in: self.pdfView), to: page) // 座標系がUIViewとは異なるので気をつけましょう。
-                        // PDFのタップされた位置の座標
-                        self.point = point
-                        // 写真選択画面を表示させる
-                        self.showPickingPhotoScreen()
-                    } else {
-                        print("SF Symbols に画像が存在しない")
+                if drawingMode == .photoMarker {
+                    // ①PDFに対してPDFAnnotationを設定する
+                    
+                    // PDF 全てのpageに存在するAnnotationを保持する
+                    getAllAnnotations() {
+                        // 現在開いているページを取得
+                        if let page = self.pdfView.currentPage,
+                           // 使用していない連番を取得する
+                           let unusedNumber = self.getUnusedNumber(),
+                           // TODO: SF Symbols は50までしか存在しない
+                           let image = UIImage(systemName: "\(unusedNumber).square") {
+                            // 使用していない連番
+                            self.unusedNumber = unusedNumber
+                            // マーカー画像
+                            self.image = image
+                            // UIViewからPDFの座標へ変換する
+                            let point = self.pdfView.convert(sender.location(in: self.pdfView), to: page) // 座標系がUIViewとは異なるので気をつけましょう。
+                            // PDFのタップされた位置の座標
+                            self.point = point
+                            // 写真選択画面を表示させる
+                            self.showPickingPhotoScreen()
+                        } else {
+                            print("SF Symbols に画像が存在しない")
+                        }
                     }
                 }
             }
         }
     }
     
-    // 移動
-    @objc func didPanAnnotation(sender: UIPanGestureRecognizer) {
-        let touchLocation = sender.location(in: pdfView)
-        guard let page = pdfView.page(for: touchLocation, nearest: true)
-        else {
-            return
-        }
-        let locationOnPage = pdfView.convert(touchLocation, to:  page)
-        
-        switch sender.state {
-        case .began:
-            guard let annotation = page.annotation(at: locationOnPage) else {   return }
-            if annotation.isKind(of: PDFAnnotation.self) ||
-                annotation.isKind(of: ImageAnnotation.self) {
-                currentlySelectedAnnotation = annotation
+    @objc
+    func didPanAnnotation(sender: UIPanGestureRecognizer) {
+        // 現在開いているページを取得
+        if let page = self.pdfView.currentPage {
+            // UIViewからPDFの座標へ変換する
+            let locationOnPage = pdfView.convert(sender.location(in: pdfView), to: page) // 座標系がUIViewとは異なるので気をつけましょう。
+            
+            // 矢印
+            if drawingMode == .arrow {
+                switch sender.state {
+                case .began:
+                    // 起点
+                    beganLocation = locationOnPage
+                    print("起点　", beganLocation)
+                case .changed:
+                    // 途中点
+                    changedLocation = locationOnPage
+                    print("途中点", changedLocation)
+                case .ended:
+                    // 終点
+                    endLocation = locationOnPage
+                    print("終点　", endLocation)
+                    // マーカーを追加する 矢印
+                    addLineMarkerAnotation()
+                case .cancelled, .failed:
+                    break
+                default:
+                    break
+                }
+            } else if drawingMode == .move { // 移動
+                switch sender.state {
+                case .began:
+                    guard let annotation = page.annotation(at: locationOnPage) else {   return }
+                    if annotation.isKind(of: PDFAnnotation.self) ||
+                        annotation.isKind(of: ImageAnnotation.self) {
+                        currentlySelectedAnnotation = annotation
+                    }
+                case .changed:
+                    guard let annotation = currentlySelectedAnnotation else {return }
+                    let initialBounds = annotation.bounds
+                    // Set the center of the annotation to the spot of our finger
+                    annotation.bounds = CGRect(x: locationOnPage.x - (initialBounds.width / 2), y: locationOnPage.y - (initialBounds.height / 2), width: initialBounds.width, height: initialBounds.height)
+                case .ended, .cancelled, .failed:
+                    currentlySelectedAnnotation = nil
+                default:
+                    break
+                }
             }
-        case .changed:
-            guard let annotation = currentlySelectedAnnotation else {return }
-            let initialBounds = annotation.bounds
-            // Set the center of the annotation to the spot of our finger
-            annotation.bounds = CGRect(x: locationOnPage.x - (initialBounds.width / 2), y: locationOnPage.y - (initialBounds.height / 2), width: initialBounds.width, height: initialBounds.height)
-        case .ended, .cancelled, .failed:
-            currentlySelectedAnnotation = nil
-        default:
-            break
         }
     }
     
