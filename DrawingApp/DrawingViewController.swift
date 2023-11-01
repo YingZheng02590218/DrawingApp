@@ -13,7 +13,7 @@ import UIKit
 class DrawingViewController: UIViewController {
     
     // セグメントコントロール
-    let segmentedControl = UISegmentedControl(items: ["写真マーカー", "矢印", "移動"])
+    let segmentedControl = UISegmentedControl(items: ["写真マーカー", "矢印", "直線", "移動", "選択"])
     // モード
     var drawingMode: DrawingMode = .photoMarker
     
@@ -158,12 +158,18 @@ class DrawingViewController: UIViewController {
     @objc
     func segmentedControlChanged() {
         drawingMode = DrawingMode(index: segmentedControl.selectedSegmentIndex)
+        
+        if drawingMode == .select {
+
+        }
     }
     
     enum DrawingMode {
         case photoMarker
         case arrow
+        case line
         case move
+        case select
         // 引数ありコンストラクタ
         init(index: Int) {
             switch index {
@@ -172,7 +178,11 @@ class DrawingViewController: UIViewController {
             case 1:
                  self = .arrow
             case 2:
+                self = .line
+            case 3:
                 self = .move
+            case 4:
+                self = .select
             default:
                 self = .move
             }
@@ -337,6 +347,41 @@ class DrawingViewController: UIViewController {
     }
     
     // マーカーを追加する 矢印
+    func addArrowMarkerAnotation() {
+        // 現在開いているページを取得
+        if let page = self.pdfView.currentPage,
+           let beganLocation = beganLocation,
+           let changedLocation = changedLocation,
+           let endLocation = endLocation {
+            
+            let boundsX = beganLocation.x > endLocation.x ? endLocation.x : beganLocation.x
+            let boundsY = beganLocation.y > endLocation.y ? endLocation.y : beganLocation.y
+            
+            let width = beganLocation.x > endLocation.x ? beganLocation.x - endLocation.x : endLocation.x - beganLocation.x
+            let height = beganLocation.y > endLocation.y ? beganLocation.y - endLocation.y : endLocation.y - beganLocation.y
+            
+            let border = PDFBorder()
+            border.lineWidth = 10
+            border.style = .dashed
+            
+            // Create dictionary of annotation properties
+            let lineAttributes: [PDFAnnotationKey: Any] = [
+                .linePoints: [beganLocation.x, beganLocation.y, endLocation.x, endLocation.y],
+                .lineEndingStyles: [PDFAnnotationLineEndingStyle.none,
+                                    PDFAnnotationLineEndingStyle.closedArrow],
+                .color: UIColor.red,
+                .border: border
+            ]
+            let lineAnnotation = PDFAnnotation(
+                bounds: CGRect(x: boundsX, y: boundsY, width: width, height: height),
+                forType: .line,
+                withProperties: lineAttributes
+            )
+            page.addAnnotation(lineAnnotation)
+        }
+    }
+    
+    // マーカーを追加する 直線
     func addLineMarkerAnotation() {
         // 現在開いているページを取得
         if let page = self.pdfView.currentPage,
@@ -350,13 +395,17 @@ class DrawingViewController: UIViewController {
             let width = beganLocation.x > endLocation.x ? beganLocation.x - endLocation.x : endLocation.x - beganLocation.x
             let height = beganLocation.y > endLocation.y ? beganLocation.y - endLocation.y : endLocation.y - beganLocation.y
             
+            let border = PDFBorder()
+            border.lineWidth = 10
+            border.style = .dashed
+            
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
                 .linePoints: [beganLocation.x, beganLocation.y, endLocation.x, endLocation.y],
                 .lineEndingStyles: [PDFAnnotationLineEndingStyle.none,
-                                    PDFAnnotationLineEndingStyle.closedArrow],
+                                    PDFAnnotationLineEndingStyle.none],
                 .color: UIColor.red,
-                .border: PDFBorder()
+                .border: border
             ]
             let lineAnnotation = PDFAnnotation(
                 bounds: CGRect(x: boundsX, y: boundsY, width: width, height: height),
@@ -400,34 +449,40 @@ class DrawingViewController: UIViewController {
             // iCloud Container に保存した写真を削除する
             removePhotoToProjectFolder(contents: annotation.contents)
         } else {
-            // 選択したマーカーの画像を表示させる
-            selectedAnnotation = annotation
-            // マーカーに紐付けされた画像
-            if let fileURL = fileURL,
-            let contents = annotation.contents {
-            // 写真を iCloud Container から取得する
-                if let photoUrl = BackupManager.shared.getPhotoFromDocumentsDirectory(contents: contents, fileURL: fileURL) {
-                    // マーカーに紐付けされた画像
-                    getThumbnailImage(url: photoUrl) { image in
-                        if let image = image {
-                            DispatchQueue.main.async {
-                                self.imageView.image = image
-                                self.imageView.isHidden = false
+            
+            if drawingMode == .select {
+                print(annotation)
+                // 選択したAnnotationの制御点を修正する
+            } else {
+                // 選択したマーカーの画像を表示させる
+                selectedAnnotation = annotation
+                // マーカーに紐付けされた画像
+                if let fileURL = fileURL,
+                   let contents = annotation.contents {
+                    // 写真を iCloud Container から取得する
+                    if let photoUrl = BackupManager.shared.getPhotoFromDocumentsDirectory(contents: contents, fileURL: fileURL) {
+                        // マーカーに紐付けされた画像
+                        getThumbnailImage(url: photoUrl) { image in
+                            if let image = image {
+                                DispatchQueue.main.async {
+                                    self.imageView.image = image
+                                    self.imageView.isHidden = false
+                                }
                             }
                         }
                     }
                 }
-            }
-            // マーカーに紐付けされた画像
-            func getThumbnailImage(url: URL, completion: @escaping (_ image: UIImage?) -> Void) {
-                do {
-                    let data = try Data(contentsOf: url)
-                    let image = UIImage(data: data)
-                    completion(image)
-                } catch let err {
-                    print("Error : \(err.localizedDescription)")
+                // マーカーに紐付けされた画像
+                func getThumbnailImage(url: URL, completion: @escaping (_ image: UIImage?) -> Void) {
+                    do {
+                        let data = try Data(contentsOf: url)
+                        let image = UIImage(data: data)
+                        completion(image)
+                    } catch let err {
+                        print("Error : \(err.localizedDescription)")
+                    }
+                    completion(nil)
                 }
-                completion(nil)
             }
         }
     }
@@ -779,6 +834,27 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
                     endLocation = locationOnPage
                     print("終点　", endLocation)
                     // マーカーを追加する 矢印
+                    addArrowMarkerAnotation()
+                case .cancelled, .failed:
+                    break
+                default:
+                    break
+                }
+            } else if drawingMode == .line { // 直線
+                switch sender.state {
+                case .began:
+                    // 起点
+                    beganLocation = locationOnPage
+                    print("起点　", beganLocation)
+                case .changed:
+                    // 途中点
+                    changedLocation = locationOnPage
+                    print("途中点", changedLocation)
+                case .ended:
+                    // 終点
+                    endLocation = locationOnPage
+                    print("終点　", endLocation)
+                    // マーカーを追加する 直線
                     addLineMarkerAnotation()
                 case .cancelled, .failed:
                     break
