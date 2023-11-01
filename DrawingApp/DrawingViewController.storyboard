@@ -17,13 +17,6 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="wyC-tR-cRF">
-                                <rect key="frame" x="169.33333333333337" y="522" width="223.66666666666663" height="296"/>
-                                <color key="backgroundColor" white="0.66666666666666663" alpha="0.16945684523809523" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <constraints>
-                                    <constraint firstAttribute="width" secondItem="wyC-tR-cRF" secondAttribute="height" multiplier="223:295" id="9Wc-JQ-b5g"/>
-                                </constraints>
-                            </imageView>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="J4D-Iu-fd1" customClass="NonSelectablePDFView" customModule="DrawingApp" customModuleProvider="target">
                                 <rect key="frame" x="10" y="69" width="373" height="739"/>
                                 <color key="backgroundColor" systemColor="systemIndigoColor"/>
@@ -35,6 +28,13 @@
                                     <constraint firstAttribute="width" constant="50" id="x8A-eU-bgb"/>
                                 </constraints>
                             </view>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wyC-tR-cRF">
+                                <rect key="frame" x="157.33333333333337" y="506" width="235.66666666666663" height="312"/>
+                                <color key="backgroundColor" white="0.66666666666666663" alpha="0.16945684523809523" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" secondItem="wyC-tR-cRF" secondAttribute="height" multiplier="223:295" id="9Wc-JQ-b5g"/>
+                                </constraints>
+                            </imageView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="vDu-zF-Fre"/>
                         <color key="backgroundColor" systemColor="systemPurpleColor"/>
@@ -43,11 +43,12 @@
                             <constraint firstItem="vDu-zF-Fre" firstAttribute="bottom" secondItem="R6r-5K-aKJ" secondAttribute="bottom" constant="15" id="9Fd-TZ-dKi"/>
                             <constraint firstItem="J4D-Iu-fd1" firstAttribute="leading" secondItem="vDu-zF-Fre" secondAttribute="leading" constant="10" id="Crd-Mn-y69"/>
                             <constraint firstItem="vDu-zF-Fre" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="R6r-5K-aKJ" secondAttribute="trailing" constant="5" id="Hme-5C-GeD"/>
+                            <constraint firstItem="wyC-tR-cRF" firstAttribute="height" relation="lessThanOrEqual" secondItem="vDu-zF-Fre" secondAttribute="height" multiplier="0.5" id="LPK-e5-j9D"/>
                             <constraint firstItem="vDu-zF-Fre" firstAttribute="trailing" secondItem="J4D-Iu-fd1" secondAttribute="trailing" constant="10" id="POp-Dr-YWq"/>
                             <constraint firstItem="J4D-Iu-fd1" firstAttribute="top" secondItem="vDu-zF-Fre" secondAttribute="top" constant="10" id="PYF-nf-E67"/>
                             <constraint firstItem="R6r-5K-aKJ" firstAttribute="top" secondItem="vDu-zF-Fre" secondAttribute="top" constant="15" id="Wkj-QN-lFo"/>
                             <constraint firstItem="R6r-5K-aKJ" firstAttribute="leading" secondItem="vDu-zF-Fre" secondAttribute="leading" constant="15" id="YIp-PS-CtZ"/>
-                            <constraint firstItem="wyC-tR-cRF" firstAttribute="width" secondItem="J4D-Iu-fd1" secondAttribute="width" multiplier="0.6" id="iPc-yD-NnK"/>
+                            <constraint firstItem="wyC-tR-cRF" firstAttribute="width" relation="lessThanOrEqual" secondItem="vDu-zF-Fre" secondAttribute="width" multiplier="0.5" id="iPc-yD-NnK"/>
                             <constraint firstItem="vDu-zF-Fre" firstAttribute="bottom" secondItem="wyC-tR-cRF" secondAttribute="bottom" id="l3J-ya-D1R"/>
                             <constraint firstItem="vDu-zF-Fre" firstAttribute="bottom" secondItem="J4D-Iu-fd1" secondAttribute="bottom" constant="10" id="pJ7-vy-Bc8"/>
                         </constraints>
