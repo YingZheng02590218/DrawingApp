@@ -7,11 +7,19 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F911B5DB2AF3332000A645DA /* UIBezierPath+extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F911B5DA2AF3332000A645DA /* UIBezierPath+extension.swift */; };
+		F911B5DD2AF3334C00A645DA /* DrawingGestureRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F911B5DC2AF3334C00A645DA /* DrawingGestureRecognizer.swift */; };
+		F911B5DF2AF3337500A645DA /* PDFDrawer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F911B5DE2AF3337500A645DA /* PDFDrawer.swift */; };
+		F911B5E12AF333D500A645DA /* DrawingAnnotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F911B5E02AF333D500A645DA /* DrawingAnnotation.swift */; };
+		F911B5E32AF333F600A645DA /* NonSelectablePDFView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F911B5E22AF333F600A645DA /* NonSelectablePDFView.swift */; };
+		F911B5E52AF3345300A645DA /* PDFAnnotationWithPath.swift in Sources */ = {isa = PBXBuildFile; fileRef = F911B5E42AF3345300A645DA /* PDFAnnotationWithPath.swift */; };
+		F911B5E72AF3347300A645DA /* PDFPage+Selection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F911B5E62AF3347300A645DA /* PDFPage+Selection.swift */; };
 		F91345242ACA8B150034AD03 /* IconTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = F91345232ACA8B150034AD03 /* IconTableViewCell.swift */; };
 		F91345262ACA8B380034AD03 /* IconTableViewCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F91345252ACA8B380034AD03 /* IconTableViewCell.xib */; };
 		F91345282ACA99870034AD03 /* ImageAnnotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F91345272ACA99870034AD03 /* ImageAnnotation.swift */; };
 		F913452A2ACA9A9D0034AD03 /* DrawingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F91345292ACA9A9D0034AD03 /* DrawingViewController.swift */; };
 		F913452C2ACA9E5D0034AD03 /* DrawingViewController.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F913452B2ACA9E5D0034AD03 /* DrawingViewController.storyboard */; };
+		F924861F2AF2575F007A1EC4 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F924861E2AF2575F007A1EC4 /* Colors.xcassets */; };
 		F963ED622ABC3AF100B41C99 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F963ED612ABC3AF100B41C99 /* AppDelegate.swift */; };
 		F963ED642ABC3AF100B41C99 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F963ED632ABC3AF100B41C99 /* SceneDelegate.swift */; };
 		F963ED662ABC3AF100B41C99 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F963ED652ABC3AF100B41C99 /* ViewController.swift */; };
@@ -24,11 +32,19 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		F911B5DA2AF3332000A645DA /* UIBezierPath+extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIBezierPath+extension.swift"; sourceTree = "<group>"; };
+		F911B5DC2AF3334C00A645DA /* DrawingGestureRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingGestureRecognizer.swift; sourceTree = "<group>"; };
+		F911B5DE2AF3337500A645DA /* PDFDrawer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFDrawer.swift; sourceTree = "<group>"; };
+		F911B5E02AF333D500A645DA /* DrawingAnnotation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingAnnotation.swift; sourceTree = "<group>"; };
+		F911B5E22AF333F600A645DA /* NonSelectablePDFView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NonSelectablePDFView.swift; sourceTree = "<group>"; };
+		F911B5E42AF3345300A645DA /* PDFAnnotationWithPath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFAnnotationWithPath.swift; sourceTree = "<group>"; };
+		F911B5E62AF3347300A645DA /* PDFPage+Selection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PDFPage+Selection.swift"; sourceTree = "<group>"; };
 		F91345232ACA8B150034AD03 /* IconTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconTableViewCell.swift; sourceTree = "<group>"; };
 		F91345252ACA8B380034AD03 /* IconTableViewCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = IconTableViewCell.xib; sourceTree = "<group>"; };
 		F91345272ACA99870034AD03 /* ImageAnnotation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageAnnotation.swift; sourceTree = "<group>"; };
 		F91345292ACA9A9D0034AD03 /* DrawingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingViewController.swift; sourceTree = "<group>"; };
 		F913452B2ACA9E5D0034AD03 /* DrawingViewController.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = DrawingViewController.storyboard; sourceTree = "<group>"; };
+		F924861E2AF2575F007A1EC4 /* Colors.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Colors.xcassets; sourceTree = "<group>"; };
 		F963ED5E2ABC3AF100B41C99 /* DrawingApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DrawingApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F963ED612ABC3AF100B41C99 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		F963ED632ABC3AF100B41C99 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -54,6 +70,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		F911B5E82AF3353100A645DA /* HandWritting */ = {
+			isa = PBXGroup;
+			children = (
+				F911B5E42AF3345300A645DA /* PDFAnnotationWithPath.swift */,
+				F911B5E02AF333D500A645DA /* DrawingAnnotation.swift */,
+				F911B5DA2AF3332000A645DA /* UIBezierPath+extension.swift */,
+				F911B5DC2AF3334C00A645DA /* DrawingGestureRecognizer.swift */,
+				F911B5DE2AF3337500A645DA /* PDFDrawer.swift */,
+				F911B5E22AF333F600A645DA /* NonSelectablePDFView.swift */,
+				F911B5E62AF3347300A645DA /* PDFPage+Selection.swift */,
+			);
+			path = HandWritting;
+			sourceTree = "<group>";
+		};
 		F963ED552ABC3AF100B41C99 = {
 			isa = PBXGroup;
 			children = (
@@ -83,9 +113,11 @@
 				F91345232ACA8B150034AD03 /* IconTableViewCell.swift */,
 				F91345252ACA8B380034AD03 /* IconTableViewCell.xib */,
 				F91345272ACA99870034AD03 /* ImageAnnotation.swift */,
+				F911B5E82AF3353100A645DA /* HandWritting */,
 				F91345292ACA9A9D0034AD03 /* DrawingViewController.swift */,
 				F913452B2ACA9E5D0034AD03 /* DrawingViewController.storyboard */,
 				F963ED6A2ABC3AF200B41C99 /* Assets.xcassets */,
+				F924861E2AF2575F007A1EC4 /* Colors.xcassets */,
 				F963ED6C2ABC3AF200B41C99 /* LaunchScreen.storyboard */,
 				F963ED6F2ABC3AF200B41C99 /* Info.plist */,
 				F963ED752ABC4ECE00B41C99 /* 2023-Journals.pdf */,
@@ -157,6 +189,7 @@
 				F963ED6B2ABC3AF200B41C99 /* Assets.xcassets in Resources */,
 				F963ED692ABC3AF100B41C99 /* Main.storyboard in Resources */,
 				F963ED762ABC4ECE00B41C99 /* 2023-Journals.pdf in Resources */,
+				F924861F2AF2575F007A1EC4 /* Colors.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -168,11 +201,18 @@
 			buildActionMask = 2147483647;
 			files = (
 				F963ED662ABC3AF100B41C99 /* ViewController.swift in Sources */,
+				F911B5DB2AF3332000A645DA /* UIBezierPath+extension.swift in Sources */,
+				F911B5E52AF3345300A645DA /* PDFAnnotationWithPath.swift in Sources */,
 				F913452A2ACA9A9D0034AD03 /* DrawingViewController.swift in Sources */,
+				F911B5DF2AF3337500A645DA /* PDFDrawer.swift in Sources */,
+				F911B5E72AF3347300A645DA /* PDFPage+Selection.swift in Sources */,
+				F911B5E32AF333F600A645DA /* NonSelectablePDFView.swift in Sources */,
 				F963ED7A2AC2D82900B41C99 /* PdfMaker.swift in Sources */,
 				F91345242ACA8B150034AD03 /* IconTableViewCell.swift in Sources */,
 				F91345282ACA99870034AD03 /* ImageAnnotation.swift in Sources */,
+				F911B5DD2AF3334C00A645DA /* DrawingGestureRecognizer.swift in Sources */,
 				F963ED622ABC3AF100B41C99 /* AppDelegate.swift in Sources */,
+				F911B5E12AF333D500A645DA /* DrawingAnnotation.swift in Sources */,
 				F963ED642ABC3AF100B41C99 /* SceneDelegate.swift in Sources */,
 				F963ED782AC2D65700B41C99 /* BackupManager.swift in Sources */,
 			);

@@ -9,11 +9,12 @@ import PDFKit
 import Photos
 import PhotosUI
 import UIKit
+//import PencilKit
 
 class DrawingViewController: UIViewController {
     
     // セグメントコントロール
-    let segmentedControl = UISegmentedControl(items: ["写真マーカー", "矢印", "直線", "移動", "選択"])
+    let segmentedControl = UISegmentedControl(items: ["写真マーカー", "手書き", "矢印", "直線", "移動", "選択"])
     // モード
     var drawingMode: DrawingMode = .photoMarker
     
@@ -51,10 +52,26 @@ class DrawingViewController: UIViewController {
     var endLocation: CGPoint?
     // 選択されたマーカー
     var selectedAnnotation: PDFAnnotation?
-
-    var imagePickerController: UIImagePickerController!
-        
     
+    var imagePickerController: UIImagePickerController!
+    // 手書き　ツール
+    var toolStackView: UIStackView?
+    // 手書き　カラー
+    var colorStackView: UIStackView?
+    
+//    let canvas = PKCanvasView()
+//    var crayon = PKInkingTool(.pencil, color: Colors.babyBlue.getColor(), width: 70)
+//    var pencil = PKInkingTool(.pencil, color: Colors.babyBlue.getColor(), width: 10)
+//    var marker = PKInkingTool(.marker, color: Colors.babyBlue.getColor(), width: 40)
+//    let eraser = PKEraserTool(.bitmap)
+    
+    private var path: UIBezierPath?
+    private var currentAnnotation : DrawingAnnotation?
+
+    private let pdfDrawer = PDFDrawer()
+
+    let pdfDrawingGestureRecognizer = DrawingGestureRecognizer()
+
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -78,10 +95,10 @@ class DrawingViewController: UIViewController {
         }
         segmentedControl.selectedSegmentIndex = 0
         segmentedControl.addTarget(self, action: #selector(segmentedControlChanged), for: .valueChanged)
-//        segment.setTitleTextAttributes([NSAttributedString.Key.font : UIFont(name: "ProximaNova-Light", size: 15)!], for: .normal)
+        //        segment.setTitleTextAttributes([NSAttributedString.Key.font : UIFont(name: "ProximaNova-Light", size: 15)!], for: .normal)
         let segmentBarButtonItem = UIBarButtonItem(customView: segmentedControl)
         navigationItem.rightBarButtonItems?.append(segmentBarButtonItem)
-
+        
         // title設定
         navigationItem.title = "マーカーを追加する"
         
@@ -102,7 +119,39 @@ class DrawingViewController: UIViewController {
         pdfView.displayMode = .singlePage
         // 現在開いているページ currentPage にのみマーカーを追加
         pdfView.autoScales = true
-        
+        pdfView.scaleFactor += 3.0
+        // PDF 全てのpageに存在するAnnotationを保持する
+        getAllAnnotations() {
+            // TODO: マーカーを拡大してセンターに表示させる
+            if let annotation = self.annotationsInAllPages.filter({ String($0.contents ?? "") == "3" }).first {
+                print("$$$$", annotation.contents)
+
+                if let pdfPage = annotation.page {
+                    // UIViewからPDFの座標へ変換する
+                    let rect = self.pdfView.convert(UIScreen.main.bounds, to: pdfPage) // 座標系がUIViewとは異なるので気をつけましょう。
+
+                    let screenHeight = rect.height
+                     let screenWidth = rect.width
+                    print(screenHeight)
+                    print(screenWidth)
+                    print(annotation.bounds.origin.x)
+                    print(annotation.bounds.origin.y)
+
+                    let cgRect = CGRect(
+                        x: annotation.bounds.origin.x - screenWidth / 2,
+                        y: annotation.bounds.origin.y + screenHeight / 2,
+                        width: annotation.bounds.width,
+                        height: annotation.bounds.height
+                    )
+                    
+                    print(cgRect)
+                    self.pdfView.go(to: cgRect, on: pdfPage)
+//                    self.pdfView.center.y = annotation.bounds.center.y - 100
+                }
+            } else {
+                self.annotationsInAllPages.map { print("$$$$$$", $0.contents) }
+            }
+        }
         // ②PDF Annotationがタップされたかを監視、タップに対する処理を行う
         //　PDFAnnotationがタップされたかを監視する
         NotificationCenter.default.addObserver(self, selector: #selector(action(_:)), name: .PDFViewAnnotationHit, object: nil)
@@ -116,12 +165,15 @@ class DrawingViewController: UIViewController {
         let panAnnotationGesture = UIPanGestureRecognizer(target: self, action: #selector(didPanAnnotation(sender:)))
         panAnnotationGesture.delegate = self
         pdfView.addGestureRecognizer(panAnnotationGesture)
-
+        
         // サムネイル
         pdfThumbnailView.pdfView = pdfView
         pdfThumbnailView.layoutMode = .vertical
         pdfThumbnailView.backgroundColor = UIColor.gray
         pdfThumbnailView.thumbnailSize = CGSize(width: 40, height: 60)
+        
+        // 手書きパレット
+        createButtons()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -149,12 +201,134 @@ class DrawingViewController: UIViewController {
         }
     }
     
+    // MARK: - 手書きパレット
+
+    // 手書きパレット
+    func createButtons() {
+//        canvas.frame = view.bounds
+//        canvas.drawingPolicy = .anyInput
+//        canvas.backgroundColor = .clear
+//        canvas.isOpaque = false //背景を透明にする(だいじ)
+//        view.addSubview(canvas)
+//        canvas.tool = crayon
+        
+        //Create the color palette
+        var buttons: [UIButton] = []
+        
+        for color in Colors.allCases {
+            let button = UIButton(primaryAction: UIAction(handler: { action in
+                self.updatePens(sender: action.sender)
+            }))
+            button.heightAnchor.constraint(equalToConstant: 100.0).isActive = true
+            button.widthAnchor.constraint(equalToConstant: 100.0).isActive = true
+            button.makeRounded(50, borderWidth: 10, borderColor: .black)
+            button.backgroundColor = color.getColor()
+            button.tag = color.rawValue
+            buttons.append(button)
+        }
+        
+        colorStackView = UIStackView(arrangedSubviews: buttons)
+        if let colorStackView = colorStackView {
+            colorStackView.axis = .horizontal
+            colorStackView.distribution = .equalSpacing
+            colorStackView.alignment = .center
+            
+            view.addSubview(colorStackView)
+            
+            colorStackView.translatesAutoresizingMaskIntoConstraints = false
+            
+            NSLayoutConstraint.activate([colorStackView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -20),
+                                         colorStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+                                         colorStackView.widthAnchor.constraint(equalToConstant: view.bounds.width / 2),
+                                         colorStackView.heightAnchor.constraint(equalToConstant: 100)])
+            colorStackView.isHidden = true
+        }
+        
+        //Setup tools
+        let crayonButton = createButton(title: "Crayon", action: UIAction(handler: { _ in
+//            self.canvas.tool = self.crayon
+        }))
+        
+        let pencilButton = createButton(title: "Pencil", action: UIAction(handler: { _ in
+//            self.canvas.tool = self.pencil
+            self.pdfDrawer.changeTool(tool: .pencil)
+        }))
+        
+        let markerButton = createButton(title: "Marker", action: UIAction(handler: { _ in
+//            self.canvas.tool = self.marker
+        }))
+        
+        let eraserButton = createButton(title: "Eraser", action: UIAction(handler: { _ in
+//            self.canvas.tool = self.eraser
+        }))
+        
+        let undoButton = createButton(title: "Undo", action: UIAction(handler: { _ in
+            // TODO: 効いていない
+            self.undoManager?.undo()
+        }))
+        
+        let redoButton = createButton(title: "Redo", action: UIAction(handler: { _ in
+            // TODO: 効いていない
+            self.undoManager?.redo()
+        }))
+        
+        toolStackView = UIStackView(arrangedSubviews: [crayonButton,
+                                                       pencilButton,
+                                                       markerButton,
+                                                       eraserButton,
+                                                       undoButton,
+                                                       redoButton])
+        if let toolStackView = toolStackView {
+            toolStackView.axis = .vertical
+            toolStackView.distribution = .fillEqually
+            toolStackView.alignment = .fill
+            toolStackView.spacing = 10
+            
+            view.addSubview(toolStackView)
+            
+            toolStackView.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([toolStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: 10),
+                                         toolStackView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+                                         toolStackView.widthAnchor.constraint(equalToConstant: 150)])
+            toolStackView.isHidden = true
+        }
+    }
+    
+    //helper function for creating the tools
+    private func createButton(title: String, action: UIAction) -> UIButton {
+        let button = UIButton(type: .system, primaryAction: action)
+        button.frame = CGRect(x: 0, y: 0, width: 150, height: 50)
+        button.setTitle(title, for: .normal)
+        button.tintColor = .lightGray
+        button.makeRounded(10, borderWidth: 2, borderColor: .black)
+        return button
+    }
+    
+    private func updatePens(sender: Any?) {
+        if let button = sender as? UIButton,
+           let color = Colors(rawValue: button.tag)?.getColor() { //,
+//           var currentTool = canvas.tool as? PKInkingTool {
+//            //update the current tool being used by the canvas
+//            currentTool.color = color
+//            canvas.tool = currentTool
+//            //update all the tools
+//            crayon.color = color
+//            pencil.color = color
+//            marker.color = color
+            pdfDrawer.changeColor(color: color)
+        }
+    }
+    
+    // MARK: - 戻るボタン
+
     @objc
     func doSomething() {
         // 戻るボタンの動作処理
         self.dismiss(animated: true)
     }
     
+    // MARK: - 編集モード
+
     @objc
     func segmentedControlChanged() {
         drawingMode = DrawingMode(index: segmentedControl.selectedSegmentIndex)
@@ -162,10 +336,28 @@ class DrawingViewController: UIViewController {
         if drawingMode == .select {
 
         }
+        if drawingMode == .drawing {
+            pdfView.addGestureRecognizer(pdfDrawingGestureRecognizer)
+            pdfDrawingGestureRecognizer.drawingDelegate = pdfDrawer
+            pdfDrawer.pdfView = pdfView
+            
+//            canvas.isHidden = false
+            pdfDrawer.isActive = true
+            colorStackView?.isHidden = false
+            toolStackView?.isHidden = false
+        } else {
+            pdfView.removeGestureRecognizer(pdfDrawingGestureRecognizer)
+            
+//            canvas.isHidden = true
+            pdfDrawer.isActive = false
+            colorStackView?.isHidden = true
+            toolStackView?.isHidden = true
+        }
     }
     
     enum DrawingMode {
         case photoMarker
+        case drawing
         case arrow
         case line
         case move
@@ -176,18 +368,21 @@ class DrawingViewController: UIViewController {
             case 0:
                  self = .photoMarker
             case 1:
-                 self = .arrow
+                self = .drawing
             case 2:
-                self = .line
+                self = .arrow
             case 3:
-                self = .move
+                self = .line
             case 4:
+                self = .move
+            case 5:
                 self = .select
             default:
                 self = .move
             }
         }
     }
+    
     // ダイアログ
     func showDialogForSucceed(message: String, color: UIColor, frame: CGRect) {
         let actionSheet = UIAlertController(title: "Annotation", message: message, preferredStyle: .actionSheet)
@@ -218,7 +413,7 @@ class DrawingViewController: UIViewController {
         }
     }
     
-    // MARK: PDF ファイル　マークアップ　編集中の一時ファイル
+    // MARK: - PDF ファイル　マークアップ　編集中の一時ファイル
     
     // 一時ファイルを削除する
     func deleteTempDirectory() {
@@ -282,7 +477,7 @@ class DrawingViewController: UIViewController {
     }
     
     
-    // MARK: PDF ファイル　マーカー　Annotation
+    // MARK: - PDF ファイル　マーカー　Annotation
     
     // Annotation設定スイッチ 切り替え
     @objc
@@ -430,6 +625,10 @@ class DrawingViewController: UIViewController {
         }
     }
     
+    // 手書きや図形を追加する
+    func addDrawingAnotation() {
+    }
+
     // PDFAnnotationがタップされた
     @objc
     func action(_ sender: Any) {
@@ -495,7 +694,7 @@ class DrawingViewController: UIViewController {
         }
     }
     
-    // MARK: フォトライブラリ
+    // MARK: - フォトライブラリ
     
     // 写真をカメラロールからiCloud Container にコピーする URLから
     func addPhotoToProjectFolder() {
@@ -543,7 +742,7 @@ class DrawingViewController: UIViewController {
         }
     }
     
-    // MARK: フォトライブラリ
+    // MARK: - フォトライブラリ
     
     // 写真選択画面を表示させる
     func showPickingPhotoScreen() {
@@ -818,6 +1017,11 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
             // UIViewからPDFの座標へ変換する
             let locationOnPage = pdfView.convert(sender.location(in: pdfView), to: page) // 座標系がUIViewとは異なるので気をつけましょう。
             
+            if drawingMode == .photoMarker {
+
+            } else if drawingMode == .drawing {
+
+            }
             // 矢印
             if drawingMode == .arrow {
                 switch sender.state {
@@ -900,21 +1104,33 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
     }
 }
 
-
-class NonSelectablePDFView: PDFView {
+enum Colors: Int, CaseIterable {
+    case babyBlue
+    case buttercup
+    case lilac
+    case meadow
+    case rose
     
-    override func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
-        super.canPerformAction(action, withSender: sender)
-        self.currentSelection = nil
-        self.clearSelection()
-        return false
-    }
-    
-    override func addGestureRecognizer(_ gestureRecognizer: UIGestureRecognizer) {
-        if gestureRecognizer is UILongPressGestureRecognizer {
-            gestureRecognizer.isEnabled = false
+    func getColor() -> UIColor {
+        switch self {
+        case .babyBlue:
+            return UIColor(named: "BabyBlue")!
+        case .buttercup:
+            return UIColor(named: "Buttercup")!
+        case .lilac:
+            return UIColor(named: "Lilac")!
+        case .meadow:
+            return UIColor(named: "Meadow")!
+        case .rose:
+            return UIColor(named: "Rose")!
         }
-        
-        super.addGestureRecognizer(gestureRecognizer)
     }
+}
+
+extension UIButton {
+  func makeRounded(_ cornerSize: CGFloat, borderWidth: CGFloat, borderColor: UIColor) {
+      layer.cornerRadius = cornerSize
+      layer.borderWidth = borderWidth
+      layer.borderColor = borderColor.cgColor
+  }
 }
