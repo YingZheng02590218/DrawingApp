@@ -14,7 +14,7 @@ import UIKit
 class DrawingViewController: UIViewController {
     
     // セグメントコントロール
-    let segmentedControl = UISegmentedControl(items: ["写真マーカー", "手書き", "矢印", "直線", "移動", "選択"])
+    let segmentedControl = UISegmentedControl(items: ["写真マーカー", "手書き", "矢印", "直線", "四角", "移動", "選択"])
     // モード
     var drawingMode: DrawingMode = .photoMarker
     
@@ -333,9 +333,19 @@ class DrawingViewController: UIViewController {
     func segmentedControlChanged() {
         drawingMode = DrawingMode(index: segmentedControl.selectedSegmentIndex)
         
-        if drawingMode == .select {
-
+        if drawingMode == .rectangle {
+            // 拡大縮小を禁止してマーカーの起点と終点を選択しやすくする
+            print(pdfView.maxScaleFactor) // 5.0
+            print(pdfView.minScaleFactor) // 0.25
+            print(pdfView.contentScaleFactor) // 1.0
+            print(pdfView.scaleFactorForSizeToFit) // 1.2486631016042782
+            pdfView.maxScaleFactor = pdfView.scaleFactorForSizeToFit
+            pdfView.minScaleFactor = pdfView.scaleFactorForSizeToFit
+        } else {
+            pdfView.maxScaleFactor = 5.0
+            pdfView.minScaleFactor = 0.25
         }
+        
         if drawingMode == .drawing {
             pdfView.addGestureRecognizer(pdfDrawingGestureRecognizer)
             pdfDrawingGestureRecognizer.drawingDelegate = pdfDrawer
@@ -360,6 +370,7 @@ class DrawingViewController: UIViewController {
         case drawing
         case arrow
         case line
+        case rectangle
         case move
         case select
         // 引数ありコンストラクタ
@@ -374,8 +385,10 @@ class DrawingViewController: UIViewController {
             case 3:
                 self = .line
             case 4:
-                self = .move
+                self = .rectangle
             case 5:
+                self = .move
+            case 6:
                 self = .select
             default:
                 self = .move
@@ -608,6 +621,40 @@ class DrawingViewController: UIViewController {
                 withProperties: lineAttributes
             )
             page.addAnnotation(lineAnnotation)
+        }
+    }
+    
+    // マーカーを追加する 四角
+    func addRectangleMarkerAnotation() {
+        // 現在開いているページを取得
+        if let page = self.pdfView.currentPage,
+           let beganLocation = beganLocation,
+           let changedLocation = changedLocation,
+           let endLocation = endLocation {
+            
+            let boundsX = beganLocation.x > endLocation.x ? endLocation.x : beganLocation.x
+            let boundsY = beganLocation.y > endLocation.y ? endLocation.y : beganLocation.y
+            
+            let width = beganLocation.x > endLocation.x ? beganLocation.x - endLocation.x : endLocation.x - beganLocation.x
+            let height = beganLocation.y > endLocation.y ? beganLocation.y - endLocation.y : endLocation.y - beganLocation.y
+            
+            let border = PDFBorder()
+            border.lineWidth = 2.0
+            border.style = .dashed
+            
+            // Create dictionary of annotation properties
+            let lineAttributes: [PDFAnnotationKey: Any] = [
+                .color: UIColor.green,
+                .border: border
+            ]
+            
+            // Create an annotation to add to a page (empty)
+            let newAnnotation = PDFAnnotation(
+                bounds: CGRect(x: boundsX, y: boundsY, width: width, height: height),
+             forType: .square,
+             withProperties: lineAttributes
+            )
+            page.addAnnotation(newAnnotation)
         }
     }
     
@@ -1060,6 +1107,27 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
                     print("終点　", endLocation)
                     // マーカーを追加する 直線
                     addLineMarkerAnotation()
+                case .cancelled, .failed:
+                    break
+                default:
+                    break
+                }
+            } else if drawingMode == .rectangle { // 四角
+                switch sender.state {
+                case .began:
+                    // 起点
+                    beganLocation = locationOnPage
+                    print("起点　", beganLocation)
+                case .changed:
+                    // 途中点
+                    changedLocation = locationOnPage
+                    print("途中点", changedLocation)
+                case .ended:
+                    // 終点
+                    endLocation = locationOnPage
+                    print("終点　", endLocation)
+                    // マーカーを追加する 四角
+                    addRectangleMarkerAnotation()
                 case .cancelled, .failed:
                     break
                 default:
