@@ -14,7 +14,7 @@ import UIKit
 class DrawingViewController: UIViewController {
     
     // セグメントコントロール
-    let segmentedControl = UISegmentedControl(items: ["写真マーカー", "手書き", "矢印", "直線", "四角", "移動", "選択"])
+    let segmentedControl = UISegmentedControl(items: ["写真マーカー", "手書き", "矢印", "直線", "四角", "円", "移動", "選択"])
     // モード
     var drawingMode: DrawingMode = .photoMarker
     
@@ -333,7 +333,7 @@ class DrawingViewController: UIViewController {
     func segmentedControlChanged() {
         drawingMode = DrawingMode(index: segmentedControl.selectedSegmentIndex)
         
-        if drawingMode == .rectangle {
+        if drawingMode == .rectangle || drawingMode == .circle {
             // 拡大縮小を禁止してマーカーの起点と終点を選択しやすくする
             print(pdfView.maxScaleFactor) // 5.0
             print(pdfView.minScaleFactor) // 0.25
@@ -371,6 +371,7 @@ class DrawingViewController: UIViewController {
         case arrow
         case line
         case rectangle
+        case circle
         case move
         case select
         // 引数ありコンストラクタ
@@ -387,8 +388,10 @@ class DrawingViewController: UIViewController {
             case 4:
                 self = .rectangle
             case 5:
-                self = .move
+                self = .circle
             case 6:
+                self = .move
+            case 7:
                 self = .select
             default:
                 self = .move
@@ -658,6 +661,40 @@ class DrawingViewController: UIViewController {
         }
     }
     
+    // マーカーを追加する 円
+    func addCircleMarkerAnotation() {
+        // 現在開いているページを取得
+        if let page = self.pdfView.currentPage,
+           let beganLocation = beganLocation,
+           let changedLocation = changedLocation,
+           let endLocation = endLocation {
+            
+            let boundsX = beganLocation.x > endLocation.x ? endLocation.x : beganLocation.x
+            let boundsY = beganLocation.y > endLocation.y ? endLocation.y : beganLocation.y
+            
+            let width = beganLocation.x > endLocation.x ? beganLocation.x - endLocation.x : endLocation.x - beganLocation.x
+            let height = beganLocation.y > endLocation.y ? beganLocation.y - endLocation.y : endLocation.y - beganLocation.y
+            
+            let border = PDFBorder()
+            border.lineWidth = 2.0
+            border.style = .dashed
+            
+            // Create dictionary of annotation properties
+            let lineAttributes: [PDFAnnotationKey: Any] = [
+                .color: UIColor.green,
+                .border: border
+            ]
+            
+            // Create an annotation to add to a page (empty)
+            let newAnnotation = PDFAnnotation(
+                bounds: CGRect(x: boundsX, y: boundsY, width: width, height: height),
+             forType: .circle,
+             withProperties: lineAttributes
+            )
+            page.addAnnotation(newAnnotation)
+        }
+    }
+
     // マーカーを削除する
     func removeMarkerAnotation(annotation: PDFAnnotation) {
         // 現在開いているページを取得
@@ -1064,13 +1101,11 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
             // UIViewからPDFの座標へ変換する
             let locationOnPage = pdfView.convert(sender.location(in: pdfView), to: page) // 座標系がUIViewとは異なるので気をつけましょう。
             
-            if drawingMode == .photoMarker {
+            if drawingMode == .photoMarker { // 写真マーカー
 
-            } else if drawingMode == .drawing {
+            } else if drawingMode == .drawing {// 手書き
 
-            }
-            // 矢印
-            if drawingMode == .arrow {
+            } else if drawingMode == .arrow { // 矢印
                 switch sender.state {
                 case .began:
                     // 起点
@@ -1128,6 +1163,28 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
                     print("終点　", endLocation)
                     // マーカーを追加する 四角
                     addRectangleMarkerAnotation()
+                case .cancelled, .failed:
+                    break
+                default:
+                    break
+                }
+                
+            } else if drawingMode == .circle { // 円
+                switch sender.state {
+                case .began:
+                    // 起点
+                    beganLocation = locationOnPage
+                    print("起点　", beganLocation)
+                case .changed:
+                    // 途中点
+                    changedLocation = locationOnPage
+                    print("途中点", changedLocation)
+                case .ended:
+                    // 終点
+                    endLocation = locationOnPage
+                    print("終点　", endLocation)
+                    // マーカーを追加する 円
+                    addCircleMarkerAnotation()
                 case .cancelled, .failed:
                     break
                 default:
