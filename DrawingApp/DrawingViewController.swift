@@ -14,7 +14,7 @@ import UIKit
 class DrawingViewController: UIViewController {
     
     // セグメントコントロール
-    let segmentedControl = UISegmentedControl(items: ["写真マーカー", "手書き", "矢印", "直線", "四角", "円", "移動", "選択"])
+    let segmentedControl = UISegmentedControl(items: ["写真マーカー", "手書き", "矢印", "直線", "四角", "円", "移動", "選択", "消しゴム"])
     // モード
     var drawingMode: DrawingMode = .photoMarker
     
@@ -374,6 +374,7 @@ class DrawingViewController: UIViewController {
         case circle
         case move
         case select
+        case eraser
         // 引数ありコンストラクタ
         init(index: Int) {
             switch index {
@@ -393,6 +394,8 @@ class DrawingViewController: UIViewController {
                 self = .move
             case 7:
                 self = .select
+            case 8:
+                self = .eraser
             default:
                 self = .move
             }
@@ -695,14 +698,32 @@ class DrawingViewController: UIViewController {
         }
     }
 
-    // マーカーを削除する
+    // 写真マーカーを削除する
     func removeMarkerAnotation(annotation: PDFAnnotation) {
         // 現在開いているページを取得
         if let page = pdfView.currentPage {
             print(PDFAnnotationSubtype(rawValue: annotation.type!).rawValue)
             print(PDFAnnotationSubtype.stamp.rawValue.self)
-            // freeText
+            // 写真マーカー
             if PDFAnnotationSubtype(rawValue: "/\(annotation.type!)") == PDFAnnotationSubtype.stamp.self {
+                // 対象のページの注釈を削除
+                page.removeAnnotation(annotation)
+            }
+        }
+    }
+    
+    // Annotationを削除する
+    func removeAnotation(annotation: PDFAnnotation) {
+        // 現在開いているページを取得
+        if let page = pdfView.currentPage {
+            print(PDFAnnotationSubtype(rawValue: annotation.type!).rawValue)
+            print(PDFAnnotationSubtype.stamp.rawValue.self)
+            print(annotation.contents)
+            // 写真マーカー
+            if PDFAnnotationSubtype(rawValue: "/\(annotation.type!)") == PDFAnnotationSubtype.stamp.self && ((annotation.contents?.isEmpty) != nil) {
+                
+            } else {
+                // 写真マーカー　以外
                 // 対象のページの注釈を削除
                 page.removeAnnotation(annotation)
             }
@@ -713,7 +734,7 @@ class DrawingViewController: UIViewController {
     func addDrawingAnotation() {
     }
 
-    // PDFAnnotationがタップされた
+    // MARK: PDFAnnotationがタップされた
     @objc
     func action(_ sender: Any) {
         // タップされたPDFAnnotationを取得する
@@ -736,6 +757,9 @@ class DrawingViewController: UIViewController {
             if drawingMode == .select {
                 print(annotation)
                 // 選択したAnnotationの制御点を修正する
+            } else if drawingMode == .eraser {
+                // Annotationを削除する
+                removeAnotation(annotation: annotation)
             } else {
                 // 選択したマーカーの画像を表示させる
                 selectedAnnotation = annotation
