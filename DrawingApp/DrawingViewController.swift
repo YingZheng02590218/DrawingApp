@@ -333,7 +333,7 @@ class DrawingViewController: UIViewController {
     func segmentedControlChanged() {
         drawingMode = DrawingMode(index: segmentedControl.selectedSegmentIndex)
         
-        if drawingMode == .rectangle || drawingMode == .circle {
+        if drawingMode == .rectangle || drawingMode == .circle || drawingMode == .move {
             // 拡大縮小を禁止してマーカーの起点と終点を選択しやすくする
             print(pdfView.maxScaleFactor) // 5.0
             print(pdfView.minScaleFactor) // 0.25
@@ -528,7 +528,7 @@ class DrawingViewController: UIViewController {
         for i in 0..<document.pageCount {
             if let page = document.page(at: i) {
                 // freeText
-                let annotations = page.annotations.filter({ "/\($0.type!)" == PDFAnnotationSubtype.stamp.rawValue })
+                let annotations = page.annotations.filter({ "/\($0.type!)" == PDFAnnotationSubtype.freeText.rawValue })
                 for annotation in annotations {
                     
                     annotationsInAllPages.append(annotation)
@@ -545,18 +545,24 @@ class DrawingViewController: UIViewController {
         if let page = self.pdfView.currentPage,
            let point = point,
            let unusedNumber = unusedNumber {
-            // 中央部に座標を指定
-            let imageStamp = ImageAnnotation(with: image, forBounds: CGRect(x: point.x, y: point.y, width: 15, height: 15), withProperties: [:])
-            imageStamp.contents = "\(unusedNumber)"
-            // 対象のページへ注釈を追加
-            page.addAnnotation(imageStamp)
+//            // 中央部に座標を指定
+//            let imageStamp = ImageAnnotation(with: image, forBounds: CGRect(x: point.x, y: point.y, width: 15, height: 15), withProperties: [:])
+//            imageStamp.contents = "\(unusedNumber)"
+//            // 対象のページへ注釈を追加
+//            page.addAnnotation(imageStamp)
             
-            //                        // freeText
-            //                        let freeText = PDFAnnotation(bounds: CGRect(x: point.x, y: point.y, width: 25, height: 25), forType: .freeText, withProperties: [:])
-            //                        freeText.contents = "\(self.annotationsInAllPages.count ?? 0)"
-            //                        freeText.color = .green
-            //                        // 対象のページへ注釈を追加
-            //                        page.addAnnotation(freeText)
+            // freeText
+            let font = UIFont.systemFont(ofSize: 15)
+            let size = "\(unusedNumber)".size(with: font)
+            // Create dictionary of annotation properties
+            let lineAttributes: [PDFAnnotationKey: Any] = [
+                .color: UIColor.green.withAlphaComponent(0.5),
+                .contents: "\(unusedNumber)",
+            ]
+
+            let freeText = PDFAnnotation(bounds: CGRect(x: point.x, y: point.y, width: size.width + 5, height: size.height + 5), forType: .freeText, withProperties: lineAttributes)
+            // 対象のページへ注釈を追加
+            page.addAnnotation(freeText)
         }
     }
     
@@ -705,7 +711,7 @@ class DrawingViewController: UIViewController {
             print(PDFAnnotationSubtype(rawValue: annotation.type!).rawValue)
             print(PDFAnnotationSubtype.stamp.rawValue.self)
             // 写真マーカー
-            if PDFAnnotationSubtype(rawValue: "/\(annotation.type!)") == PDFAnnotationSubtype.stamp.self {
+            if PDFAnnotationSubtype(rawValue: "/\(annotation.type!)") == PDFAnnotationSubtype.freeText.self && ((annotation.contents?.isEmpty) != nil)  {
                 // 対象のページの注釈を削除
                 page.removeAnnotation(annotation)
             }
@@ -720,7 +726,7 @@ class DrawingViewController: UIViewController {
             print(PDFAnnotationSubtype.stamp.rawValue.self)
             print(annotation.contents)
             // 写真マーカー
-            if PDFAnnotationSubtype(rawValue: "/\(annotation.type!)") == PDFAnnotationSubtype.stamp.self && ((annotation.contents?.isEmpty) != nil) {
+            if PDFAnnotationSubtype(rawValue: "/\(annotation.type!)") == PDFAnnotationSubtype.freeText.self && ((annotation.contents?.isEmpty) != nil) {
                 
             } else {
                 // 写真マーカー　以外
@@ -940,7 +946,12 @@ class DrawingViewController: UIViewController {
         self.present(alert, animated: true, completion: nil)
     }
 }
-
+extension String {
+    func size(with font: UIFont) -> CGSize {
+        let attributes = [NSAttributedString.Key.font : font]
+        return (self as NSString).size(withAttributes: attributes)
+    }
+}
 extension DrawingViewController: UIImagePickerControllerDelegate {
     /**
      画像が選択された時に呼ばれる.
