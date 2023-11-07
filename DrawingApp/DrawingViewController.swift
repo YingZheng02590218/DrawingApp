@@ -759,8 +759,46 @@ class DrawingViewController: UIViewController {
             // iCloud Container に保存した写真を削除する
             removePhotoToProjectFolder(contents: annotation.contents)
         } else {
-            
-            if drawingMode == .select {
+            if drawingMode == .arrow { // 矢印
+                print(annotation)
+                // 現在開いているページを取得
+                if let page = self.pdfView.currentPage,
+                   let linePoints = annotation.annotationKeyValues.filter( {$0.key == PDFAnnotationKey.linePoints as AnyHashable} ).first,
+                   let lineEndingStyles = annotation.annotationKeyValues.filter( {$0.key == PDFAnnotationKey.lineEndingStyles as AnyHashable} ).first,
+                   let color = annotation.annotationKeyValues.filter( {$0.key == PDFAnnotationKey.color as AnyHashable} ).first {
+                    print(lineEndingStyles)
+                    print(lineEndingStyles.value)
+                    print((lineEndingStyles.value as AnyObject))
+                    print((lineEndingStyles.value as AnyObject).object(at: 0))
+                    print((lineEndingStyles.value as AnyObject).object(at: 1))
+                    // TODO: PDF上の矢印Annotationのプロパティを変更しても、UIに反映されないため、Annotationを再度作成し、古いものを削除する
+                    //                    annotation.setValue([(lineEndingStyles.value as AnyObject).object(at: 1),
+                    //                                         (lineEndingStyles.value as AnyObject).object(at: 0)], forAnnotationKey: .lineEndingStyles)
+                    //                    pdfView.reloadInputViews()
+                    //                    pdfView.layoutDocumentView()
+                    
+                    // Create dictionary of annotation properties
+                    let lineAttributes: [PDFAnnotationKey: Any] = [
+                        .linePoints: [(linePoints.value as AnyObject).object(at: 0),
+                                      (linePoints.value as AnyObject).object(at: 1),
+                                      (linePoints.value as AnyObject).object(at: 2),
+                                      (linePoints.value as AnyObject).object(at: 3)],
+                        .lineEndingStyles: [(lineEndingStyles.value as AnyObject).object(at: 1),
+                                            (lineEndingStyles.value as AnyObject).object(at: 0)],
+                        .color: color.value,
+                        .border: annotation.border
+                    ]
+                    let lineAnnotation = PDFAnnotation(
+                        bounds: annotation.bounds,
+                        forType: .line,
+                        withProperties: lineAttributes
+                    )
+                    // Annotationを再度作成
+                    page.addAnnotation(lineAnnotation)
+                    // 古いものを削除する
+                    page.removeAnnotation(annotation)
+                }
+            } else if drawingMode == .select {
                 print(annotation)
                 // 選択したAnnotationの制御点を修正する
             } else if drawingMode == .eraser {
