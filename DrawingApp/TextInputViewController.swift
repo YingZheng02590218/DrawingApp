@@ -22,11 +22,13 @@ class TextInputViewController: UIViewController {
     @IBOutlet var okButton: UIButton!
     @IBOutlet var cancelButton: UIButton!
 
-    var fontSize: CGFloat = 8.0 {
+    var text: String?
+    var fontSize: CGFloat = 15.0 {
         didSet {
             fontSizeLabel.text = "\(Int(fontSize))"
         }
     }
+    var annotationIsEditing = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -35,8 +37,8 @@ class TextInputViewController: UIViewController {
         titleLabel.text = Title.textInput.description
         // フォントサイズ
         slider.value = Float(fontSize)
-        
-        textField.resignFirstResponder()
+        // 初期表示
+        textField.text = text
     }
     
     override func viewWillLayoutSubviews() {
@@ -91,11 +93,19 @@ class TextInputViewController: UIViewController {
         // ナビゲーションコントローラの最前面を取得
         if let viewController = navigationController.topViewController as? DrawingViewController { // 呼び出し元のビューコントローラーを取得
             self.dismiss(animated: true, completion: { [viewController] () -> Void in
-                // マーカーを追加する テキスト
-                viewController.addTextMarkerAnotation(
-                    inputText: self.textField.text,
-                    fontSize: self.fontSize
-                )
+                if self.annotationIsEditing {
+                    // マーカーを更新する テキスト
+                    viewController.updateTextMarkerAnotation(
+                        inputText: self.textField.text,
+                        fontSize: self.fontSize
+                    )
+                } else {
+                    // マーカーを追加する テキスト
+                    viewController.addTextMarkerAnotation(
+                        inputText: self.textField.text,
+                        fontSize: self.fontSize
+                    )
+                }
             })
         }
     }

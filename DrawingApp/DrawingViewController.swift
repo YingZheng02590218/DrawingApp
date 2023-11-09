@@ -52,7 +52,9 @@ class DrawingViewController: UIViewController {
     var endLocation: CGPoint?
     // 選択されたマーカー
     var selectedAnnotation: PDFAnnotation?
-    
+    // 編集中のAnnotation
+    var isEditingAnnotation: PDFAnnotation?
+
     var imagePickerController: UIImagePickerController!
     // 手書き　ツール
     var toolStackView: UIStackView?
@@ -542,7 +544,7 @@ class DrawingViewController: UIViewController {
         completion()
     }
     
-    // マーカーを追加する
+    // マーカーを追加する 写真
     func addMarkerAnotation() {
         // 現在開いているページを取得
         if let page = self.pdfView.currentPage,
@@ -733,7 +735,28 @@ class DrawingViewController: UIViewController {
             page.addAnnotation(freeText)
         }
     }
-    
+    // マーカーを更新する テキスト
+    func updateTextMarkerAnotation(inputText: String?, fontSize: CGFloat) {
+
+        if let isEditingAnnotation = isEditingAnnotation,
+           let inputText = inputText,
+           !inputText.isEmpty {
+            
+            // freeText
+            let font = UIFont.systemFont(ofSize: fontSize)
+            let size = "\(inputText)".size(with: font)
+            // 文字列の長さが変化したらboundsも更新しなければならない
+            isEditingAnnotation.bounds = CGRect(
+                x: isEditingAnnotation.bounds.origin.x,
+                y: isEditingAnnotation.bounds.origin.y,
+                width: size.width + 5,
+                height: size.height + 5
+            )
+            isEditingAnnotation.contents = inputText
+            isEditingAnnotation.setValue(UIColor.orange.withAlphaComponent(0.1), forAnnotationKey: .color)
+        }
+    }
+
     // 写真マーカーを削除する
     func removeMarkerAnotation(annotation: PDFAnnotation) {
         // 現在開いているページを取得
@@ -778,15 +801,32 @@ class DrawingViewController: UIViewController {
             return
         }
         // ダイアログ
-        showDialogForSucceed(message: "/\(annotation.type!) \n\(annotation.bounds)", color: annotation.color, frame: annotation.bounds) // Type: '/Square', Bounds: (214, 530) [78, 59]
+        // showDialogForSucceed(message: "/\(annotation.type!) \n\(annotation.bounds)", color: annotation.color, frame: annotation.bounds) // Type: '/Square', Bounds: (214, 530) [78, 59]
         // タップされたPDFAnnotationに対する処理
         // 編集中
         if isEditing {
-            print(annotation)
-            // マーカーを削除する
-            removeMarkerAnotation(annotation: annotation)
-            // iCloud Container に保存した写真を削除する
-            removePhotoToProjectFolder(contents: annotation.contents)
+            if drawingMode == .photoMarker { // 写真マーカー
+                // マーカーを削除する
+                removeMarkerAnotation(annotation: annotation)
+                // iCloud Container に保存した写真を削除する
+                removePhotoToProjectFolder(contents: annotation.contents)
+            } else if drawingMode == .text {
+                // 編集中のAnnotation
+                isEditingAnnotation = annotation
+                // ポップアップを表示させる
+                if let viewController = UIStoryboard(
+                    name: "TextInputViewController",
+                    bundle: nil
+                ).instantiateViewController(
+                    withIdentifier: "TextInputViewController"
+                ) as? TextInputViewController {
+                    viewController.modalPresentationStyle = .overCurrentContext
+                    viewController.modalTransitionStyle = .crossDissolve
+                    viewController.annotationIsEditing = true
+                    viewController.text = annotation.contents
+                    present(viewController, animated: true, completion: nil)
+                }
+            }
         } else {
             if drawingMode == .arrow { // 矢印
                 print(annotation)
