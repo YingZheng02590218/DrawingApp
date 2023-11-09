@@ -14,7 +14,7 @@ import UIKit
 class DrawingViewController: UIViewController {
     
     // セグメントコントロール
-    let segmentedControl = UISegmentedControl(items: ["写真マーカー", "手書き", "矢印", "直線", "四角", "円", "移動", "選択", "消しゴム"])
+    let segmentedControl = UISegmentedControl(items: ["写真マーカー", "手書き", "矢印", "直線", "四角", "円", "テキスト", "移動", "選択", "消しゴム"])
     // モード
     var drawingMode: DrawingMode = .photoMarker
     
@@ -372,6 +372,7 @@ class DrawingViewController: UIViewController {
         case line
         case rectangle
         case circle
+        case text
         case move
         case select
         case eraser
@@ -391,10 +392,12 @@ class DrawingViewController: UIViewController {
             case 5:
                 self = .circle
             case 6:
-                self = .move
+                self = .text
             case 7:
-                self = .select
+                self = .move
             case 8:
+                self = .select
+            case 9:
                 self = .eraser
             default:
                 self = .move
@@ -703,7 +706,34 @@ class DrawingViewController: UIViewController {
             page.addAnnotation(newAnnotation)
         }
     }
+    
+    // マーカーを追加する テキスト
+    func addTextMarkerAnotation(inputText: String?, fontSize: CGFloat) {
+        // 現在開いているページを取得
+        if let page = self.pdfView.currentPage,
+           let point = point,
+           let inputText = inputText,
+           !inputText.isEmpty {
+            
+            // freeText
+            let font = UIFont.systemFont(ofSize: fontSize)
+            let size = "\(inputText)".size(with: font)
+            // Create dictionary of annotation properties
+            let attributes: [PDFAnnotationKey: Any] = [
+                .color: UIColor.systemPink.withAlphaComponent(0.1),
+                .contents: "\(inputText)",
+            ]
 
+            let freeText = PDFAnnotation(
+                bounds: CGRect(x: point.x, y: point.y, width: size.width + 5, height: size.height + 5), 
+                forType: .freeText,
+                withProperties: attributes
+            )
+            // 対象のページへ注釈を追加
+            page.addAnnotation(freeText)
+        }
+    }
+    
     // 写真マーカーを削除する
     func removeMarkerAnotation(annotation: PDFAnnotation) {
         // 現在開いているページを取得
@@ -1160,6 +1190,25 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
                             self.showPickingPhotoScreen()
                         } else {
                             print("SF Symbols に画像が存在しない")
+                        }
+                    }
+                } else if drawingMode == .text {
+                    // 現在開いているページを取得
+                    if let page = self.pdfView.currentPage {
+                        // UIViewからPDFの座標へ変換する
+                        let point = self.pdfView.convert(sender.location(in: self.pdfView), to: page) // 座標系がUIViewとは異なるので気をつけましょう。
+                        // PDFのタップされた位置の座標
+                        self.point = point
+                        // ポップアップを表示させる
+                        if let viewController = UIStoryboard(
+                            name: "TextInputViewController",
+                            bundle: nil
+                        ).instantiateViewController(
+                            withIdentifier: "TextInputViewController"
+                        ) as? TextInputViewController {
+                            viewController.modalPresentationStyle = .overCurrentContext
+                            viewController.modalTransitionStyle = .crossDissolve
+                            present(viewController, animated: true, completion: nil)
                         }
                     }
                 }
