@@ -39,6 +39,7 @@ class TextInputViewController: UIViewController {
         slider.value = Float(fontSize)
         // 初期表示
         textField.text = text
+        textField.delegate = self
     }
     
     override func viewWillLayoutSubviews() {
@@ -113,6 +114,14 @@ class TextInputViewController: UIViewController {
     @IBAction func cancelButtonTapped(_ sender: Any) {
         
         dismiss(animated: true, completion: nil)
+    }
+}
+
+extension TextInputViewController: UITextFieldDelegate {
+    // リターンキー押下でキーボードを閉じる
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        return true
     }
 }
 
