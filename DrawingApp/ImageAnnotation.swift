@@ -42,3 +42,5 @@ class ImageAnnotation: PDFAnnotation {
     }
 
 }
+class PhotoAnnotation: PDFAnnotation {
+}

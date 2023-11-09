@@ -563,7 +563,7 @@ class DrawingViewController: UIViewController {
                 .contents: "\(unusedNumber)",
             ]
 
-            let freeText = PDFAnnotation(bounds: CGRect(x: point.x, y: point.y, width: size.width + 5, height: size.height + 5), forType: .freeText, withProperties: lineAttributes)
+            let freeText = PhotoAnnotation(bounds: CGRect(x: point.x, y: point.y, width: size.width + 5, height: size.height + 5), forType: .freeText, withProperties: lineAttributes)
             // 対象のページへ注釈を追加
             page.addAnnotation(freeText)
         }
@@ -741,7 +741,7 @@ class DrawingViewController: UIViewController {
             print(PDFAnnotationSubtype(rawValue: annotation.type!).rawValue)
             print(PDFAnnotationSubtype.stamp.rawValue.self)
             // 写真マーカー
-            if PDFAnnotationSubtype(rawValue: "/\(annotation.type!)") == PDFAnnotationSubtype.freeText.self && ((annotation.contents?.isEmpty) != nil)  {
+            if annotation.isKind(of: PhotoAnnotation.self) && PDFAnnotationSubtype(rawValue: "/\(annotation.type!)") == PDFAnnotationSubtype.freeText.self && ((annotation.contents?.isEmpty) != nil)  {
                 // 対象のページの注釈を削除
                 page.removeAnnotation(annotation)
             }
@@ -756,8 +756,7 @@ class DrawingViewController: UIViewController {
             print(PDFAnnotationSubtype.stamp.rawValue.self)
             print(annotation.contents)
             // 写真マーカー
-            if PDFAnnotationSubtype(rawValue: "/\(annotation.type!)") == PDFAnnotationSubtype.freeText.self && ((annotation.contents?.isEmpty) != nil) {
-                
+            if annotation.isKind(of: PhotoAnnotation.self) && PDFAnnotationSubtype(rawValue: "/\(annotation.type!)") == PDFAnnotationSubtype.freeText.self && ((annotation.contents?.isEmpty) != nil) {
             } else {
                 // 写真マーカー　以外
                 // 対象のページの注釈を削除
