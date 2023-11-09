@@ -60,7 +60,9 @@ class DrawingViewController: UIViewController {
     var toolStackView: UIStackView?
     // 手書き　カラー
     var colorStackView: UIStackView?
-    
+    // 破線のパターン
+    var dashPattern: DashPattern = .pattern1
+
 //    let canvas = PKCanvasView()
 //    var crayon = PKInkingTool(.pencil, color: Colors.babyBlue.getColor(), width: 70)
 //    var pencil = PKInkingTool(.pencil, color: Colors.babyBlue.getColor(), width: 10)
@@ -335,7 +337,7 @@ class DrawingViewController: UIViewController {
     func segmentedControlChanged() {
         drawingMode = DrawingMode(index: segmentedControl.selectedSegmentIndex)
         
-        if drawingMode == .rectangle || drawingMode == .circle || drawingMode == .move {
+        if drawingMode == .arrow || drawingMode == .line || drawingMode == .rectangle || drawingMode == .circle || drawingMode == .move {
             // 拡大縮小を禁止してマーカーの起点と終点を選択しやすくする
             print(pdfView.maxScaleFactor) // 5.0
             print(pdfView.minScaleFactor) // 0.25
@@ -406,6 +408,48 @@ class DrawingViewController: UIViewController {
             }
         }
     }
+    
+    enum DashPattern {
+        case pattern1
+        case pattern2
+        case pattern3
+        case pattern4
+        case pattern5
+
+        var style: [CGFloat] {
+            switch self {
+            case .pattern1:
+                return [1.0]
+            case .pattern2:
+                return [30.0, 10.0]
+            case .pattern3:
+                return [40.0, 20.0]
+            case .pattern4:
+                return [50.0, 5.0, 5.0, 5.0]
+            case .pattern5:
+                return [50.0, 5.0, 5.0, 5.0, 5.0, 5.0]
+            }
+        }
+    }
+    
+    @IBAction func dashPatternChanged(_ sender: UIButton) {
+        
+        switch sender.tag {
+        case 1:
+            dashPattern = .pattern1
+        case 2:
+            dashPattern = .pattern2
+        case 3:
+            dashPattern = .pattern3
+        case 4:
+            dashPattern = .pattern4
+        case 5:
+            dashPattern = .pattern5
+        default:
+            break
+        }
+    }
+    
     
     // ダイアログ
     func showDialogForSucceed(message: String, color: UIColor, frame: CGRect) {
@@ -587,8 +631,9 @@ class DrawingViewController: UIViewController {
             
             let border = PDFBorder()
             border.lineWidth = 10
-            border.style = .dashed
-            
+            border.style = dashPattern == .pattern1 ? .solid : .dashed
+            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
+
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
                 .linePoints: [beganLocation.x, beganLocation.y, endLocation.x, endLocation.y],
@@ -622,8 +667,9 @@ class DrawingViewController: UIViewController {
             
             let border = PDFBorder()
             border.lineWidth = 10
-            border.style = .dashed
-            
+            border.style = dashPattern == .pattern1 ? .solid : .dashed
+            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
+
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
                 .linePoints: [beganLocation.x, beganLocation.y, endLocation.x, endLocation.y],
@@ -656,9 +702,10 @@ class DrawingViewController: UIViewController {
             let height = beganLocation.y > endLocation.y ? beganLocation.y - endLocation.y : endLocation.y - beganLocation.y
             
             let border = PDFBorder()
-            border.lineWidth = 2.0
-            border.style = .dashed
-            
+            border.lineWidth = 5.0
+            border.style = dashPattern == .pattern1 ? .solid : .dashed
+            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
+
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
                 .color: UIColor.green,
@@ -691,8 +738,9 @@ class DrawingViewController: UIViewController {
             
             let border = PDFBorder()
             border.lineWidth = 2.0
-            border.style = .dashed
-            
+            border.style = dashPattern == .pattern1 ? .solid : .dashed
+            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
+
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
                 .color: UIColor.green,

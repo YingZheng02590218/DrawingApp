@@ -35,15 +35,67 @@
                                     <constraint firstAttribute="width" secondItem="wyC-tR-cRF" secondAttribute="height" multiplier="223:295" id="9Wc-JQ-b5g"/>
                                 </constraints>
                             </imageView>
+                            <stackView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="vb2-Qg-nPx">
+                                <rect key="frame" x="71.333333333333343" y="79" width="301.66666666666663" height="50"/>
+                                <subviews>
+                                    <button opaque="NO" tag="1" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="3Hc-Bz-wj2">
+                                        <rect key="frame" x="0.0" y="0.0" width="60.333333333333336" height="50"/>
+                                        <state key="normal" title="Button"/>
+                                        <buttonConfiguration key="configuration" style="plain" title="style1"/>
+                                        <connections>
+                                            <action selector="dashPatternChanged:" destination="Y6W-OH-hqX" eventType="touchUpInside" id="JXj-Mx-7S7"/>
+                                        </connections>
+                                    </button>
+                                    <button opaque="NO" tag="2" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="cHr-4T-ega">
+                                        <rect key="frame" x="60.333333333333329" y="0.0" width="60.333333333333329" height="50"/>
+                                        <state key="normal" title="Button"/>
+                                        <buttonConfiguration key="configuration" style="plain" title="style2"/>
+                                        <connections>
+                                            <action selector="dashPatternChanged:" destination="Y6W-OH-hqX" eventType="touchUpInside" id="uiZ-dD-fdu"/>
+                                        </connections>
+                                    </button>
+                                    <button opaque="NO" tag="3" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="NuD-qa-AMJ">
+                                        <rect key="frame" x="120.66666666666667" y="0.0" width="60.333333333333329" height="50"/>
+                                        <state key="normal" title="Button"/>
+                                        <buttonConfiguration key="configuration" style="plain" title="style3"/>
+                                        <connections>
+                                            <action selector="dashPatternChanged:" destination="Y6W-OH-hqX" eventType="touchUpInside" id="U0K-uV-uxf"/>
+                                        </connections>
+                                    </button>
+                                    <button opaque="NO" tag="4" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pXS-Db-Ka5">
+                                        <rect key="frame" x="181" y="0.0" width="60.333333333333343" height="50"/>
+                                        <state key="normal" title="Button"/>
+                                        <buttonConfiguration key="configuration" style="plain" title="style4"/>
+                                        <connections>
+                                            <action selector="dashPatternChanged:" destination="Y6W-OH-hqX" eventType="touchUpInside" id="bt0-dk-07Y"/>
+                                        </connections>
+                                    </button>
+                                    <button opaque="NO" tag="5" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Zdb-rd-fXd">
+                                        <rect key="frame" x="241.3333333333334" y="0.0" width="60.333333333333343" height="50"/>
+                                        <state key="normal" title="Button"/>
+                                        <buttonConfiguration key="configuration" style="plain" title="style5"/>
+                                        <connections>
+                                            <action selector="dashPatternChanged:" destination="Y6W-OH-hqX" eventType="touchUpInside" id="bUt-VE-BrE"/>
+                                        </connections>
+                                    </button>
+                                </subviews>
+                                <color key="backgroundColor" systemColor="opaqueSeparatorColor"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="50" id="v1Q-Yx-K17"/>
+                                </constraints>
+                            </stackView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="vDu-zF-Fre"/>
                         <color key="backgroundColor" systemColor="systemPurpleColor"/>
                         <constraints>
                             <constraint firstItem="vDu-zF-Fre" firstAttribute="trailing" secondItem="wyC-tR-cRF" secondAttribute="trailing" id="4b4-Sc-53h"/>
+                            <constraint firstItem="J4D-Iu-fd1" firstAttribute="trailing" secondItem="vb2-Qg-nPx" secondAttribute="trailing" constant="10" id="4qi-1T-B0E"/>
                             <constraint firstItem="vDu-zF-Fre" firstAttribute="bottom" secondItem="R6r-5K-aKJ" secondAttribute="bottom" constant="15" id="9Fd-TZ-dKi"/>
+                            <constraint firstItem="vb2-Qg-nPx" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="R6r-5K-aKJ" secondAttribute="trailing" id="CVf-M6-tu0"/>
                             <constraint firstItem="J4D-Iu-fd1" firstAttribute="leading" secondItem="vDu-zF-Fre" secondAttribute="leading" constant="10" id="Crd-Mn-y69"/>
                             <constraint firstItem="vDu-zF-Fre" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="R6r-5K-aKJ" secondAttribute="trailing" constant="5" id="Hme-5C-GeD"/>
                             <constraint firstItem="wyC-tR-cRF" firstAttribute="height" relation="lessThanOrEqual" secondItem="vDu-zF-Fre" secondAttribute="height" multiplier="0.5" id="LPK-e5-j9D"/>
+                            <constraint firstItem="vb2-Qg-nPx" firstAttribute="top" secondItem="J4D-Iu-fd1" secondAttribute="top" constant="10" id="NgB-yA-a1V"/>
                             <constraint firstItem="vDu-zF-Fre" firstAttribute="trailing" secondItem="J4D-Iu-fd1" secondAttribute="trailing" constant="10" id="POp-Dr-YWq"/>
                             <constraint firstItem="J4D-Iu-fd1" firstAttribute="top" secondItem="vDu-zF-Fre" secondAttribute="top" constant="10" id="PYF-nf-E67"/>
                             <constraint firstItem="R6r-5K-aKJ" firstAttribute="top" secondItem="vDu-zF-Fre" secondAttribute="top" constant="15" id="Wkj-QN-lFo"/>
@@ -65,6 +117,9 @@
         </scene>
     </scenes>
     <resources>
+        <systemColor name="opaqueSeparatorColor">
+            <color red="0.77647058820000003" green="0.77647058820000003" blue="0.7843137255" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </systemColor>
         <systemColor name="systemIndigoColor">
             <color red="0.34509803919999998" green="0.33725490200000002" blue="0.83921568629999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
