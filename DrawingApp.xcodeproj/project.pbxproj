@@ -19,6 +19,9 @@
 		F91345282ACA99870034AD03 /* ImageAnnotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F91345272ACA99870034AD03 /* ImageAnnotation.swift */; };
 		F913452A2ACA9A9D0034AD03 /* DrawingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F91345292ACA9A9D0034AD03 /* DrawingViewController.swift */; };
 		F913452C2ACA9E5D0034AD03 /* DrawingViewController.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F913452B2ACA9E5D0034AD03 /* DrawingViewController.storyboard */; };
+		F921DAF32AFC6ABD009500EC /* TextInputViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F921DAF22AFC6ABD009500EC /* TextInputViewController.swift */; };
+		F921DAF52AFC6BF1009500EC /* UIView+extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F921DAF42AFC6BF1009500EC /* UIView+extension.swift */; };
+		F921DAF72AFC6C2F009500EC /* TextInputViewController.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F921DAF62AFC6C2F009500EC /* TextInputViewController.storyboard */; };
 		F924861F2AF2575F007A1EC4 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F924861E2AF2575F007A1EC4 /* Colors.xcassets */; };
 		F963ED622ABC3AF100B41C99 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F963ED612ABC3AF100B41C99 /* AppDelegate.swift */; };
 		F963ED642ABC3AF100B41C99 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F963ED632ABC3AF100B41C99 /* SceneDelegate.swift */; };
@@ -44,6 +47,9 @@
 		F91345272ACA99870034AD03 /* ImageAnnotation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageAnnotation.swift; sourceTree = "<group>"; };
 		F91345292ACA9A9D0034AD03 /* DrawingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingViewController.swift; sourceTree = "<group>"; };
 		F913452B2ACA9E5D0034AD03 /* DrawingViewController.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = DrawingViewController.storyboard; sourceTree = "<group>"; };
+		F921DAF22AFC6ABD009500EC /* TextInputViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextInputViewController.swift; sourceTree = "<group>"; };
+		F921DAF42AFC6BF1009500EC /* UIView+extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+extension.swift"; sourceTree = "<group>"; };
+		F921DAF62AFC6C2F009500EC /* TextInputViewController.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = TextInputViewController.storyboard; sourceTree = "<group>"; };
 		F924861E2AF2575F007A1EC4 /* Colors.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Colors.xcassets; sourceTree = "<group>"; };
 		F963ED5E2ABC3AF100B41C99 /* DrawingApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DrawingApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F963ED612ABC3AF100B41C99 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -116,6 +122,9 @@
 				F911B5E82AF3353100A645DA /* HandWritting */,
 				F91345292ACA9A9D0034AD03 /* DrawingViewController.swift */,
 				F913452B2ACA9E5D0034AD03 /* DrawingViewController.storyboard */,
+				F921DAF22AFC6ABD009500EC /* TextInputViewController.swift */,
+				F921DAF62AFC6C2F009500EC /* TextInputViewController.storyboard */,
+				F921DAF42AFC6BF1009500EC /* UIView+extension.swift */,
 				F963ED6A2ABC3AF200B41C99 /* Assets.xcassets */,
 				F924861E2AF2575F007A1EC4 /* Colors.xcassets */,
 				F963ED6C2ABC3AF200B41C99 /* LaunchScreen.storyboard */,
@@ -184,6 +193,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F963ED6E2ABC3AF200B41C99 /* LaunchScreen.storyboard in Resources */,
+				F921DAF72AFC6C2F009500EC /* TextInputViewController.storyboard in Resources */,
 				F91345262ACA8B380034AD03 /* IconTableViewCell.xib in Resources */,
 				F913452C2ACA9E5D0034AD03 /* DrawingViewController.storyboard in Resources */,
 				F963ED6B2ABC3AF200B41C99 /* Assets.xcassets in Resources */,
@@ -203,6 +213,7 @@
 				F963ED662ABC3AF100B41C99 /* ViewController.swift in Sources */,
 				F911B5DB2AF3332000A645DA /* UIBezierPath+extension.swift in Sources */,
 				F911B5E52AF3345300A645DA /* PDFAnnotationWithPath.swift in Sources */,
+				F921DAF52AFC6BF1009500EC /* UIView+extension.swift in Sources */,
 				F913452A2ACA9A9D0034AD03 /* DrawingViewController.swift in Sources */,
 				F911B5DF2AF3337500A645DA /* PDFDrawer.swift in Sources */,
 				F911B5E72AF3347300A645DA /* PDFPage+Selection.swift in Sources */,
@@ -212,6 +223,7 @@
 				F91345282ACA99870034AD03 /* ImageAnnotation.swift in Sources */,
 				F911B5DD2AF3334C00A645DA /* DrawingGestureRecognizer.swift in Sources */,
 				F963ED622ABC3AF100B41C99 /* AppDelegate.swift in Sources */,
+				F921DAF32AFC6ABD009500EC /* TextInputViewController.swift in Sources */,
 				F911B5E12AF333D500A645DA /* DrawingAnnotation.swift in Sources */,
 				F963ED642ABC3AF100B41C99 /* SceneDelegate.swift in Sources */,
 				F963ED782AC2D65700B41C99 /* BackupManager.swift in Sources */,
