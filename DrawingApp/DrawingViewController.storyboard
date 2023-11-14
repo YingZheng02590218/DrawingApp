@@ -84,6 +84,30 @@
                                     <constraint firstAttribute="height" constant="50" id="v1Q-Yx-K17"/>
                                 </constraints>
                             </stackView>
+                            <stackView opaque="NO" contentMode="scaleToFill" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UIj-2F-UbC" userLabel="Undo Stack View">
+                                <rect key="frame" x="96" y="371" width="130.66666666666669" height="50"/>
+                                <subviews>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="tKD-AS-PFr">
+                                        <rect key="frame" x="0.0" y="0.0" width="65.333333333333329" height="50"/>
+                                        <state key="normal" title="Button"/>
+                                        <buttonConfiguration key="configuration" style="plain" title="Undo"/>
+                                        <connections>
+                                            <action selector="undoTapped:" destination="Y6W-OH-hqX" eventType="touchUpInside" id="fSA-m6-6mL"/>
+                                        </connections>
+                                    </button>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="9FF-gx-yww">
+                                        <rect key="frame" x="65.333333333333371" y="0.0" width="65.333333333333314" height="50"/>
+                                        <state key="normal" title="Button"/>
+                                        <buttonConfiguration key="configuration" style="plain" title="Redo"/>
+                                        <connections>
+                                            <action selector="redoTapped:" destination="Y6W-OH-hqX" eventType="touchUpInside" id="PHf-VV-4vk"/>
+                                        </connections>
+                                    </button>
+                                </subviews>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="50" id="kEW-ed-cTc"/>
+                                </constraints>
+                            </stackView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="vDu-zF-Fre"/>
                         <color key="backgroundColor" systemColor="systemPurpleColor"/>
@@ -96,10 +120,12 @@
                             <constraint firstItem="vDu-zF-Fre" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="R6r-5K-aKJ" secondAttribute="trailing" constant="5" id="Hme-5C-GeD"/>
                             <constraint firstItem="wyC-tR-cRF" firstAttribute="height" relation="lessThanOrEqual" secondItem="vDu-zF-Fre" secondAttribute="height" multiplier="0.5" id="LPK-e5-j9D"/>
                             <constraint firstItem="vb2-Qg-nPx" firstAttribute="top" secondItem="J4D-Iu-fd1" secondAttribute="top" constant="10" id="NgB-yA-a1V"/>
+                            <constraint firstItem="UIj-2F-UbC" firstAttribute="trailing" secondItem="J4D-Iu-fd1" secondAttribute="trailing" constant="10" id="O4H-Fs-2Kk"/>
                             <constraint firstItem="vDu-zF-Fre" firstAttribute="trailing" secondItem="J4D-Iu-fd1" secondAttribute="trailing" constant="10" id="POp-Dr-YWq"/>
                             <constraint firstItem="J4D-Iu-fd1" firstAttribute="top" secondItem="vDu-zF-Fre" secondAttribute="top" constant="10" id="PYF-nf-E67"/>
                             <constraint firstItem="R6r-5K-aKJ" firstAttribute="top" secondItem="vDu-zF-Fre" secondAttribute="top" constant="15" id="Wkj-QN-lFo"/>
                             <constraint firstItem="R6r-5K-aKJ" firstAttribute="leading" secondItem="vDu-zF-Fre" secondAttribute="leading" constant="15" id="YIp-PS-CtZ"/>
+                            <constraint firstItem="UIj-2F-UbC" firstAttribute="top" secondItem="vb2-Qg-nPx" secondAttribute="bottom" id="d1P-z1-DKP"/>
                             <constraint firstItem="wyC-tR-cRF" firstAttribute="width" relation="lessThanOrEqual" secondItem="vDu-zF-Fre" secondAttribute="width" multiplier="0.5" id="iPc-yD-NnK"/>
                             <constraint firstItem="vDu-zF-Fre" firstAttribute="bottom" secondItem="wyC-tR-cRF" secondAttribute="bottom" id="l3J-ya-D1R"/>
                             <constraint firstItem="vDu-zF-Fre" firstAttribute="bottom" secondItem="J4D-Iu-fd1" secondAttribute="bottom" constant="10" id="pJ7-vy-Bc8"/>
@@ -109,6 +135,8 @@
                         <outlet property="imageView" destination="wyC-tR-cRF" id="e5K-om-mAq"/>
                         <outlet property="pdfThumbnailView" destination="R6r-5K-aKJ" id="6Lo-KX-S4F"/>
                         <outlet property="pdfView" destination="J4D-Iu-fd1" id="W4e-uc-3eC"/>
+                        <outlet property="redoButton" destination="9FF-gx-yww" id="Hbc-6p-hZ5"/>
+                        <outlet property="undoButton" destination="tKD-AS-PFr" id="OHo-tm-0aA"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Ief-a0-LHa" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
@@ -118,16 +146,16 @@
     </scenes>
     <resources>
         <systemColor name="opaqueSeparatorColor">
-            <color red="0.77647058820000003" green="0.77647058820000003" blue="0.7843137255" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.77647058823529413" green="0.77647058823529413" blue="0.78431372549019607" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemIndigoColor">
-            <color red="0.34509803919999998" green="0.33725490200000002" blue="0.83921568629999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.34509803921568627" green="0.33725490196078434" blue="0.83921568627450982" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemPurpleColor">
-            <color red="0.68627450980000004" green="0.32156862749999998" blue="0.87058823529999996" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.68627450980392157" green="0.32156862745098042" blue="0.87058823529411766" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemTealColor">
-            <color red="0.18823529410000001" green="0.69019607839999997" blue="0.78039215689999997" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.18823529411764706" green="0.69019607843137254" blue="0.7803921568627451" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
     </resources>
 </document>

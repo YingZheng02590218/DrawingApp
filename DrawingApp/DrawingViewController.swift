@@ -76,6 +76,17 @@ class DrawingViewController: UIViewController {
 
     let pdfDrawingGestureRecognizer = DrawingGestureRecognizer()
 
+    // 変更前
+    var before: PDFAnnotation?
+    // Undo Redo
+    let undoRedoManager = UndoRedoManager()
+    // Undo Redo が可能なAnnotation
+    private var editingAnnotations: [PDFAnnotation]?
+
+    @IBOutlet var undoButton: UIButton!
+    @IBOutlet var redoButton: UIButton!
+
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -178,6 +189,13 @@ class DrawingViewController: UIViewController {
         
         // 手書きパレット
         createButtons()
+    }
+    
+    override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
+        // ボタン　活性状態
+        undoButton.isEnabled = undoRedoManager.canUndo()
+        redoButton.isEnabled = undoRedoManager.canRedo()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -608,10 +626,21 @@ class DrawingViewController: UIViewController {
                 .color: UIColor.green.withAlphaComponent(0.5),
                 .contents: "\(unusedNumber)",
             ]
-
+            
             let freeText = PhotoAnnotation(bounds: CGRect(x: point.x, y: point.y, width: size.width + 5, height: size.height + 5), forType: .freeText, withProperties: lineAttributes)
+            // UUID
+            freeText.userName = UUID().uuidString
             // 対象のページへ注釈を追加
             page.addAnnotation(freeText)
+            // Undo Redo
+            undoRedoManager.addAnnotation(freeText)
+            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+            })
+            // ボタン　活性状態
+            undoButton.isEnabled = undoRedoManager.canUndo()
+            redoButton.isEnabled = undoRedoManager.canRedo()
         }
     }
     
@@ -647,8 +676,42 @@ class DrawingViewController: UIViewController {
                 forType: .line,
                 withProperties: lineAttributes
             )
+            // UUID
+            lineAnnotation.userName = UUID().uuidString
             page.addAnnotation(lineAnnotation)
+            
+            // Undo Redo
+            undoRedoManager.addAnnotation(lineAnnotation)
+            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+            })            
+            // ボタン　活性状態
+            undoButton.isEnabled = undoRedoManager.canUndo()
+            redoButton.isEnabled = undoRedoManager.canRedo()
         }
+    }
+    
+    @IBAction func undoTapped(_ sender: Any) {
+        
+        undoRedoManager.undo(completion: { didUndoAnnotations in
+            // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+            self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+        })
+        // ボタン　活性状態
+        undoButton.isEnabled = undoRedoManager.canUndo()
+        redoButton.isEnabled = undoRedoManager.canRedo()
+    }
+    
+    @IBAction func redoTapped(_ sender: Any) {
+        
+        undoRedoManager.redo(completion: { didUndoAnnotations in
+            // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+            self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+        })
+        // ボタン　活性状態
+        undoButton.isEnabled = undoRedoManager.canUndo()
+        redoButton.isEnabled = undoRedoManager.canRedo()
     }
     
     // マーカーを追加する 直線
@@ -683,7 +746,19 @@ class DrawingViewController: UIViewController {
                 forType: .line,
                 withProperties: lineAttributes
             )
+            // UUID
+            lineAnnotation.userName = UUID().uuidString
             page.addAnnotation(lineAnnotation)
+            
+            // Undo Redo
+            undoRedoManager.addAnnotation(lineAnnotation)
+            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+            })            
+            // ボタン　活性状態
+            undoButton.isEnabled = undoRedoManager.canUndo()
+            redoButton.isEnabled = undoRedoManager.canRedo()
         }
     }
     
@@ -718,7 +793,19 @@ class DrawingViewController: UIViewController {
              forType: .square,
              withProperties: lineAttributes
             )
+            // UUID
+            newAnnotation.userName = UUID().uuidString
             page.addAnnotation(newAnnotation)
+            
+            // Undo Redo
+            undoRedoManager.addAnnotation(newAnnotation)
+            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+            })            
+            // ボタン　活性状態
+            undoButton.isEnabled = undoRedoManager.canUndo()
+            redoButton.isEnabled = undoRedoManager.canRedo()
         }
     }
     
@@ -753,7 +840,19 @@ class DrawingViewController: UIViewController {
              forType: .circle,
              withProperties: lineAttributes
             )
+            // UUID
+            newAnnotation.userName = UUID().uuidString
             page.addAnnotation(newAnnotation)
+            
+            // Undo Redo
+            undoRedoManager.addAnnotation(newAnnotation)
+            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+            })            
+            // ボタン　活性状態
+            undoButton.isEnabled = undoRedoManager.canUndo()
+            redoButton.isEnabled = undoRedoManager.canRedo()
         }
     }
     
@@ -773,35 +872,124 @@ class DrawingViewController: UIViewController {
                 .color: UIColor.systemPink.withAlphaComponent(0.1),
                 .contents: "\(inputText)",
             ]
-
+            
             let freeText = PDFAnnotation(
-                bounds: CGRect(x: point.x, y: point.y, width: size.width + 5, height: size.height + 5), 
+                bounds: CGRect(x: point.x, y: point.y, width: size.width + 5, height: size.height + 5),
                 forType: .freeText,
                 withProperties: attributes
             )
+            // UUID
+            freeText.userName = UUID().uuidString
             // 対象のページへ注釈を追加
             page.addAnnotation(freeText)
+            
+            // Undo Redo
+            undoRedoManager.addAnnotation(freeText)
+            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+            })
+            // ボタン　活性状態
+            undoButton.isEnabled = undoRedoManager.canUndo()
+            redoButton.isEnabled = undoRedoManager.canRedo()
         }
     }
+    
     // マーカーを更新する テキスト
     func updateTextMarkerAnotation(inputText: String?, fontSize: CGFloat) {
-
-        if let isEditingAnnotation = isEditingAnnotation,
-           let inputText = inputText,
-           !inputText.isEmpty {
+        
+        // 現在開いているページを取得
+        if let page = pdfView.currentPage {
             
-            // freeText
-            let font = UIFont.systemFont(ofSize: fontSize)
-            let size = "\(inputText)".size(with: font)
-            // 文字列の長さが変化したらboundsも更新しなければならない
-            isEditingAnnotation.bounds = CGRect(
-                x: isEditingAnnotation.bounds.origin.x,
-                y: isEditingAnnotation.bounds.origin.y,
-                width: size.width + 5,
-                height: size.height + 5
-            )
-            isEditingAnnotation.contents = inputText
-            isEditingAnnotation.setValue(UIColor.orange.withAlphaComponent(0.1), forAnnotationKey: .color)
+            guard let isEditingAnnotation = isEditingAnnotation else { return }
+            // 変更前
+            before = isEditingAnnotation
+            // 変更後
+            let after = isEditingAnnotation.copy() as! PDFAnnotation
+            after.bounds = isEditingAnnotation.bounds
+            after.page = isEditingAnnotation.page
+
+            if let before = before,
+               let inputText = inputText,
+               !inputText.isEmpty {
+                
+                // freeText
+                let font = UIFont.systemFont(ofSize: fontSize)
+                let size = "\(inputText)".size(with: font)
+                // 文字列の長さが変化したらboundsも更新しなければならない
+                after.bounds = CGRect(
+                    x: after.bounds.origin.x,
+                    y: after.bounds.origin.y,
+                    width: size.width + 5,
+                    height: size.height + 5
+                )
+                after.contents = inputText
+                after.setValue(UIColor.orange.withAlphaComponent(0.1), forAnnotationKey: .color)
+                after.page = before.page
+                print(before.userName, after.userName, UUID().uuidString)
+                print(before.page, after.page, before.page == after.page)
+                // UUID
+                after.userName = UUID().uuidString
+                // Annotationを再度作成
+                page.addAnnotation(after)
+                // 古いものを削除する
+                //                    page.removeAnnotation(before)
+                // 初期化
+                self.before = nil
+                // Undo Redo 更新
+                undoRedoManager.updateAnnotation(before: before, after: after)
+                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                    self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                })
+                // ボタン　活性状態
+                undoButton.isEnabled = undoRedoManager.canUndo()
+                redoButton.isEnabled = undoRedoManager.canRedo()
+            }
+        }
+    }
+    
+    // マーカーを更新する 移動
+    func updateMarkerAnotation() {
+        
+        // 現在開いているページを取得
+        if let page = pdfView.currentPage {
+            // 選択しているAnnotation 移動中のAnnotation
+            guard let currentlySelectedAnnotation = currentlySelectedAnnotation else { return }
+            // 変更後
+            let after = currentlySelectedAnnotation.copy() as! PDFAnnotation
+            after.bounds = currentlySelectedAnnotation.bounds
+            after.page = currentlySelectedAnnotation.page
+            
+            if let before = before {
+                after.bounds = CGRect(
+                    x: after.bounds.origin.x,
+                    y: after.bounds.origin.y,
+                    width: after.bounds.size.width,
+                    height: after.bounds.size.height
+                )
+                after.contents = before.contents
+                after.setValue(UIColor.green.withAlphaComponent(0.1), forAnnotationKey: .color)
+                after.page = before.page
+                
+                // UUID
+                after.userName = UUID().uuidString
+                // Annotationを再度作成
+                page.addAnnotation(after)
+                // 古いものを削除する
+                 page.removeAnnotation(before)
+                // 初期化
+                self.before = nil
+                // Undo Redo 更新
+                undoRedoManager.updateAnnotation(before: before, after: after)
+                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                    self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                })
+                // ボタン　活性状態
+                undoButton.isEnabled = undoRedoManager.canUndo()
+                redoButton.isEnabled = undoRedoManager.canRedo()
+            }
         }
     }
 
@@ -815,6 +1003,16 @@ class DrawingViewController: UIViewController {
             if annotation.isKind(of: PhotoAnnotation.self) && PDFAnnotationSubtype(rawValue: "/\(annotation.type!)") == PDFAnnotationSubtype.freeText.self && ((annotation.contents?.isEmpty) != nil)  {
                 // 対象のページの注釈を削除
                 page.removeAnnotation(annotation)
+                
+                // Undo Redo 削除
+                undoRedoManager.deleteAnnotation(annotation)
+                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                    self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                })
+                // ボタン　活性状態
+                undoButton.isEnabled = undoRedoManager.canUndo()
+                redoButton.isEnabled = undoRedoManager.canRedo()
             }
         }
     }
@@ -832,12 +1030,71 @@ class DrawingViewController: UIViewController {
                 // 写真マーカー　以外
                 // 対象のページの注釈を削除
                 page.removeAnnotation(annotation)
+                
+                // Undo Redo 削除
+                undoRedoManager.deleteAnnotation(annotation)
+                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                    self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                })
+                // ボタン　活性状態
+                undoButton.isEnabled = undoRedoManager.canUndo()
+                redoButton.isEnabled = undoRedoManager.canRedo()
             }
         }
     }
     
     // 手書きや図形を追加する
     func addDrawingAnotation() {
+    }
+    
+    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+    func reloadPDFAnnotations(didUndoAnnotations: [PDFAnnotation]?) {
+        print(#function)
+        // Undo Redo が可能なAnnotation　を削除する
+        DispatchQueue.main.async {
+            if let editingAnnotations = self.editingAnnotations {
+                for editingAnnotation in editingAnnotations {
+                    // pageを探す
+                    guard let document = self.pdfView.document else { return }
+                    for i in 0..<document.pageCount {
+                        if let page = document.page(at: i),
+                           let editingAnnotationPage = editingAnnotation.page {
+                            // page が同一か？
+                            //                        print(document.index(for: page), document.index(for: editingAnnotationPage))
+                            if document.index(for: page) == document.index(for: editingAnnotationPage) {
+                                print("対象のページの注釈を削除", editingAnnotation.contents)
+                                // 対象のページの注釈を削除
+                                page.removeAnnotation(editingAnnotation)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // Undo Redo が可能なAnnotation　をUndoする
+        DispatchQueue.main.async {
+            self.editingAnnotations = nil
+            self.editingAnnotations = didUndoAnnotations
+            if let editingAnnotations = self.editingAnnotations {
+                for editingAnnotation in editingAnnotations {
+                    // pageを探す
+                    guard let document = self.pdfView.document else { return }
+                    for i in 0..<document.pageCount {
+                        if let page = document.page(at: i),
+                           let editingAnnotationPage = editingAnnotation.page {
+                            // page が同一か？
+                            //                        print(document.index(for: page), document.index(for: editingAnnotationPage))
+                            if document.index(for: page) == document.index(for: editingAnnotationPage) {
+                                print("対象のページの注釈を追加", editingAnnotation.contents)
+                                // 対象のページの注釈を追加
+                                page.addAnnotation(editingAnnotation)
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // MARK: PDFAnnotationがタップされた
@@ -910,10 +1167,24 @@ class DrawingViewController: UIViewController {
                         forType: .line,
                         withProperties: lineAttributes
                     )
+                    // UUID
+                    lineAnnotation.userName = UUID().uuidString
+                    //                    lineAnnotation.userName = annotation.userName
+                    
                     // Annotationを再度作成
                     page.addAnnotation(lineAnnotation)
                     // 古いものを削除する
                     page.removeAnnotation(annotation)
+                    
+                    // Undo Redo 更新
+                    undoRedoManager.updateAnnotation(before: annotation, after: lineAnnotation)
+                    undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                        // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                        self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                    })
+                    // ボタン　活性状態
+                    undoButton.isEnabled = undoRedoManager.canUndo()
+                    redoButton.isEnabled = undoRedoManager.canRedo()
                 }
             } else if drawingMode == .select {
                 print(annotation)
@@ -1101,12 +1372,7 @@ class DrawingViewController: UIViewController {
         self.present(alert, animated: true, completion: nil)
     }
 }
-extension String {
-    func size(with font: UIFont) -> CGSize {
-        let attributes = [NSAttributedString.Key.font : font]
-        return (self as NSString).size(withAttributes: attributes)
-    }
-}
+
 extension DrawingViewController: UIImagePickerControllerDelegate {
     /**
      画像が選択された時に呼ばれる.
@@ -1406,6 +1672,10 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
                     if annotation.isKind(of: PDFAnnotation.self) ||
                         annotation.isKind(of: ImageAnnotation.self) {
                         currentlySelectedAnnotation = annotation
+                        // 変更前
+                        before = annotation.copy() as! PDFAnnotation
+                        before?.bounds = annotation.bounds
+                        before?.page = annotation.page
                     }
                 case .changed:
                     guard let annotation = currentlySelectedAnnotation else {return }
@@ -1413,6 +1683,9 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
                     // Set the center of the annotation to the spot of our finger
                     annotation.bounds = CGRect(x: locationOnPage.x - (initialBounds.width / 2), y: locationOnPage.y - (initialBounds.height / 2), width: initialBounds.width, height: initialBounds.height)
                 case .ended, .cancelled, .failed:
+                    // マーカーを更新する 移動
+                    updateMarkerAnotation()
+                    
                     currentlySelectedAnnotation = nil
                 default:
                     break
