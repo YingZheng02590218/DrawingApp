@@ -26,6 +26,14 @@
 		F921DAF72AFC6C2F009500EC /* TextInputViewController.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F921DAF62AFC6C2F009500EC /* TextInputViewController.storyboard */; };
 		F924861F2AF2575F007A1EC4 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F924861E2AF2575F007A1EC4 /* Colors.xcassets */; };
 		F93BBDE32AFDC1DF00B8F0AE /* UndoRedoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F93BBDE22AFDC1DF00B8F0AE /* UndoRedoManager.swift */; };
+		F96332C42B03686C003B424D /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F96332C32B03686C003B424D /* MainViewController.swift */; };
+		F96332C62B03689B003B424D /* SidemenuViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F96332C52B03689B003B424D /* SidemenuViewController.swift */; };
+		F96332C92B0369A2003B424D /* SidemenuTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = F96332C72B0369A2003B424D /* SidemenuTableViewCell.swift */; };
+		F96332CA2B0369A2003B424D /* SidemenuTableViewCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F96332C82B0369A2003B424D /* SidemenuTableViewCell.xib */; };
+		F96332CC2B0469BF003B424D /* WrappingMainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F96332CB2B0469BF003B424D /* WrappingMainViewController.swift */; };
+		F96332CE2B046A58003B424D /* WrappingMainViewController.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F96332CD2B046A58003B424D /* WrappingMainViewController.storyboard */; };
+		F96332D02B046B85003B424D /* ViewController.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F96332CF2B046B85003B424D /* ViewController.storyboard */; };
+		F96332D22B046C39003B424D /* SplashViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F96332D12B046C39003B424D /* SplashViewController.swift */; };
 		F963ED622ABC3AF100B41C99 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F963ED612ABC3AF100B41C99 /* AppDelegate.swift */; };
 		F963ED642ABC3AF100B41C99 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F963ED632ABC3AF100B41C99 /* SceneDelegate.swift */; };
 		F963ED662ABC3AF100B41C99 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F963ED652ABC3AF100B41C99 /* ViewController.swift */; };
@@ -68,6 +76,14 @@
 		F921DAF62AFC6C2F009500EC /* TextInputViewController.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = TextInputViewController.storyboard; sourceTree = "<group>"; };
 		F924861E2AF2575F007A1EC4 /* Colors.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Colors.xcassets; sourceTree = "<group>"; };
 		F93BBDE22AFDC1DF00B8F0AE /* UndoRedoManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UndoRedoManager.swift; sourceTree = "<group>"; };
+		F96332C32B03686C003B424D /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
+		F96332C52B03689B003B424D /* SidemenuViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidemenuViewController.swift; sourceTree = "<group>"; };
+		F96332C72B0369A2003B424D /* SidemenuTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidemenuTableViewCell.swift; sourceTree = "<group>"; };
+		F96332C82B0369A2003B424D /* SidemenuTableViewCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SidemenuTableViewCell.xib; sourceTree = "<group>"; };
+		F96332CB2B0469BF003B424D /* WrappingMainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WrappingMainViewController.swift; sourceTree = "<group>"; };
+		F96332CD2B046A58003B424D /* WrappingMainViewController.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = WrappingMainViewController.storyboard; sourceTree = "<group>"; };
+		F96332CF2B046B85003B424D /* ViewController.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = ViewController.storyboard; sourceTree = "<group>"; };
+		F96332D12B046C39003B424D /* SplashViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashViewController.swift; sourceTree = "<group>"; };
 		F963ED5E2ABC3AF100B41C99 /* DrawingApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DrawingApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F963ED612ABC3AF100B41C99 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		F963ED632ABC3AF100B41C99 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -122,6 +138,19 @@
 			path = HandWritting;
 			sourceTree = "<group>";
 		};
+		F96332C22B036841003B424D /* SideMenu */ = {
+			isa = PBXGroup;
+			children = (
+				F96332C32B03686C003B424D /* MainViewController.swift */,
+				F96332CB2B0469BF003B424D /* WrappingMainViewController.swift */,
+				F96332CD2B046A58003B424D /* WrappingMainViewController.storyboard */,
+				F96332C52B03689B003B424D /* SidemenuViewController.swift */,
+				F96332C72B0369A2003B424D /* SidemenuTableViewCell.swift */,
+				F96332C82B0369A2003B424D /* SidemenuTableViewCell.xib */,
+			);
+			path = SideMenu;
+			sourceTree = "<group>";
+		};
 		F963ED552ABC3AF100B41C99 = {
 			isa = PBXGroup;
 			children = (
@@ -146,10 +175,13 @@
 				F963ED7B2AC2E05E00B41C99 /* DrawingApp.entitlements */,
 				F963ED612ABC3AF100B41C99 /* AppDelegate.swift */,
 				F963ED632ABC3AF100B41C99 /* SceneDelegate.swift */,
+				F963ED6C2ABC3AF200B41C99 /* LaunchScreen.storyboard */,
+				F963ED672ABC3AF100B41C99 /* Main.storyboard */,
+				F96332D12B046C39003B424D /* SplashViewController.swift */,
 				F963ED772AC2D65700B41C99 /* BackupManager.swift */,
 				F963ED792AC2D82900B41C99 /* PdfMaker.swift */,
 				F963ED652ABC3AF100B41C99 /* ViewController.swift */,
-				F963ED672ABC3AF100B41C99 /* Main.storyboard */,
+				F96332CF2B046B85003B424D /* ViewController.storyboard */,
 				F91345232ACA8B150034AD03 /* IconTableViewCell.swift */,
 				F91345252ACA8B380034AD03 /* IconTableViewCell.xib */,
 				F91345272ACA99870034AD03 /* ImageAnnotation.swift */,
@@ -158,12 +190,12 @@
 				F913452B2ACA9E5D0034AD03 /* DrawingViewController.storyboard */,
 				F921DAF22AFC6ABD009500EC /* TextInputViewController.swift */,
 				F921DAF62AFC6C2F009500EC /* TextInputViewController.storyboard */,
+				F96332C22B036841003B424D /* SideMenu */,
 				F93BBDE22AFDC1DF00B8F0AE /* UndoRedoManager.swift */,
 				F921DAF42AFC6BF1009500EC /* UIView+extension.swift */,
 				F90141B12B030CCB00F2270B /* String+extension.swift */,
 				F963ED6A2ABC3AF200B41C99 /* Assets.xcassets */,
 				F924861E2AF2575F007A1EC4 /* Colors.xcassets */,
-				F963ED6C2ABC3AF200B41C99 /* LaunchScreen.storyboard */,
 				F963ED6F2ABC3AF200B41C99 /* Info.plist */,
 				F963ED752ABC4ECE00B41C99 /* 2023-Journals.pdf */,
 			);
@@ -258,7 +290,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F96332CE2B046A58003B424D /* WrappingMainViewController.storyboard in Resources */,
 				F963ED6E2ABC3AF200B41C99 /* LaunchScreen.storyboard in Resources */,
+				F96332CA2B0369A2003B424D /* SidemenuTableViewCell.xib in Resources */,
 				F921DAF72AFC6C2F009500EC /* TextInputViewController.storyboard in Resources */,
 				F91345262ACA8B380034AD03 /* IconTableViewCell.xib in Resources */,
 				F913452C2ACA9E5D0034AD03 /* DrawingViewController.storyboard in Resources */,
@@ -266,6 +300,7 @@
 				F963ED692ABC3AF100B41C99 /* Main.storyboard in Resources */,
 				F963ED762ABC4ECE00B41C99 /* 2023-Journals.pdf in Resources */,
 				F924861F2AF2575F007A1EC4 /* Colors.xcassets in Resources */,
+				F96332D02B046B85003B424D /* ViewController.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -292,17 +327,22 @@
 				F911B5DF2AF3337500A645DA /* PDFDrawer.swift in Sources */,
 				F911B5E72AF3347300A645DA /* PDFPage+Selection.swift in Sources */,
 				F911B5E32AF333F600A645DA /* NonSelectablePDFView.swift in Sources */,
+				F96332C62B03689B003B424D /* SidemenuViewController.swift in Sources */,
 				F963ED7A2AC2D82900B41C99 /* PdfMaker.swift in Sources */,
 				F91345242ACA8B150034AD03 /* IconTableViewCell.swift in Sources */,
 				F91345282ACA99870034AD03 /* ImageAnnotation.swift in Sources */,
 				F911B5DD2AF3334C00A645DA /* DrawingGestureRecognizer.swift in Sources */,
 				F963ED622ABC3AF100B41C99 /* AppDelegate.swift in Sources */,
 				F921DAF32AFC6ABD009500EC /* TextInputViewController.swift in Sources */,
+				F96332D22B046C39003B424D /* SplashViewController.swift in Sources */,
 				F911B5E12AF333D500A645DA /* DrawingAnnotation.swift in Sources */,
 				F93BBDE32AFDC1DF00B8F0AE /* UndoRedoManager.swift in Sources */,
 				F963ED642ABC3AF100B41C99 /* SceneDelegate.swift in Sources */,
 				F963ED782AC2D65700B41C99 /* BackupManager.swift in Sources */,
+				F96332CC2B0469BF003B424D /* WrappingMainViewController.swift in Sources */,
 				F90141B22B030CCB00F2270B /* String+extension.swift in Sources */,
+				F96332C42B03686C003B424D /* MainViewController.swift in Sources */,
+				F96332C92B0369A2003B424D /* SidemenuTableViewCell.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
