@@ -12,7 +12,7 @@ class WrappingMainViewController: MainViewController {
     
     override func viewDidLoad() {
         
-        if let viewController = UIStoryboard(name: "ViewController", bundle: nil).instantiateViewController(withIdentifier: "ViewController") as? ViewController {
+        if let viewController = UIStoryboard(name: "DrawingReportListViewController", bundle: nil).instantiateViewController(withIdentifier: "DrawingReportListViewController") as? DrawingReportListViewController {
             viewController.modalPresentationStyle = .fullScreen
             contentViewController = UINavigationController(rootViewController: viewController)
         }
