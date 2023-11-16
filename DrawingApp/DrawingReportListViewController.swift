@@ -127,15 +127,15 @@ class DrawingReportListViewController: UIViewController {
     }
     
     // PDF編集画面を表示させる
-    func showEditingView(fileURL: URL?, pageNumber: Int) {
+    func showEditingView(document: PDFDocumentForList, pageNumber: Int) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             
             if let viewController = UIStoryboard(
-                name: "DrawingViewController",
+                name: "DrawingReportEditViewController",
                 bundle: nil
-            ).instantiateInitialViewController() as? DrawingViewController {
+            ).instantiateInitialViewController() as? DrawingReportEditViewController {
                 // Documents に保存しているPDFファイルのパス
-                viewController.fileURL = fileURL
+                viewController.document = document
                 viewController.pageNumber = pageNumber
                 
                 if let navigator = self.navigationController {
@@ -146,7 +146,6 @@ class DrawingReportListViewController: UIViewController {
                     self.present(navigation, animated: true, completion: nil)
                 }
             }
-            
         }
     }
 }
@@ -228,6 +227,6 @@ extension DrawingReportListViewController: UICollectionViewDelegate {
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         // PDF編集画面を表示させる
-        showEditingView(fileURL: drawingReportFiles[indexPath.section], pageNumber: indexPath.row + 1)
+        showEditingView(document: documents[indexPath.section], pageNumber: indexPath.row + 1)
     }
 }
