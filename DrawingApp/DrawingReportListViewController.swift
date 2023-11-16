@@ -13,8 +13,9 @@ import PDFKit
 class DrawingReportListViewController: UIViewController {
 
     @IBOutlet var collectionView: UICollectionView!
-    
-    // iCloud Container に保存しているPDFファイルのパス
+    private var layout: UICollectionViewFlowLayout!
+
+    // Documents に保存しているPDFファイルのパス
     var fileURL: URL?
     // Documents 図面　ファイル
     var drawingReportFiles: [(URL?)] = [] {
@@ -34,30 +35,11 @@ class DrawingReportListViewController: UIViewController {
 
     /// Current document being displayed
     var documents: [PDFDocumentForList] = []
-    
-    /// Current page index being displayed
-    var currentPageIndex: Int = 0 {
-        didSet {
-            guard let collectionView = collectionView else { return }
-            guard let pageImages = pageImages else { return }
-            guard pageImages.count > 0 else { return }
-            let curentPageIndexPath = IndexPath(row: currentPageIndex, section: 0)
-            if !collectionView.indexPathsForVisibleItems.contains(curentPageIndexPath) {
-                collectionView.scrollToItem(at: curentPageIndexPath, at: .centeredHorizontally, animated: true)
-            }
-            collectionView.reloadData()
-        }
-    }
-    
-    /// Calls actions when certain cells have been interacted with
-    weak var delegate: PDFThumbnailControllerDelegate?
-    
+        
     /// Small thumbnail image representations of the pdf pages
     private var pageImages: [[UIImage]]? = [] {
         didSet {
-            DispatchQueue.main.async {
-                self.collectionView.reloadData()
-            }
+            collectionView.reloadData()
         }
     }
 
@@ -82,6 +64,10 @@ class DrawingReportListViewController: UIViewController {
         collectionView.register(nib, forCellWithReuseIdentifier: "Cell")
         collectionView.delegate = self
         collectionView.dataSource = self
+        // UICollectionViewFlowLayoutをインスタンス化
+        layout = UICollectionViewFlowLayout()
+        // UICollectionViewを初期化
+        collectionView.collectionViewLayout = layout
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -92,6 +78,16 @@ class DrawingReportListViewController: UIViewController {
     
     override func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
+        // レイアウト関連は、ここでやる
+        layout.minimumInteritemSpacing = 0
+        layout.minimumLineSpacing = 0
+        let itemCount: CGFloat = 4
+        let itemWidth: CGFloat = collectionView.bounds.width / itemCount
+        print(collectionView.frame.width)
+        print(collectionView.bounds.width)
+        print(itemWidth)
+        layout.itemSize = CGSize(width: itemWidth, height: itemWidth)
+
         // 画面の回転に合わせてCellのサイズを変更する
         collectionView.collectionViewLayout.invalidateLayout()
         collectionView.reloadData()
@@ -129,7 +125,30 @@ class DrawingReportListViewController: UIViewController {
             }
         }
     }
-
+    
+    // PDF編集画面を表示させる
+    func showEditingView(fileURL: URL?, pageNumber: Int) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            
+            if let viewController = UIStoryboard(
+                name: "DrawingViewController",
+                bundle: nil
+            ).instantiateInitialViewController() as? DrawingViewController {
+                // Documents に保存しているPDFファイルのパス
+                viewController.fileURL = fileURL
+                viewController.pageNumber = pageNumber
+                
+                if let navigator = self.navigationController {
+                    navigator.pushViewController(viewController, animated: true)
+                } else {
+                    let navigation = UINavigationController(rootViewController: viewController)
+                    navigation.modalPresentationStyle = .fullScreen
+                    self.present(navigation, animated: true, completion: nil)
+                }
+            }
+            
+        }
+    }
 }
 
 // MARK: 図面PDFファイルを取り込む　iCloud Container にプロジェクトフォルダを作成
@@ -174,12 +193,6 @@ extension DrawingReportListViewController: UIDocumentPickerDelegate {
     }
 }
 
-/// Delegate that is informed of important interaction events with the current thumbnail collection view
-protocol PDFThumbnailControllerDelegate: class {
-    /// User has tapped on thumbnail
-    func didSelectIndexPath(_ indexPath: IndexPath)
-}
-
 /// Bottom collection of thumbnails that the user can interact with
 extension DrawingReportListViewController: UICollectionViewDataSource {
     
@@ -196,50 +209,25 @@ extension DrawingReportListViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath) as! PDFThumbnailCell
         
-        cell.imageView?.image = pageImages?[indexPath.section][indexPath.row]
-        cell.alpha = currentPageIndex == indexPath.row ? 1 : 0.2
-        
+        if let image = pageImages?[indexPath.section][indexPath.row] {
+            // cell.alpha = currentPageIndex == indexPath.row ? 1 : 0.2
+            cell.imageView?.image = nil
+            let thumbnailSize = CGSize(width: (collectionView.frame.width / 4) - 10, height: (collectionView.frame.width / 4) - 10) // imageViewの余白をマイナスする
+            image.prepareThumbnail(of: thumbnailSize) { thumbnail in
+                DispatchQueue.main.async {
+                    cell.imageView?.image = thumbnail
+                }
+            }
+        }
+
         return cell
     }
-    
-//    @objc func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: IndexPath) -> CGSize {
-//        return PDFThumbnailCell.cellSize
-//    }
 }
 
 extension DrawingReportListViewController: UICollectionViewDelegate {
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        delegate?.didSelectIndexPath(indexPath)
-    }
-}
-
-extension DrawingReportListViewController: UICollectionViewDelegateFlowLayout {
-    //    //セル間の間隔を指定
-    //    private func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimunLineSpacingForSectionAt section: Int) -> CGFloat {
-    //        return 20
-    //    }
-    // セルのサイズ(CGSize)
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        // print(collectionView.frame) // (10.0, 10.0, 1346.0, 934.0)
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            if UIDevice.current.orientation == .landscapeLeft || UIDevice.current.orientation == .landscapeRight {
-                return CGSize(width: (collectionView.frame.width / 4) - 0, height: (collectionView.frame.width / 4) - 0)
-            } else {
-                return CGSize(width: (collectionView.frame.width / 4) - 0, height: (collectionView.frame.width / 4) - 0)
-            }
-        } else {
-            // TableViewCell の高さからCollectionViewCell の高さを割り出す
-            if UIDevice.current.orientation == .landscapeLeft || UIDevice.current.orientation == .landscapeRight {
-                return CGSize(width: (collectionView.frame.width / 3) - 20, height: (collectionView.frame.height / 2) - 20)
-            } else {
-                return CGSize(width: collectionView.frame.width - 40, height: (collectionView.frame.height / 2) - 20)
-            }
-        }
-    }
-    // 余白の調整（UIImageを拡大、縮小している）
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
-        // top:ナビゲーションバーの高さ分上に移動
-        return UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+        // PDF編集画面を表示させる
+        showEditingView(fileURL: drawingReportFiles[indexPath.section], pageNumber: indexPath.row + 1)
     }
 }

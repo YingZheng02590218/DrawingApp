@@ -13,4 +13,9 @@ internal final class PDFThumbnailCell: UICollectionViewCell {
 //    static let cellSize = CGSize(width: 24, height: 44)
     
     @IBOutlet var imageView: UIImageView?
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        imageView?.image = nil
+    }
 }

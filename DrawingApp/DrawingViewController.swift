@@ -23,6 +23,8 @@ class DrawingViewController: UIViewController {
     @IBOutlet weak var pdfView: NonSelectablePDFView!
     // iCloud Container に保存しているPDFファイルのパス
     var fileURL: URL?
+    // ページ番号
+    var pageNumber: Int?
     // ローカル Container に保存している編集中のPDFファイルのパス
     var tempFilePath: URL?
     // PDF 全てのpageに存在するAnnotationを保持する
@@ -208,6 +210,13 @@ class DrawingViewController: UIViewController {
         super.viewDidAppear(animated)
         // 写真のアクセス権限
         albumAction()
+        DispatchQueue.main.async {
+            // 図面調書一覧画面で選択したページへジャンプする
+            if let pageNumber = self.pageNumber, // ページ番号
+                let page = self.pdfView.document?.page(at: pageNumber) {
+                self.pdfView.go(to: page)
+            }
+        }
     }
     
     // 編集モード切り替え
