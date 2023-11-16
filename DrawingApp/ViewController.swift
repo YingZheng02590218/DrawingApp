@@ -65,6 +65,12 @@ class ViewController: UIViewController {
 
     /// 外部アプリ　ファイル読み込みボタンをタップ
     @IBAction func tapFileReadButton(_ sender: Any) {
+        // ファイル選択画面を表示させる
+        showDocumentPicker()
+    }
+    
+    // ファイル選択画面を表示させる
+    func showDocumentPicker() {
         // PDFのみ選択できるドキュメントピッカーを作成
         if #available(iOS 14.0, *) {
             let documentPicker = UIDocumentPickerViewController(

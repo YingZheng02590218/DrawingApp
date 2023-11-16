@@ -36,6 +36,7 @@
 		F96332D22B046C39003B424D /* SplashViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F96332D12B046C39003B424D /* SplashViewController.swift */; };
 		F96332D42B04A2CB003B424D /* DrawingReportListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F96332D32B04A2CB003B424D /* DrawingReportListViewController.swift */; };
 		F96332D62B04A2E8003B424D /* DrawingReportListViewController.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F96332D52B04A2E8003B424D /* DrawingReportListViewController.storyboard */; };
+		F96332D82B04B7B4003B424D /* LocalFileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F96332D72B04B7B4003B424D /* LocalFileManager.swift */; };
 		F963ED622ABC3AF100B41C99 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F963ED612ABC3AF100B41C99 /* AppDelegate.swift */; };
 		F963ED642ABC3AF100B41C99 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F963ED632ABC3AF100B41C99 /* SceneDelegate.swift */; };
 		F963ED662ABC3AF100B41C99 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F963ED652ABC3AF100B41C99 /* ViewController.swift */; };
@@ -88,6 +89,7 @@
 		F96332D12B046C39003B424D /* SplashViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashViewController.swift; sourceTree = "<group>"; };
 		F96332D32B04A2CB003B424D /* DrawingReportListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingReportListViewController.swift; sourceTree = "<group>"; };
 		F96332D52B04A2E8003B424D /* DrawingReportListViewController.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = DrawingReportListViewController.storyboard; sourceTree = "<group>"; };
+		F96332D72B04B7B4003B424D /* LocalFileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalFileManager.swift; sourceTree = "<group>"; };
 		F963ED5E2ABC3AF100B41C99 /* DrawingApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DrawingApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F963ED612ABC3AF100B41C99 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		F963ED632ABC3AF100B41C99 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -185,6 +187,7 @@
 				F96332D32B04A2CB003B424D /* DrawingReportListViewController.swift */,
 				F96332D52B04A2E8003B424D /* DrawingReportListViewController.storyboard */,
 				F963ED772AC2D65700B41C99 /* BackupManager.swift */,
+				F96332D72B04B7B4003B424D /* LocalFileManager.swift */,
 				F963ED792AC2D82900B41C99 /* PdfMaker.swift */,
 				F963ED652ABC3AF100B41C99 /* ViewController.swift */,
 				F96332CF2B046B85003B424D /* ViewController.storyboard */,
@@ -327,6 +330,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F963ED662ABC3AF100B41C99 /* ViewController.swift in Sources */,
+				F96332D82B04B7B4003B424D /* LocalFileManager.swift in Sources */,
 				F911B5DB2AF3332000A645DA /* UIBezierPath+extension.swift in Sources */,
 				F911B5E52AF3345300A645DA /* PDFAnnotationWithPath.swift in Sources */,
 				F921DAF52AFC6BF1009500EC /* UIView+extension.swift in Sources */,

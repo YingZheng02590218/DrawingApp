@@ -220,7 +220,16 @@ enum SideMenu: String, CaseIterable {
     case photoReportRegister = "写真調書登録"
     case pictureRegister = "撮影写真登録"
     case project = "プロジェクト"
-
+    
+    func getRow() -> Int { // インスタンスメソッド
+        switch self {
+        case .drawingReportRegister: return 0
+        case .photoReportRegister: return 1
+        case .pictureRegister: return 2
+        case .project: return 3
+        default: return 0
+        }
+    }
 }
 
 // アコーディオン
