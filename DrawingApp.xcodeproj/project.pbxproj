@@ -37,6 +37,9 @@
 		F96332D42B04A2CB003B424D /* DrawingReportListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F96332D32B04A2CB003B424D /* DrawingReportListViewController.swift */; };
 		F96332D62B04A2E8003B424D /* DrawingReportListViewController.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F96332D52B04A2E8003B424D /* DrawingReportListViewController.storyboard */; };
 		F96332D82B04B7B4003B424D /* LocalFileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F96332D72B04B7B4003B424D /* LocalFileManager.swift */; };
+		F96332DA2B05AF2F003B424D /* PDFDocumentForList.swift in Sources */ = {isa = PBXBuildFile; fileRef = F96332D92B05AF2F003B424D /* PDFDocumentForList.swift */; };
+		F96332DC2B05B0E9003B424D /* PDFThumbnailCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = F96332DB2B05B0E9003B424D /* PDFThumbnailCell.swift */; };
+		F96332DE2B05B1C9003B424D /* PDFThumbnailCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F96332DD2B05B1C9003B424D /* PDFThumbnailCell.xib */; };
 		F963ED622ABC3AF100B41C99 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F963ED612ABC3AF100B41C99 /* AppDelegate.swift */; };
 		F963ED642ABC3AF100B41C99 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F963ED632ABC3AF100B41C99 /* SceneDelegate.swift */; };
 		F963ED662ABC3AF100B41C99 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F963ED652ABC3AF100B41C99 /* ViewController.swift */; };
@@ -90,6 +93,9 @@
 		F96332D32B04A2CB003B424D /* DrawingReportListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingReportListViewController.swift; sourceTree = "<group>"; };
 		F96332D52B04A2E8003B424D /* DrawingReportListViewController.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = DrawingReportListViewController.storyboard; sourceTree = "<group>"; };
 		F96332D72B04B7B4003B424D /* LocalFileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalFileManager.swift; sourceTree = "<group>"; };
+		F96332D92B05AF2F003B424D /* PDFDocumentForList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFDocumentForList.swift; sourceTree = "<group>"; };
+		F96332DB2B05B0E9003B424D /* PDFThumbnailCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFThumbnailCell.swift; sourceTree = "<group>"; };
+		F96332DD2B05B1C9003B424D /* PDFThumbnailCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = PDFThumbnailCell.xib; sourceTree = "<group>"; };
 		F963ED5E2ABC3AF100B41C99 /* DrawingApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DrawingApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F963ED612ABC3AF100B41C99 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		F963ED632ABC3AF100B41C99 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -186,8 +192,11 @@
 				F96332D12B046C39003B424D /* SplashViewController.swift */,
 				F96332D32B04A2CB003B424D /* DrawingReportListViewController.swift */,
 				F96332D52B04A2E8003B424D /* DrawingReportListViewController.storyboard */,
+				F96332DB2B05B0E9003B424D /* PDFThumbnailCell.swift */,
+				F96332DD2B05B1C9003B424D /* PDFThumbnailCell.xib */,
 				F963ED772AC2D65700B41C99 /* BackupManager.swift */,
 				F96332D72B04B7B4003B424D /* LocalFileManager.swift */,
+				F96332D92B05AF2F003B424D /* PDFDocumentForList.swift */,
 				F963ED792AC2D82900B41C99 /* PdfMaker.swift */,
 				F963ED652ABC3AF100B41C99 /* ViewController.swift */,
 				F96332CF2B046B85003B424D /* ViewController.storyboard */,
@@ -310,6 +319,7 @@
 				F963ED692ABC3AF100B41C99 /* Main.storyboard in Resources */,
 				F963ED762ABC4ECE00B41C99 /* 2023-Journals.pdf in Resources */,
 				F924861F2AF2575F007A1EC4 /* Colors.xcassets in Resources */,
+				F96332DE2B05B1C9003B424D /* PDFThumbnailCell.xib in Resources */,
 				F96332D02B046B85003B424D /* ViewController.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -332,10 +342,12 @@
 				F963ED662ABC3AF100B41C99 /* ViewController.swift in Sources */,
 				F96332D82B04B7B4003B424D /* LocalFileManager.swift in Sources */,
 				F911B5DB2AF3332000A645DA /* UIBezierPath+extension.swift in Sources */,
+				F96332DC2B05B0E9003B424D /* PDFThumbnailCell.swift in Sources */,
 				F911B5E52AF3345300A645DA /* PDFAnnotationWithPath.swift in Sources */,
 				F921DAF52AFC6BF1009500EC /* UIView+extension.swift in Sources */,
 				F913452A2ACA9A9D0034AD03 /* DrawingViewController.swift in Sources */,
 				F911B5DF2AF3337500A645DA /* PDFDrawer.swift in Sources */,
+				F96332DA2B05AF2F003B424D /* PDFDocumentForList.swift in Sources */,
 				F911B5E72AF3347300A645DA /* PDFPage+Selection.swift in Sources */,
 				F911B5E32AF333F600A645DA /* NonSelectablePDFView.swift in Sources */,
 				F96332C62B03689B003B424D /* SidemenuViewController.swift in Sources */,
