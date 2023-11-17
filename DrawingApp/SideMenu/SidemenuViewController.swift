@@ -28,7 +28,7 @@ class SidemenuViewController: UIViewController {
         return self.parent != nil
     }
     private var contentMaxWidth: CGFloat {
-        return view.bounds.width * 0.3
+        return view.bounds.width * 0.3 < 200 ? 200 : view.bounds.width * 0.3
     }
     private var contentRatio: CGFloat {
         get {
@@ -53,15 +53,8 @@ class SidemenuViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        var contentRect = view.bounds
-        contentRect.size.width = contentMaxWidth
-        contentRect.origin.x = -contentRect.width
-        contentView.frame = contentRect
-        contentView.backgroundColor = .white
-        contentView.autoresizingMask = .flexibleHeight
         view.addSubview(contentView)
         
-        tableView.frame = contentView.bounds
         tableView.separatorInset = .zero
         tableView.dataSource = self
         tableView.delegate = self
@@ -72,11 +65,29 @@ class SidemenuViewController: UIViewController {
         tableView.rowHeight = 50
         
         contentView.addSubview(tableView)
-        tableView.reloadData()
         
         let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(backgroundTapped(sender:)))
         tapGestureRecognizer.delegate = self
         view.addGestureRecognizer(tapGestureRecognizer)
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+
+        var contentRect = view.bounds
+        contentRect.size.width = contentMaxWidth
+        if isShown {
+            // サイドメニューを表示している場合
+        } else {
+            contentRect.origin.x = -contentRect.width
+        }
+        contentView.frame = contentRect
+        contentView.backgroundColor = .white
+        contentView.autoresizingMask = .flexibleHeight
+        
+        tableView.frame = contentView.bounds
+
+        tableView.reloadData()
     }
     
     @objc private func backgroundTapped(sender: UITapGestureRecognizer) {

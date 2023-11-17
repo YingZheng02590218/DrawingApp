@@ -35,6 +35,12 @@ class MainViewController: UIViewController {
         sidemenuViewController.startPanGestureRecognizing()
     }
     
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        // 画面が回転した場合など　サイドメニューのViewのサイズを変化させる
+        sidemenuViewController.view.frame = contentViewController.view.bounds
+    }
+    
     @objc private func sidemenuBarButtonTapped(sender: Any) {
         showSidemenu(animated: true)
     }
