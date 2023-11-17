@@ -1,16 +1,15 @@
 //
-//  DrawingReportListViewController.swift
+//  PhotoLisViewController.swift
 //  DrawingApp
 //
-//  Created by Hisashi Ishihara on 2023/11/15.
+//  Created by Hisashi Ishihara on 2023/11/17.
 //
 
 import UIKit
 import UniformTypeIdentifiers
-import PDFKit
 
-// 図面調書一覧
-class DrawingReportListViewController: UIViewController {
+// 撮影写真一覧
+class PhotoLisViewController: UIViewController {
 
     @IBOutlet var collectionView: UICollectionView!
     private var layout: UICollectionViewFlowLayout!
@@ -150,7 +149,7 @@ class DrawingReportListViewController: UIViewController {
 // MARK: 図面PDFファイルを取り込む　iCloud Container にプロジェクトフォルダを作成
 
 /// UIDocumentPickerDelegate
-extension DrawingReportListViewController: UIDocumentPickerDelegate {
+extension PhotoLisViewController: UIDocumentPickerDelegate {
     /// ファイル選択後に呼ばれる
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         // URLを取得
@@ -190,7 +189,7 @@ extension DrawingReportListViewController: UIDocumentPickerDelegate {
 }
 
 /// Bottom collection of thumbnails that the user can interact with
-extension DrawingReportListViewController: UICollectionViewDataSource {
+extension PhotoLisViewController: UICollectionViewDataSource {
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
         print(pageImages?.count)
@@ -220,7 +219,7 @@ extension DrawingReportListViewController: UICollectionViewDataSource {
     }
 }
 
-extension DrawingReportListViewController: UICollectionViewDelegate {
+extension PhotoLisViewController: UICollectionViewDelegate {
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         // PDF編集画面を表示させる

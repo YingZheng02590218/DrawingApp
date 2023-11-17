@@ -94,24 +94,29 @@ extension MainViewController: SidemenuViewControllerDelegate {
         print(contentViewController.viewControllers)
         print(self.presentingViewController) // Optional(<DrawingApp.SplashViewController: 0x101209d10>)
         print(self.presentedViewController)
-        if let presentingViewController = contentViewController.viewControllers.first as? DrawingReportListViewController {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                switch indexPath.row {
-                case SideMenu.drawingReportRegister.getRow(): // 図面調書登録
+        switch indexPath.row {
+        case SideMenu.drawingReportRegister.getRow(): // 図面調書登録
+            if let presentingViewController = contentViewController.viewControllers.first as? DrawingReportListViewController {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                     // ファイル選択画面を表示させる
                     presentingViewController.showDocumentPicker()
-                    break
-                case SideMenu.photoReportRegister.getRow(): // 写真調書登録
-                    break
-                case SideMenu.pictureRegister.getRow(): // 撮影写真登録
-                    break
-                case SideMenu.project.getRow(): // プロジェクト
-                    break
-                default:
-                    break
                 }
             }
+            break
+        case SideMenu.photoReportRegister.getRow(): // 写真調書登録
+            break
+        case SideMenu.pictureRegister.getRow(): // 撮影写真登録
+            if let presentingViewController = contentViewController.viewControllers.first as? PhotoLisViewController {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    // ファイル選択画面を表示させる
+                    presentingViewController.showDocumentPicker()
+                }
+            }
+            break
+        case SideMenu.project.getRow(): // プロジェクト
+            break
+        default:
+            break
         }
     }
-    
 }

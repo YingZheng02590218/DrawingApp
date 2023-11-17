@@ -33,6 +33,10 @@
 		F94035542B061AA800EB8C7E /* PDFPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F94035532B061AA800EB8C7E /* PDFPageView.swift */; };
 		F94035562B061AF000EB8C7E /* TiledView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F94035552B061AF000EB8C7E /* TiledView.swift */; };
 		F94035582B061E8600EB8C7E /* PDFViewController.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F94035572B061E8600EB8C7E /* PDFViewController.storyboard */; };
+		F940355B2B0709A600EB8C7E /* PhotoLisViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F940355A2B0709A600EB8C7E /* PhotoLisViewController.swift */; };
+		F940355D2B070BC600EB8C7E /* PhotoLisViewController.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F940355C2B070BC600EB8C7E /* PhotoLisViewController.storyboard */; };
+		F940355F2B070D6700EB8C7E /* SegmentedControlPageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F940355E2B070D6700EB8C7E /* SegmentedControlPageViewController.swift */; };
+		F94035612B070F0700EB8C7E /* SegmentedControlPageViewController.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F94035602B070F0700EB8C7E /* SegmentedControlPageViewController.storyboard */; };
 		F96332C42B03686C003B424D /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F96332C32B03686C003B424D /* MainViewController.swift */; };
 		F96332C62B03689B003B424D /* SidemenuViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F96332C52B03689B003B424D /* SidemenuViewController.swift */; };
 		F96332C92B0369A2003B424D /* SidemenuTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = F96332C72B0369A2003B424D /* SidemenuTableViewCell.swift */; };
@@ -97,6 +101,10 @@
 		F94035532B061AA800EB8C7E /* PDFPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFPageView.swift; sourceTree = "<group>"; };
 		F94035552B061AF000EB8C7E /* TiledView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TiledView.swift; sourceTree = "<group>"; };
 		F94035572B061E8600EB8C7E /* PDFViewController.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = PDFViewController.storyboard; sourceTree = "<group>"; };
+		F940355A2B0709A600EB8C7E /* PhotoLisViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoLisViewController.swift; sourceTree = "<group>"; };
+		F940355C2B070BC600EB8C7E /* PhotoLisViewController.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = PhotoLisViewController.storyboard; sourceTree = "<group>"; };
+		F940355E2B070D6700EB8C7E /* SegmentedControlPageViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentedControlPageViewController.swift; sourceTree = "<group>"; };
+		F94035602B070F0700EB8C7E /* SegmentedControlPageViewController.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = SegmentedControlPageViewController.storyboard; sourceTree = "<group>"; };
 		F96332C32B03686C003B424D /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
 		F96332C52B03689B003B424D /* SidemenuViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidemenuViewController.swift; sourceTree = "<group>"; };
 		F96332C72B0369A2003B424D /* SidemenuTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidemenuTableViewCell.swift; sourceTree = "<group>"; };
@@ -166,6 +174,22 @@
 			path = HandWritting;
 			sourceTree = "<group>";
 		};
+		F94035592B07092400EB8C7E /* PDFThumbnailCollection */ = {
+			isa = PBXGroup;
+			children = (
+				F940354D2B0619D300EB8C7E /* PDFViewController.swift */,
+				F94035572B061E8600EB8C7E /* PDFViewController.storyboard */,
+				F940354F2B061A0F00EB8C7E /* PDFThumbnailCollectionViewController.swift */,
+				F94035512B061A8D00EB8C7E /* PDFPageCollectionViewCell.swift */,
+				F94035532B061AA800EB8C7E /* PDFPageView.swift */,
+				F94035552B061AF000EB8C7E /* TiledView.swift */,
+				F96332D92B05AF2F003B424D /* PDFDocumentForList.swift */,
+				F96332DB2B05B0E9003B424D /* PDFThumbnailCell.swift */,
+				F96332DD2B05B1C9003B424D /* PDFThumbnailCell.xib */,
+			);
+			path = PDFThumbnailCollection;
+			sourceTree = "<group>";
+		};
 		F96332C22B036841003B424D /* SideMenu */ = {
 			isa = PBXGroup;
 			children = (
@@ -206,19 +230,15 @@
 				F963ED6C2ABC3AF200B41C99 /* LaunchScreen.storyboard */,
 				F963ED672ABC3AF100B41C99 /* Main.storyboard */,
 				F96332D12B046C39003B424D /* SplashViewController.swift */,
+				F940355E2B070D6700EB8C7E /* SegmentedControlPageViewController.swift */,
+				F94035602B070F0700EB8C7E /* SegmentedControlPageViewController.storyboard */,
 				F96332D32B04A2CB003B424D /* DrawingReportListViewController.swift */,
 				F96332D52B04A2E8003B424D /* DrawingReportListViewController.storyboard */,
-				F96332DB2B05B0E9003B424D /* PDFThumbnailCell.swift */,
-				F96332DD2B05B1C9003B424D /* PDFThumbnailCell.xib */,
 				F96332DF2B06163F003B424D /* DrawingReportEditViewController.swift */,
 				F940354B2B06186000EB8C7E /* DrawingReportEditViewController.storyboard */,
-				F940354D2B0619D300EB8C7E /* PDFViewController.swift */,
-				F94035572B061E8600EB8C7E /* PDFViewController.storyboard */,
-				F940354F2B061A0F00EB8C7E /* PDFThumbnailCollectionViewController.swift */,
-				F94035512B061A8D00EB8C7E /* PDFPageCollectionViewCell.swift */,
-				F94035532B061AA800EB8C7E /* PDFPageView.swift */,
-				F94035552B061AF000EB8C7E /* TiledView.swift */,
-				F96332D92B05AF2F003B424D /* PDFDocumentForList.swift */,
+				F940355A2B0709A600EB8C7E /* PhotoLisViewController.swift */,
+				F940355C2B070BC600EB8C7E /* PhotoLisViewController.storyboard */,
+				F94035592B07092400EB8C7E /* PDFThumbnailCollection */,
 				F963ED772AC2D65700B41C99 /* BackupManager.swift */,
 				F96332D72B04B7B4003B424D /* LocalFileManager.swift */,
 				F963ED792AC2D82900B41C99 /* PdfMaker.swift */,
@@ -343,7 +363,9 @@
 				F963ED6B2ABC3AF200B41C99 /* Assets.xcassets in Resources */,
 				F963ED692ABC3AF100B41C99 /* Main.storyboard in Resources */,
 				F963ED762ABC4ECE00B41C99 /* 2023-Journals.pdf in Resources */,
+				F940355D2B070BC600EB8C7E /* PhotoLisViewController.storyboard in Resources */,
 				F924861F2AF2575F007A1EC4 /* Colors.xcassets in Resources */,
+				F94035612B070F0700EB8C7E /* SegmentedControlPageViewController.storyboard in Resources */,
 				F96332DE2B05B1C9003B424D /* PDFThumbnailCell.xib in Resources */,
 				F940354C2B06186000EB8C7E /* DrawingReportEditViewController.storyboard in Resources */,
 				F96332D02B046B85003B424D /* ViewController.storyboard in Resources */,
@@ -381,6 +403,7 @@
 				F963ED7A2AC2D82900B41C99 /* PdfMaker.swift in Sources */,
 				F91345242ACA8B150034AD03 /* IconTableViewCell.swift in Sources */,
 				F94035502B061A0F00EB8C7E /* PDFThumbnailCollectionViewController.swift in Sources */,
+				F940355B2B0709A600EB8C7E /* PhotoLisViewController.swift in Sources */,
 				F940354E2B0619D300EB8C7E /* PDFViewController.swift in Sources */,
 				F91345282ACA99870034AD03 /* ImageAnnotation.swift in Sources */,
 				F94035542B061AA800EB8C7E /* PDFPageView.swift in Sources */,
@@ -392,6 +415,7 @@
 				F93BBDE32AFDC1DF00B8F0AE /* UndoRedoManager.swift in Sources */,
 				F94035522B061A8D00EB8C7E /* PDFPageCollectionViewCell.swift in Sources */,
 				F963ED642ABC3AF100B41C99 /* SceneDelegate.swift in Sources */,
+				F940355F2B070D6700EB8C7E /* SegmentedControlPageViewController.swift in Sources */,
 				F94035562B061AF000EB8C7E /* TiledView.swift in Sources */,
 				F963ED782AC2D65700B41C99 /* BackupManager.swift in Sources */,
 				F96332CC2B0469BF003B424D /* WrappingMainViewController.swift in Sources */,

@@ -43,9 +43,9 @@ class SplashViewController: UIViewController {
             self.indicator.stopAnimating()
             
             if let viewController = UIStoryboard(
-                name: "WrappingMainViewController",
+                name: "SegmentedControlPageViewController",
                 bundle: nil
-            ).instantiateViewController(withIdentifier: "WrappingMainViewController") as? WrappingMainViewController {
+            ).instantiateViewController(withIdentifier: "SegmentedControlPageViewController") as? SegmentedControlPageViewController {
                 viewController.modalPresentationStyle = .fullScreen
                 viewController.modalTransitionStyle = .crossDissolve
                 self.present(viewController, animated: false, completion: nil)
