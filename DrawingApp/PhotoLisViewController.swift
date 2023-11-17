@@ -9,7 +9,7 @@ import UIKit
 import UniformTypeIdentifiers
 
 // 撮影写真一覧
-class PhotoLisViewController: InportViewController {
+class PhotoLisViewController: UIViewController {
 
     @IBOutlet var collectionView: UICollectionView!
     private var layout: UICollectionViewFlowLayout!
@@ -25,11 +25,6 @@ class PhotoLisViewController: InportViewController {
             
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        if let navigationController = self.navigationController {
-            navigationController.navigationItem.title = "撮影写真一覧"
-            navigationController.navigationBar.backgroundColor = .brown // .systemBackground
-        }
         // xib読み込み
         let nib = UINib(nibName: "PDFThumbnailCell", bundle: .main)
         collectionView.register(nib, forCellWithReuseIdentifier: "Cell")
@@ -42,6 +37,14 @@ class PhotoLisViewController: InportViewController {
         
         // UIをリロード
         reload()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        if let navigationController = self.navigationController {
+            navigationController.navigationItem.title = "撮影写真一覧"
+            navigationController.navigationBar.backgroundColor = .brown // .systemBackground
+        }
     }
     
     override func viewWillLayoutSubviews() {
@@ -62,7 +65,7 @@ class PhotoLisViewController: InportViewController {
     }
     
     // UIをリロード
-    override func reload() {
+    func reload() {
         DispatchQueue.main.async {
             LocalFileManager.shared.readFiles(directory: .Photos) {
                 print($0)

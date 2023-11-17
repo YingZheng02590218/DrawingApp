@@ -20,7 +20,7 @@ class InportViewController: UIViewController {
         // Do any additional setup after loading the view.
     }
     
-    // UIをリロード
+    // UIをリロード 継承したクラスでオーバーライドする
     func reload() {}
     
     // MARK: ファイルを取り込む　図面PDF、撮影写真

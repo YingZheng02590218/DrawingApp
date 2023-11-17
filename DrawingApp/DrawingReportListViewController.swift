@@ -58,10 +58,6 @@ class DrawingReportListViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if let navigationController = self.navigationController {
-            navigationController.navigationItem.title = "図面調書一覧"
-            navigationController.navigationBar.backgroundColor = .brown // .systemBackground
-        }
         // xib読み込み
         let nib = UINib(nibName: "PDFThumbnailCell", bundle: .main)
         collectionView.register(nib, forCellWithReuseIdentifier: "Cell")
@@ -74,6 +70,14 @@ class DrawingReportListViewController: UIViewController {
         
         // UIをリロード
         reload()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        if let navigationController = self.navigationController {
+            navigationController.navigationItem.title = "図面調書一覧"
+            navigationController.navigationBar.backgroundColor = .brown // .systemBackground
+        }
     }
     
     override func viewWillLayoutSubviews() {

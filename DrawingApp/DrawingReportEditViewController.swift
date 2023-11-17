@@ -54,10 +54,6 @@ class DrawingReportEditViewController: UIViewController {
 //        let height = min(thumbnailHeight, view.bounds.height)
 //        thumbnailCollectionControllerHeight.constant = height
         
-        if let navigationController = self.navigationController {
-            navigationController.navigationItem.title = "図面調書編集"
-            navigationController.navigationBar.backgroundColor = .systemBackground
-        }
         // Documents に保存しているPDFファイルのパス
         guard let fileURL = document.fileURL else { return }
         guard let document = PDFDocument(url: fileURL) else { return }
@@ -66,6 +62,14 @@ class DrawingReportEditViewController: UIViewController {
         pdfView.displayMode = .singlePage
         pdfView.autoScales = true
 
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        if let navigationController = self.navigationController {
+            navigationController.navigationItem.title = "図面調書編集"
+            navigationController.navigationBar.backgroundColor = .systemBackground
+        }
     }
     
     override func viewDidAppear(_ animated: Bool) {

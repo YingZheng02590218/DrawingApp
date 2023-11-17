@@ -68,12 +68,13 @@ class SegmentedControlPageViewController: InportViewController {
     
     // UIをリロード
     override func reload() {
-        let viewController = viewControllers[segmentedControl.selectedSegmentIndex] as? WrappingMainViewController
-        if let viewController = viewController?.contentViewController as? DrawingReportListViewController {
-            viewController.reload()
-        }
-        if let viewController = viewController?.contentViewController as? PhotoLisViewController {
-            viewController.reload()
+        if let viewController = viewControllers[segmentedControl.selectedSegmentIndex] as? UINavigationController {
+            if let viewController = viewController.viewControllers.first as? DrawingReportListViewController {
+                viewController.reload()
+            }
+            if let viewController = viewController.viewControllers.first as? PhotoLisViewController {
+                viewController.reload()
+            }
         }
     }
 }
