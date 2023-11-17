@@ -44,7 +44,6 @@ class LocalFileManager {
     func createFolders() {
         do {
             // Documentsのフォルダ作成
-            // iCloud Drive / DrawingApp フォルダ作成　ユーザーがFileアプリから削除したケースに対応
             if FileManager.default.fileExists(atPath: documentsFolderUrl.path) {
                 print(documentsFolderUrl.path)
                 // /var/mobile/Containers/Data/Application/32D3348F-67EF-449B-A804-9BB3FFEA0D04/Documents
@@ -53,23 +52,53 @@ class LocalFileManager {
                 try FileManager.default.createDirectory(atPath: documentsFolderUrl.path, withIntermediateDirectories: true)
             }
             /// 作業中のフォルダ作成
-            if FileManager.default.fileExists(atPath: backupFolderUrl.path) {
-                print(backupFolderUrl.path)
+            if FileManager.default.fileExists(atPath: WorkingDirectoryFolderUrl.path) {
+                print(WorkingDirectoryFolderUrl.path)
                 // /var/mobile/Containers/Data/Application/32D3348F-67EF-449B-A804-9BB3FFEA0D04/Documents/WorkingDirectory
             } else {
-                print(backupFolderUrl.path)
-                try FileManager.default.createDirectory(atPath: backupFolderUrl.path, withIntermediateDirectories: false)
+                print(WorkingDirectoryFolderUrl.path)
+                try FileManager.default.createDirectory(atPath: WorkingDirectoryFolderUrl.path, withIntermediateDirectories: false)
             }
-            /// zumen のフォルダ作成
+            /// Zumen のフォルダ作成
             if FileManager.default.fileExists(atPath: zumenFolderUrl.path) {
                 print(zumenFolderUrl.path)
-                // /var/mobile/Containers/Data/Application/32D3348F-67EF-449B-A804-9BB3FFEA0D04/Documents/WorkingDirectory/zumen
             } else {
                 print(zumenFolderUrl.path)
                 try FileManager.default.createDirectory(atPath: zumenFolderUrl.path, withIntermediateDirectories: false)
             }
+            /// Report のフォルダ作成
+            if FileManager.default.fileExists(atPath: reportFolderUrl.path) {
+                print(reportFolderUrl.path)
+            } else {
+                print(reportFolderUrl.path)
+                try FileManager.default.createDirectory(atPath: reportFolderUrl.path, withIntermediateDirectories: false)
+            }
+            /// Photos のフォルダ作成
+            if FileManager.default.fileExists(atPath: photosFolderUrl.path) {
+                print(photosFolderUrl.path)
+            } else {
+                print(photosFolderUrl.path)
+                try FileManager.default.createDirectory(atPath: photosFolderUrl.path, withIntermediateDirectories: false)
+            }
         } catch {
             print(error.localizedDescription)
+        }
+    }
+    
+    // ディレクトリのURL
+    func getURL(for directory: AppDirectories) -> URL {
+        switch directory
+        {
+        case .Documents:
+            return documentsFolderUrl
+        case .WorkingDirectory:
+            return WorkingDirectoryFolderUrl
+        case .Zumen:
+            return zumenFolderUrl
+        case .Report:
+            return reportFolderUrl
+        case .Photos:
+            return photosFolderUrl
         }
     }
     
@@ -82,21 +111,33 @@ class LocalFileManager {
     }
     
     /// 作業中のフォルダ のURL
-    private var backupFolderUrl: URL {
+    private var WorkingDirectoryFolderUrl: URL {
         let folderName = "WorkingDirectory" // 作業中のフォルダ
         return documentsFolderUrl.appendingPathComponent(folderName, isDirectory: true)
     }
 
-    /// zumen のフォルダ のURL
+    /// Zumen のフォルダ のURL
     private var zumenFolderUrl: URL {
-        let folderName = "zumen" // zumen のフォルダ
-        return backupFolderUrl.appendingPathComponent(folderName, isDirectory: true)
+        let folderName = "Zumen" // Zumen のフォルダ
+        return WorkingDirectoryFolderUrl.appendingPathComponent(folderName, isDirectory: true)
     }
     
+    /// Report のフォルダ のURL
+    private var reportFolderUrl: URL {
+        let folderName = "Report" // Report のフォルダ
+        return WorkingDirectoryFolderUrl.appendingPathComponent(folderName, isDirectory: true)
+    }
+    
+    /// Photos のフォルダ のURL
+    private var photosFolderUrl: URL {
+        let folderName = "Photos" // Photos のフォルダ
+        return WorkingDirectoryFolderUrl.appendingPathComponent(folderName, isDirectory: true)
+    }
+
     // MARK: ファイル　インポート
 
-    /// PDFファイルを Documents - WorkingDirectory - zumen にコピー
-    func inportFile(fileURL: URL? = nil, modifiedContentsURL: URL, completion: @escaping () -> Void, errorHandler: @escaping () -> Void) {
+    /// ファイルを Documents - WorkingDirectory - 各フォルダ にコピー
+    func inportFile(directory: AppDirectories, fileURL: URL? = nil, modifiedContentsURL: URL, completion: @escaping () -> Void, errorHandler: @escaping () -> Void) {
         if let fileURL = fileURL { // 編集
             // フォルダは作成しない
         } else { // 新規作成
@@ -109,8 +150,8 @@ class LocalFileManager {
         // バックアップファイル名
         let fileName = modifiedContentsURL.lastPathComponent
         // バックアップファイルの格納場所
-        let fileUrl = fileURL ?? zumenFolderUrl.appendingPathComponent(fileName)
-        // PDFファイルを Documents - WorkingDirectory - zumen に保存する
+        let fileUrl = fileURL ?? getURL(for: directory).appendingPathComponent(fileName)
+        // PDFファイルを Documents - WorkingDirectory - 各フォルダ に保存する
         if let fileName = saveToDocumentsDirectory(backupFileUrl: fileUrl, modifiedContentsURL: modifiedContentsURL) {
             print(fileName)
             completion()
@@ -119,7 +160,7 @@ class LocalFileManager {
         }
     }
     
-    // PDFファイルを Documents - WorkingDirectory - zumen に保存する
+    // PDFファイルを Documents - WorkingDirectory - 各フォルダ に保存する
     func saveToDocumentsDirectory(backupFileUrl: URL, modifiedContentsURL: URL) -> URL? {
         do {
             // ファイル一覧を取得
@@ -159,12 +200,12 @@ class LocalFileManager {
 
     // MARK: ファイル　取得
 
-    func readFiles(completion: @escaping ([(URL)]) -> Void) {
+    func readFiles(directory: AppDirectories, completion: @escaping ([(URL)]) -> Void) {
         // 読み出し
         var backupFiles: [(URL)] = []
         // ディレクトリ内にあるコンテンツの検索
         do {
-            let urls = try FileManager.default.contentsOfDirectory(at: zumenFolderUrl, includingPropertiesForKeys: nil)
+            let urls = try FileManager.default.contentsOfDirectory(at: getURL(for: directory), includingPropertiesForKeys: nil)
             print(urls)
             for url in urls {
                 // ファイルのURL
@@ -175,5 +216,12 @@ class LocalFileManager {
         }
         completion(backupFiles)
     }
+}
 
+enum AppDirectories : String {
+    case Documents = "Documents"
+    case WorkingDirectory = "WorkingDirectory"
+    case Zumen = "Zumen"
+    case Report = "Report"
+    case Photos = "Photos"
 }

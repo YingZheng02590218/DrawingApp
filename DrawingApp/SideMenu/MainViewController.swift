@@ -27,6 +27,8 @@ class MainViewController: UIViewController {
         //         }
         
         contentViewController.viewControllers[0].navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "list.bullet")?.withRenderingMode(.alwaysTemplate), style: .plain, target: self, action: #selector(sidemenuBarButtonTapped(sender:)))
+        contentViewController.navigationBar.backgroundColor = .systemPink // .systemBackground
+
         addChild(contentViewController)
         view.addSubview(contentViewController.view)
         contentViewController.didMove(toParent: self)
@@ -94,29 +96,31 @@ extension MainViewController: SidemenuViewControllerDelegate {
         print(contentViewController.viewControllers)
         print(self.presentingViewController) // Optional(<DrawingApp.SplashViewController: 0x101209d10>)
         print(self.presentedViewController)
-        switch indexPath.row {
-        case SideMenu.drawingReportRegister.getRow(): // 図面調書登録
-            if let presentingViewController = contentViewController.viewControllers.first as? DrawingReportListViewController {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            if let presentingViewController = self.contentViewController.viewControllers.first as? SegmentedControlPageViewController {
+                
+                switch indexPath.row {
+                case SideMenu.drawingReportRegister.getRow(): // 図面調書登録
+                    // 保存先のディレクトリ
+                    presentingViewController.directory = .Zumen
                     // ファイル選択画面を表示させる
                     presentingViewController.showDocumentPicker()
-                }
-            }
-            break
-        case SideMenu.photoReportRegister.getRow(): // 写真調書登録
-            break
-        case SideMenu.pictureRegister.getRow(): // 撮影写真登録
-            if let presentingViewController = contentViewController.viewControllers.first as? PhotoLisViewController {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    break
+                case SideMenu.photoReportRegister.getRow(): // 写真調書登録
+                    break
+                case SideMenu.pictureRegister.getRow(): // 撮影写真登録
+                    // 保存先のディレクトリ
+                    presentingViewController.directory = .Photos
                     // ファイル選択画面を表示させる
                     presentingViewController.showDocumentPicker()
+                    break
+                case SideMenu.project.getRow(): // プロジェクト
+                    break
+                default:
+                    break
                 }
             }
-            break
-        case SideMenu.project.getRow(): // プロジェクト
-            break
-        default:
-            break
         }
     }
 }

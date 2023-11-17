@@ -8,15 +8,15 @@
 import UIKit
 
 // ホーム画面
-class SegmentedControlPageViewController: UIViewController {
+class SegmentedControlPageViewController: InportViewController {
 
     @IBOutlet var segmentedControl: UISegmentedControl!
     
     var pageViewController: UIPageViewController!
-    var drawingReportListViewController: WrappingMainViewController!
-    var photoLisViewController: WrappingMainViewController!
+    var drawingReportListViewController: UINavigationController!
+    var photoLisViewController: UINavigationController!
 
-    let idArray = SegmentedControlTab.allCases
+    let segmentedControlTabs = SegmentedControlTab.allCases
     
     var viewControllers = [UIViewController]()
 
@@ -24,20 +24,22 @@ class SegmentedControlPageViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        for id in idArray {
-            if let viewController = UIStoryboard(
-                name: "WrappingMainViewController",
-                bundle: nil
-            ).instantiateViewController(withIdentifier: "WrappingMainViewController") as? WrappingMainViewController {
-                viewController.modalPresentationStyle = .fullScreen
-                viewController.modalTransitionStyle = .crossDissolve
-                viewController.segmentedControlTab = id
-                if id == .drawingReportList {
-                    drawingReportListViewController = viewController
-                } else {
-                    photoLisViewController = viewController
+        for segmentedControlTab in segmentedControlTabs {
+            switch segmentedControlTab {
+            case .drawingReportList:
+                if let viewController = UIStoryboard(name: "DrawingReportListViewController", bundle: nil).instantiateViewController(withIdentifier: "DrawingReportListViewController") as? DrawingReportListViewController {
+                    viewController.modalPresentationStyle = .fullScreen
+                    viewController.modalTransitionStyle = .crossDissolve
+                    drawingReportListViewController = UINavigationController(rootViewController: viewController)
+                    viewControllers.append(drawingReportListViewController)
                 }
-                viewControllers.append(viewController)
+            case .photoReportList:
+                if let viewController = UIStoryboard(name: "PhotoLisViewController", bundle: nil).instantiateViewController(withIdentifier: "PhotoLisViewController") as? PhotoLisViewController {
+                    viewController.modalPresentationStyle = .fullScreen
+                    viewController.modalTransitionStyle = .crossDissolve
+                    photoLisViewController = UINavigationController(rootViewController: viewController)
+                    viewControllers.append(photoLisViewController)
+                }
             }
         }
         
@@ -63,6 +65,17 @@ class SegmentedControlPageViewController: UIViewController {
             break
         }
     }
+    
+    // UIをリロード
+    override func reload() {
+        let viewController = viewControllers[segmentedControl.selectedSegmentIndex] as? WrappingMainViewController
+        if let viewController = viewController?.contentViewController as? DrawingReportListViewController {
+            viewController.reload()
+        }
+        if let viewController = viewController?.contentViewController as? PhotoLisViewController {
+            viewController.reload()
+        }
+    }
 }
 
 extension SegmentedControlPageViewController: UIPageViewControllerDelegate, UIPageViewControllerDataSource {
@@ -84,9 +97,14 @@ extension SegmentedControlPageViewController: UIPageViewControllerDelegate, UIPa
     }
     
     func pageViewController(_ pageViewController: UIPageViewController, didFinishAnimating finished: Bool, previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
-        if let vcName = pageViewController.viewControllers?.first?.restorationIdentifier {
-            let index = idArray.firstIndex(of: SegmentedControlTab(rawValue: vcName) ?? .drawingReportList)
-            segmentedControl.selectedSegmentIndex = index!
+        // viewControllerBefore と viewControllerAfter　は2回処理が走ってインデックスがずれるので、アニメーション完了後にインデックスを取得
+        if let navigationController = pageViewController.viewControllers?.first,
+           let currentVC = navigationController.children.first {
+            if currentVC.isKind(of: DrawingReportListViewController.self) {
+                segmentedControl.selectedSegmentIndex = 0
+            } else if currentVC.isKind(of: PhotoLisViewController.self) {
+                    segmentedControl.selectedSegmentIndex = 1
+            }
         }
     }
 }

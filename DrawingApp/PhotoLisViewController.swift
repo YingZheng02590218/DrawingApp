@@ -9,7 +9,7 @@ import UIKit
 import UniformTypeIdentifiers
 
 // 撮影写真一覧
-class PhotoLisViewController: UIViewController {
+class PhotoLisViewController: InportViewController {
 
     @IBOutlet var collectionView: UICollectionView!
     private var layout: UICollectionViewFlowLayout!
@@ -19,45 +19,17 @@ class PhotoLisViewController: UIViewController {
     // Documents 図面　ファイル
     var drawingReportFiles: [(URL?)] = [] {
         didSet {
-            self.pageImages = []
-            self.documents = []
-            // Documents に保存しているPDFファイルのパス
-            for drawingReportFile in drawingReportFiles {
-                guard let drawingReportFile = drawingReportFile else { return }
-                guard let document = PDFDocumentForList(url: drawingReportFile) else { return }
-                self.documents.append(document)
-            }
-            // サムネイル画像をPDFから取得して、UIに表示させる
-            createPageImages()
-        }
-    }
-
-    /// Current document being displayed
-    var documents: [PDFDocumentForList] = []
-        
-    /// Small thumbnail image representations of the pdf pages
-    private var pageImages: [[UIImage]]? = [] {
-        didSet {
             collectionView.reloadData()
         }
     }
-
-    // サムネイル画像をPDFから取得して、UIに表示させる
-    func createPageImages() {
-        for document in documents {
-            DispatchQueue.global(qos: .background).async {
-                document.allPageImages(callback: { (images) in
-                    DispatchQueue.main.async {
-                        self.pageImages?.append(images)
-                    }
-                })
-            }
-        }
-    }
-    
+            
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        if let navigationController = self.navigationController {
+            navigationController.navigationItem.title = "撮影写真一覧"
+            navigationController.navigationBar.backgroundColor = .brown // .systemBackground
+        }
         // xib読み込み
         let nib = UINib(nibName: "PDFThumbnailCell", bundle: .main)
         collectionView.register(nib, forCellWithReuseIdentifier: "Cell")
@@ -90,101 +62,46 @@ class PhotoLisViewController: UIViewController {
     }
     
     // UIをリロード
-    func reload() {
+    override func reload() {
         DispatchQueue.main.async {
-            LocalFileManager.shared.readFiles {
+            LocalFileManager.shared.readFiles(directory: .Photos) {
                 print($0)
                 self.drawingReportFiles = $0
             }
         }
     }
-
-    // MARK: 図面PDFファイルを取り込む　iCloud Container にプロジェクトフォルダを作成
-
-    // ファイル選択画面を表示させる
-    func showDocumentPicker() {
-        // PDFのみ選択できるドキュメントピッカーを作成
-        if #available(iOS 14.0, *) {
-            let documentPicker = UIDocumentPickerViewController(
-                forOpeningContentTypes: [.pdf] // PDFファイルのみを対象とする
-            )
-            documentPicker.delegate = self
-            DispatchQueue.main.async {
-                self.present(documentPicker, animated: false, completion: nil)
-            }
-        } else {
-            let documentPicker = UIDocumentPickerViewController(documentTypes: [UTType.pdf.description], in: .open)
+    
+    // 撮影写真確認画面を表示させる
+    func showEditingView(pageNumber: Int) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             
-            documentPicker.delegate = self
-            DispatchQueue.main.async {
-                self.present(documentPicker, animated: false, completion: nil)
-            }
+//            if let viewController = UIStoryboard(
+//                name: "DrawingReportEditViewController",
+//                bundle: nil
+//            ).instantiateInitialViewController() as? DrawingReportEditViewController {
+//                viewController.pageNumber = pageNumber
+//                
+//                if let navigator = self.navigationController {
+//                    navigator.pushViewController(viewController, animated: true)
+//                } else {
+//                    let navigation = UINavigationController(rootViewController: viewController)
+//                    navigation.modalPresentationStyle = .fullScreen
+//                    self.present(navigation, animated: true, completion: nil)
+//                }
+//            }
         }
     }
     
-    // PDF編集画面を表示させる
-    func showEditingView(document: PDFDocumentForList, pageNumber: Int) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            
-            if let viewController = UIStoryboard(
-                name: "DrawingReportEditViewController",
-                bundle: nil
-            ).instantiateInitialViewController() as? DrawingReportEditViewController {
-                // Documents に保存しているPDFファイルのパス
-                viewController.document = document
-                viewController.pageNumber = pageNumber
-                
-                if let navigator = self.navigationController {
-                    navigator.pushViewController(viewController, animated: true)
-                } else {
-                    let navigation = UINavigationController(rootViewController: viewController)
-                    navigation.modalPresentationStyle = .fullScreen
-                    self.present(navigation, animated: true, completion: nil)
-                }
-            }
+    // マーカーに紐付けされた画像
+    func getThumbnailImage(url: URL, completion: @escaping (_ image: UIImage?) -> Void) {
+        do {
+            let data = try Data(contentsOf: url)
+            let image = UIImage(data: data)
+            completion(image)
+        } catch let err {
+            print("Error : \(err.localizedDescription)")
         }
-    }
-}
-
-// MARK: 図面PDFファイルを取り込む　iCloud Container にプロジェクトフォルダを作成
-
-/// UIDocumentPickerDelegate
-extension PhotoLisViewController: UIDocumentPickerDelegate {
-    /// ファイル選択後に呼ばれる
-    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        // URLを取得
-        guard let url = urls.first else { return }
-        print(url)
-        // file:///private/var/mobile/Library/Mobile%20Documents/com~apple~CloudDocs/Desktop/douroaisyo.pdf
-        // iCloud Container のプロジェクトフォルダ内のPDFファイルは受け取れないように弾く
-        guard !url.path.contains("iCloud~com~ikingdom778~DrawingApp/Documents") else {
-            return
-        }
-        
-        // 選択したURLがディレクトリかどうか
-        if url.hasDirectoryPath {
-            // ここで読み込む処理
-        }
-        // USBメモリなど外部記憶装置内のファイルにアクセスするにはセキュリティで保護されたリソースへのアクセス許可が必要
-        guard url.startAccessingSecurityScopedResource() else {
-            // ここで選択したURLでファイルを処理する
-            return
-        }
-        
-        /// PDFファイルを Documents - WorkingDirectory - zumen にコピー
-        LocalFileManager.shared.inportFile(
-            fileURL: nil, // プロジェクトフォルダを新規作成する
-            modifiedContentsURL: url,
-            completion: {
-                // tableViewをリロード
-                self.reload()
-            },
-            errorHandler: {
-                //
-            }
-        )
-        // ファイルの処理が終わったら、セキュリティで保護されたリソースを解放
-        defer { url.stopAccessingSecurityScopedResource() }
+        completion(nil)
     }
 }
 
@@ -192,29 +109,29 @@ extension PhotoLisViewController: UIDocumentPickerDelegate {
 extension PhotoLisViewController: UICollectionViewDataSource {
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        print(pageImages?.count)
-        return pageImages?.count ?? 0
+        return 1
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        print("section", section, "row", pageImages?[section].count)
-        return pageImages?[section].count ?? 0
+        print("row", drawingReportFiles.count)
+        return drawingReportFiles.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath) as! PDFThumbnailCell
         
-        if let image = pageImages?[indexPath.section][indexPath.row] {
-            // cell.alpha = currentPageIndex == indexPath.row ? 1 : 0.2
+        if let photoUrl = drawingReportFiles[indexPath.row] {
             cell.imageView?.image = nil
-            let thumbnailSize = CGSize(width: (collectionView.frame.width / 4) - 10, height: (collectionView.frame.width / 4) - 10) // imageViewの余白をマイナスする
-            image.prepareThumbnail(of: thumbnailSize) { thumbnail in
-                DispatchQueue.main.async {
-                    cell.imageView?.image = thumbnail
+            // マーカーに紐付けされた画像
+            getThumbnailImage(url: photoUrl) { image in
+                if let image = image {
+                    DispatchQueue.main.async {
+                        cell.imageView?.image = image
+                    }
                 }
             }
         }
-
+        
         return cell
     }
 }
@@ -222,7 +139,7 @@ extension PhotoLisViewController: UICollectionViewDataSource {
 extension PhotoLisViewController: UICollectionViewDelegate {
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        // PDF編集画面を表示させる
-        showEditingView(document: documents[indexPath.section], pageNumber: indexPath.row + 1)
+        // 撮影写真確認画面を表示させる
+        showEditingView(pageNumber: indexPath.row)
     }
 }

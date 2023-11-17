@@ -37,6 +37,7 @@
 		F940355D2B070BC600EB8C7E /* PhotoLisViewController.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F940355C2B070BC600EB8C7E /* PhotoLisViewController.storyboard */; };
 		F940355F2B070D6700EB8C7E /* SegmentedControlPageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F940355E2B070D6700EB8C7E /* SegmentedControlPageViewController.swift */; };
 		F94035612B070F0700EB8C7E /* SegmentedControlPageViewController.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F94035602B070F0700EB8C7E /* SegmentedControlPageViewController.storyboard */; };
+		F94035642B07374300EB8C7E /* InportViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F94035632B07374300EB8C7E /* InportViewController.swift */; };
 		F96332C42B03686C003B424D /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F96332C32B03686C003B424D /* MainViewController.swift */; };
 		F96332C62B03689B003B424D /* SidemenuViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F96332C52B03689B003B424D /* SidemenuViewController.swift */; };
 		F96332C92B0369A2003B424D /* SidemenuTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = F96332C72B0369A2003B424D /* SidemenuTableViewCell.swift */; };
@@ -105,6 +106,7 @@
 		F940355C2B070BC600EB8C7E /* PhotoLisViewController.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = PhotoLisViewController.storyboard; sourceTree = "<group>"; };
 		F940355E2B070D6700EB8C7E /* SegmentedControlPageViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentedControlPageViewController.swift; sourceTree = "<group>"; };
 		F94035602B070F0700EB8C7E /* SegmentedControlPageViewController.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = SegmentedControlPageViewController.storyboard; sourceTree = "<group>"; };
+		F94035632B07374300EB8C7E /* InportViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InportViewController.swift; sourceTree = "<group>"; };
 		F96332C32B03686C003B424D /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
 		F96332C52B03689B003B424D /* SidemenuViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidemenuViewController.swift; sourceTree = "<group>"; };
 		F96332C72B0369A2003B424D /* SidemenuTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidemenuTableViewCell.swift; sourceTree = "<group>"; };
@@ -190,6 +192,17 @@
 			path = PDFThumbnailCollection;
 			sourceTree = "<group>";
 		};
+		F94035622B0732CE00EB8C7E /* SampleCode */ = {
+			isa = PBXGroup;
+			children = (
+				F963ED652ABC3AF100B41C99 /* ViewController.swift */,
+				F96332CF2B046B85003B424D /* ViewController.storyboard */,
+				F91345292ACA9A9D0034AD03 /* DrawingViewController.swift */,
+				F913452B2ACA9E5D0034AD03 /* DrawingViewController.storyboard */,
+			);
+			path = SampleCode;
+			sourceTree = "<group>";
+		};
 		F96332C22B036841003B424D /* SideMenu */ = {
 			isa = PBXGroup;
 			children = (
@@ -238,18 +251,16 @@
 				F940354B2B06186000EB8C7E /* DrawingReportEditViewController.storyboard */,
 				F940355A2B0709A600EB8C7E /* PhotoLisViewController.swift */,
 				F940355C2B070BC600EB8C7E /* PhotoLisViewController.storyboard */,
+				F94035632B07374300EB8C7E /* InportViewController.swift */,
 				F94035592B07092400EB8C7E /* PDFThumbnailCollection */,
 				F963ED772AC2D65700B41C99 /* BackupManager.swift */,
 				F96332D72B04B7B4003B424D /* LocalFileManager.swift */,
 				F963ED792AC2D82900B41C99 /* PdfMaker.swift */,
-				F963ED652ABC3AF100B41C99 /* ViewController.swift */,
-				F96332CF2B046B85003B424D /* ViewController.storyboard */,
+				F94035622B0732CE00EB8C7E /* SampleCode */,
 				F91345232ACA8B150034AD03 /* IconTableViewCell.swift */,
 				F91345252ACA8B380034AD03 /* IconTableViewCell.xib */,
 				F91345272ACA99870034AD03 /* ImageAnnotation.swift */,
 				F911B5E82AF3353100A645DA /* HandWritting */,
-				F91345292ACA9A9D0034AD03 /* DrawingViewController.swift */,
-				F913452B2ACA9E5D0034AD03 /* DrawingViewController.storyboard */,
 				F921DAF22AFC6ABD009500EC /* TextInputViewController.swift */,
 				F921DAF62AFC6C2F009500EC /* TextInputViewController.storyboard */,
 				F96332C22B036841003B424D /* SideMenu */,
@@ -400,6 +411,7 @@
 				F911B5E72AF3347300A645DA /* PDFPage+Selection.swift in Sources */,
 				F911B5E32AF333F600A645DA /* NonSelectablePDFView.swift in Sources */,
 				F96332C62B03689B003B424D /* SidemenuViewController.swift in Sources */,
+				F94035642B07374300EB8C7E /* InportViewController.swift in Sources */,
 				F963ED7A2AC2D82900B41C99 /* PdfMaker.swift in Sources */,
 				F91345242ACA8B150034AD03 /* IconTableViewCell.swift in Sources */,
 				F94035502B061A0F00EB8C7E /* PDFThumbnailCollectionViewController.swift in Sources */,
