@@ -42,7 +42,7 @@ class PhotoLisViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         if let navigationController = self.navigationController {
-            navigationController.navigationItem.title = "撮影写真一覧"
+            self.title = "撮影写真一覧"
             navigationController.navigationBar.backgroundColor = .brown // .systemBackground
         }
     }

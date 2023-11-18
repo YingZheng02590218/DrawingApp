@@ -18,13 +18,24 @@
                     <rect key="frame" x="5" y="5" width="211" height="227"/>
                     <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                 </imageView>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="cTO-1H-5ne">
+                    <rect key="frame" x="216" y="207" width="0.0" height="25"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="25" id="3we-zs-d8M"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                    <color key="textColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    <nil key="highlightedColor"/>
+                </label>
             </subviews>
             <viewLayoutGuide key="safeArea" id="vUN-kp-3ea"/>
             <color key="backgroundColor" systemColor="systemGreenColor"/>
             <constraints>
+                <constraint firstAttribute="trailing" secondItem="cTO-1H-5ne" secondAttribute="trailing" constant="5" id="6jn-CT-Pfl"/>
                 <constraint firstItem="wXz-Tb-Bve" firstAttribute="height" secondItem="iN0-l3-epB" secondAttribute="height" constant="-10" id="9ug-h3-ScT"/>
                 <constraint firstItem="wXz-Tb-Bve" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="5" id="Fmy-qc-fcH"/>
                 <constraint firstAttribute="trailing" secondItem="wXz-Tb-Bve" secondAttribute="trailing" constant="5" id="b5d-8Q-zxk"/>
+                <constraint firstAttribute="bottom" secondItem="cTO-1H-5ne" secondAttribute="bottom" constant="5" id="bae-nJ-QCR"/>
                 <constraint firstItem="wXz-Tb-Bve" firstAttribute="width" secondItem="iN0-l3-epB" secondAttribute="width" constant="-10" id="mfI-EN-rtW"/>
                 <constraint firstItem="wXz-Tb-Bve" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" constant="5" id="qZ3-x2-ekD"/>
                 <constraint firstAttribute="bottom" secondItem="wXz-Tb-Bve" secondAttribute="bottom" constant="5" id="tlj-Ju-VbD"/>
@@ -32,13 +43,14 @@
             <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
             <connections>
                 <outlet property="imageView" destination="wXz-Tb-Bve" id="UOS-HQ-RrG"/>
+                <outlet property="pageNumberLabel" destination="cTO-1H-5ne" id="iXB-xn-xrE"/>
             </connections>
             <point key="canvasLocation" x="-142.74809160305344" y="-196.83098591549296"/>
         </view>
     </objects>
     <resources>
         <systemColor name="systemGreenColor">
-            <color red="0.20392156859999999" green="0.78039215689999997" blue="0.34901960780000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.20392156862745098" green="0.7803921568627451" blue="0.34901960784313724" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
     </resources>
 </document>

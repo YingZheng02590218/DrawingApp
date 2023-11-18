@@ -75,7 +75,7 @@ class DrawingReportListViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         if let navigationController = self.navigationController {
-            navigationController.navigationItem.title = "図面調書一覧"
+            self.title = "図面調書一覧"
             navigationController.navigationBar.backgroundColor = .brown // .systemBackground
         }
     }
@@ -146,7 +146,9 @@ extension DrawingReportListViewController: UICollectionViewDataSource {
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath) as! PDFThumbnailCell
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath) as? PDFThumbnailCell else {
+            return UICollectionViewCell()
+        }
         
         if let image = pageImages?[indexPath.section][indexPath.row] {
             // cell.alpha = currentPageIndex == indexPath.row ? 1 : 0.2
@@ -160,6 +162,8 @@ extension DrawingReportListViewController: UICollectionViewDataSource {
 //                }
 //            }
         }
+        // ページ番号
+        cell.pageNumberLabel.text = "\(indexPath.row)"
 
         return cell
     }
@@ -168,6 +172,11 @@ extension DrawingReportListViewController: UICollectionViewDataSource {
 extension DrawingReportListViewController: UICollectionViewDelegate {
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath) as? PDFThumbnailCell else {
+            return
+        }
+        // セルの枠線の太さを変える
+        cell.isSelected = false
         // PDF編集画面を表示させる
         showEditingView(document: documents[indexPath.section], pageNumber: indexPath.row)
     }

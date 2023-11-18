@@ -61,13 +61,12 @@ class DrawingReportEditViewController: UIViewController {
         // 単一ページのみ
         pdfView.displayMode = .singlePage
         pdfView.autoScales = true
-
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         if let navigationController = self.navigationController {
-            navigationController.navigationItem.title = "図面調書編集"
+            self.title = "図面調書編集"
             navigationController.navigationBar.backgroundColor = .systemBackground
         }
     }
@@ -76,13 +75,12 @@ class DrawingReportEditViewController: UIViewController {
         super.viewDidAppear(animated)
         
         DispatchQueue.main.async {
-            // 図面調書一覧画面で選択したページへジャンプする
+            // 図面調書編集 図面調書一覧画面で選択したページへジャンプする
             if let pageNumber = self.pageNumber, // ページ番号
                let page = self.pdfView.document?.page(at: pageNumber) {
                 self.pdfView.go(to: page)
+                // 図面調書編集
                 self.currentPageIndex = pageNumber
-                // サムネイル一覧もスクロールさせる
-                self.thumbnailCollectionController?.currentPageIndex = pageNumber
 
                 self.pageNumber = nil
             }
@@ -94,7 +92,11 @@ class DrawingReportEditViewController: UIViewController {
             thumbnailCollectionController = controller
             controller.document = document
             controller.delegate = self
-            controller.currentPageIndex = currentPageIndex
+            // 図面調書一覧画面で選択したページへジャンプする
+            if let pageNumber = self.pageNumber { // ページ番号
+                // サムネイル一覧もスクロールさせる
+                controller.pageNumber = pageNumber
+            }
         }
     }
 }
@@ -102,12 +104,14 @@ class DrawingReportEditViewController: UIViewController {
 extension DrawingReportEditViewController: PDFThumbnailControllerDelegate {
     func didSelectIndexPath(_ indexPath: IndexPath) {
         DispatchQueue.main.async {
-            // 図面調書一覧画面で選択したページへジャンプする
+            // サムネイル一覧で選択したページへジャンプする
             if let page = self.pdfView.document?.page(at: indexPath.row) {
                 self.pdfView.go(to: page)
             }
         }
+        // 図面調書編集
         currentPageIndex = indexPath.row
+        // サムネイル一覧
         thumbnailCollectionController?.currentPageIndex = indexPath.row
     }
 }

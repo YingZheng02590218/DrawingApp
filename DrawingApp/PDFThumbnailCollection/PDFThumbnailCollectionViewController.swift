@@ -25,14 +25,28 @@ internal final class PDFThumbnailCollectionViewController: UICollectionViewContr
             guard let collectionView = collectionView else { return }
             guard let pageImages = pageImages else { return }
             guard pageImages.count > 0 else { return }
+            // ページ番号がPDFのページ数以上のの場合
+            guard currentPageIndex <= pageImages.count - 1 else {
+                currentPageIndex = pageImages.count - 1
+                return
+            }
             let curentPageIndexPath = IndexPath(row: currentPageIndex, section: 0)
-//            if !collectionView.indexPathsForVisibleItems.contains(curentPageIndexPath) {
-                collectionView.scrollToItem(at: curentPageIndexPath, at: .centeredVertically, animated: true)
-//            }
-            collectionView.reloadData()
+            // NOTE: 画面にセルが表示されている場合のみスクロールする　図面調書一覧画面で指定したページへ移れない
+            // if !collectionView.indexPathsForVisibleItems.contains(curentPageIndexPath) {
+            // NOTE: ページ番号がPDFのページ数以上のの場合 うまくいかない
+            // if let _ = collectionView.cellForItem(at: curentPageIndexPath) {
+                collectionView.scrollToItem(
+                    at: curentPageIndexPath,
+                    at: .centeredVertically,
+                    animated: true
+                )
+                collectionView.reloadData()
+            // }
+            // }
         }
     }
-    
+    // ページ番号
+    var pageNumber: Int = 0
     /// Calls actions when certain cells have been interacted with
     weak var delegate: PDFThumbnailControllerDelegate?
     
@@ -40,11 +54,16 @@ internal final class PDFThumbnailCollectionViewController: UICollectionViewContr
     private var pageImages: [UIImage]? {
         didSet {
             collectionView?.reloadData()
+            // サムネイル一覧もスクロールさせる
+            currentPageIndex = pageNumber
         }
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        // XIBの登録
+        collectionView.register(UINib(nibName: "PDFThumbnailCell", bundle: nil), forCellWithReuseIdentifier: "Cell")
+
         DispatchQueue.global(qos: .background).async {
             self.document.allPageImages(callback: { (images) in
                 DispatchQueue.main.async {
@@ -59,7 +78,9 @@ internal final class PDFThumbnailCollectionViewController: UICollectionViewContr
     }
 
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath) as! PDFThumbnailCell
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath) as? PDFThumbnailCell else {
+            return UICollectionViewCell()
+        }
         
         cell.imageView?.image = pageImages?[indexPath.row]
         // cell.alpha = currentPageIndex == indexPath.row ? 1 : 0.2
@@ -76,8 +97,12 @@ internal final class PDFThumbnailCollectionViewController: UICollectionViewContr
     }
     
     override func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        DispatchQueue.main.async {
-            cell.alpha = self.currentPageIndex == indexPath.row ? 0.2 : 1
+        guard let cell = cell as? PDFThumbnailCell else {
+            return
         }
+        // セルの枠線の太さを変える
+        cell.isSelected = self.currentPageIndex == indexPath.row
+        // ページ番号
+        cell.pageNumberLabel.text = "\(indexPath.row)"
     }
 }

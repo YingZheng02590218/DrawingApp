@@ -49,4 +49,26 @@ extension UIView {
             self.layer.addSublayer(border)
         }
     }
+    
+    // MARK: Utility
+    
+    /// 枠線の色
+    @IBInspectable var borderColor: UIColor? {
+        get {
+            layer.borderColor.map { UIColor(cgColor: $0) }
+        }
+        set {
+            layer.borderColor = newValue?.cgColor
+        }
+    }
+
+    /// 枠線のWidth
+    @IBInspectable var borderWidth: CGFloat {
+        get {
+            layer.borderWidth
+        }
+        set {
+            layer.borderWidth = newValue
+        }
+    }
 }
