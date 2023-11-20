@@ -1706,15 +1706,23 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
             } else if drawingMode == .move { // 移動
                 switch sender.state {
                 case .began:
-                    guard let annotation = page.annotation(at: locationOnPage) else {   return }
-                    if annotation.isKind(of: PDFAnnotation.self) ||
-                        annotation.isKind(of: ImageAnnotation.self) ||
-                        annotation.isKind(of: PhotoAnnotation.self) {
-                        currentlySelectedAnnotation = annotation
-                        // 変更前
-                        before = annotation.copy() as! PDFAnnotation
-                        before?.bounds = annotation.bounds
-                        before?.page = annotation.page
+                    guard let annotation = page.annotation(at: locationOnPage) else { return }
+                    currentlySelectedAnnotation = annotation
+                    // 変更前
+                    if let copy = annotation.copy() as? PDFAnnotation {
+                        before = copy
+                        copy.bounds = annotation.bounds
+                        copy.page = annotation.page
+                    }
+                    if let copy = annotation.copy() as? PhotoAnnotation {
+                        before = copy
+                        copy.bounds = annotation.bounds
+                        copy.page = annotation.page
+                    }
+                    if let copy = annotation.copy() as? ImageAnnotation {
+                        before = copy
+                        copy.bounds = annotation.bounds
+                        copy.page = annotation.page
                     }
                 case .changed:
                     guard let annotation = currentlySelectedAnnotation else {return }
