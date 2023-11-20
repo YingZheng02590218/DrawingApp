@@ -56,7 +56,7 @@ class DrawingViewController: UIViewController {
     var selectedAnnotation: PDFAnnotation?
     // 編集中のAnnotation
     var isEditingAnnotation: PDFAnnotation?
-
+    
     var imagePickerController: UIImagePickerController!
     // 手書き　ツール
     var toolStackView: UIStackView?
@@ -64,30 +64,30 @@ class DrawingViewController: UIViewController {
     var colorStackView: UIStackView?
     // 破線のパターン
     var dashPattern: DashPattern = .pattern1
-
-//    let canvas = PKCanvasView()
-//    var crayon = PKInkingTool(.pencil, color: Colors.babyBlue.getColor(), width: 70)
-//    var pencil = PKInkingTool(.pencil, color: Colors.babyBlue.getColor(), width: 10)
-//    var marker = PKInkingTool(.marker, color: Colors.babyBlue.getColor(), width: 40)
-//    let eraser = PKEraserTool(.bitmap)
+    
+    //    let canvas = PKCanvasView()
+    //    var crayon = PKInkingTool(.pencil, color: Colors.babyBlue.getColor(), width: 70)
+    //    var pencil = PKInkingTool(.pencil, color: Colors.babyBlue.getColor(), width: 10)
+    //    var marker = PKInkingTool(.marker, color: Colors.babyBlue.getColor(), width: 40)
+    //    let eraser = PKEraserTool(.bitmap)
     
     private var path: UIBezierPath?
-//    private var currentAnnotation : DrawingAnnotation?
+    //    private var currentAnnotation : DrawingAnnotation?
     
     private let pdfDrawer = PDFDrawer()
-
+    
     let pdfDrawingGestureRecognizer = DrawingGestureRecognizer()
-
+    
     // 変更前
     var before: PDFAnnotation?
     // Undo Redo
     let undoRedoManager = UndoRedoManager()
     // Undo Redo が可能なAnnotation
     private var editingAnnotations: [PDFAnnotation]?
-
+    
     @IBOutlet var undoButton: UIButton!
     @IBOutlet var redoButton: UIButton!
-
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -96,8 +96,8 @@ class DrawingViewController: UIViewController {
         editButtonItem.tintColor = .black
         navigationItem.rightBarButtonItem = editButtonItem
         
-        // Xボタン
-        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: nil, action: #selector(doSomething))
+        // Xボタン　戻るボタン
+        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(closeScreen))
         
         // Annotation設定スイッチ
         let switchButton = UISwitch(frame: CGRect(x: 0, y: 0, width: 0, height: 0))
@@ -214,7 +214,7 @@ class DrawingViewController: UIViewController {
     }
     
     // MARK: - 写真マーカー　ズームイン
-
+    
     // 写真マーカー　ズームイン
     func zoomInAtPhotoMarker(photoMarkerNumber: String) {
         // 拡大
@@ -254,15 +254,15 @@ class DrawingViewController: UIViewController {
     }
     
     // MARK: - 手書きパレット
-
+    
     // 手書きパレット
     func createButtons() {
-//        canvas.frame = view.bounds
-//        canvas.drawingPolicy = .anyInput
-//        canvas.backgroundColor = .clear
-//        canvas.isOpaque = false //背景を透明にする(だいじ)
-//        view.addSubview(canvas)
-//        canvas.tool = crayon
+        //        canvas.frame = view.bounds
+        //        canvas.drawingPolicy = .anyInput
+        //        canvas.backgroundColor = .clear
+        //        canvas.isOpaque = false //背景を透明にする(だいじ)
+        //        view.addSubview(canvas)
+        //        canvas.tool = crayon
         
         //Create the color palette
         var buttons: [UIButton] = []
@@ -298,20 +298,20 @@ class DrawingViewController: UIViewController {
         
         //Setup tools
         let crayonButton = createButton(title: "Crayon", action: UIAction(handler: { _ in
-//            self.canvas.tool = self.crayon
+            //            self.canvas.tool = self.crayon
         }))
         
         let pencilButton = createButton(title: "Pencil", action: UIAction(handler: { _ in
-//            self.canvas.tool = self.pencil
+            //            self.canvas.tool = self.pencil
             self.pdfDrawer.changeTool(tool: .pencil)
         }))
         
         let markerButton = createButton(title: "Marker", action: UIAction(handler: { _ in
-//            self.canvas.tool = self.marker
+            //            self.canvas.tool = self.marker
         }))
         
         let eraserButton = createButton(title: "Eraser", action: UIAction(handler: { _ in
-//            self.canvas.tool = self.eraser
+            //            self.canvas.tool = self.eraser
         }))
         
         let undoButton = createButton(title: "Undo", action: UIAction(handler: { _ in
@@ -359,40 +359,41 @@ class DrawingViewController: UIViewController {
     private func updatePens(sender: Any?) {
         if let button = sender as? UIButton,
            let color = Colors(rawValue: button.tag)?.getColor() { //,
-//           var currentTool = canvas.tool as? PKInkingTool {
-//            //update the current tool being used by the canvas
-//            currentTool.color = color
-//            canvas.tool = currentTool
-//            //update all the tools
-//            crayon.color = color
-//            pencil.color = color
-//            marker.color = color
+            //           var currentTool = canvas.tool as? PKInkingTool {
+            //            //update the current tool being used by the canvas
+            //            currentTool.color = color
+            //            canvas.tool = currentTool
+            //            //update all the tools
+            //            crayon.color = color
+            //            pencil.color = color
+            //            marker.color = color
             pdfDrawer.changeColor(color: color)
         }
     }
     
     // MARK: - 戻るボタン
-
+    
+    // Xボタン　戻るボタン
     @objc
-    func doSomething() {
+    func closeScreen() {
         // 戻るボタンの動作処理
         self.dismiss(animated: true)
     }
     
     // MARK: - 編集モード
-
+    
     // セグメントコントロール
     @objc
     func segmentedControlChanged() {
         drawingMode = DrawingMode(index: segmentedControl.selectedSegmentIndex)
-        
+        print(drawingMode)
         // スワイプジェスチャーを禁止
         if drawingMode == .viewingMode {
             NotificationCenter.default.post(name: SegmentedControlPageViewController.needToChangeSwipeEnabledNotification, object: true)
         } else {
             NotificationCenter.default.post(name: SegmentedControlPageViewController.needToChangeSwipeEnabledNotification, object: false)
         }
-
+        
         // 拡大縮小を禁止してマーカーの起点と終点を選択しやすくする
         if drawingMode == .move || drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle {
             print(pdfView.maxScaleFactor) // 5.0
@@ -413,7 +414,7 @@ class DrawingViewController: UIViewController {
             // 手書きのアノテーションを追加する処理
             pdfDrawer.drawingManageAnnotationDelegate = self
             
-//            canvas.isHidden = false
+            //            canvas.isHidden = false
             pdfDrawer.isActive = true
             colorStackView?.isHidden = false
             toolStackView?.isHidden = false
@@ -421,8 +422,8 @@ class DrawingViewController: UIViewController {
             pdfView.removeGestureRecognizer(pdfDrawingGestureRecognizer)
             // 手書きのアノテーションを追加する処理
             pdfDrawer.drawingManageAnnotationDelegate = nil
-
-//            canvas.isHidden = true
+            
+            //            canvas.isHidden = true
             pdfDrawer.isActive = false
             colorStackView?.isHidden = true
             toolStackView?.isHidden = true
@@ -435,7 +436,7 @@ class DrawingViewController: UIViewController {
         case pattern3
         case pattern4
         case pattern5
-
+        
         var style: [CGFloat] {
             switch self {
             case .pattern1:
@@ -479,12 +480,12 @@ class DrawingViewController: UIViewController {
         if UIDevice.current.userInterfaceIdiom == .pad {
             actionSheet.popoverPresentationController?.sourceView = pdfView
             actionSheet.popoverPresentationController?.sourceRect = frame
-//            CGRect(
-//                x: frame.origin.x - frame.width,
-//                y: frame.origin.y - frame.height,
-//                width: 0,
-//                height: 0
-//            )
+            //            CGRect(
+            //                x: frame.origin.x - frame.width,
+            //                y: frame.origin.y - frame.height,
+            //                width: 0,
+            //                height: 0
+            //            )
             // iPadの場合、アクションシートの背後の画面をタップできる
         } else {
             // ③表示するViewと表示位置を指定する
@@ -493,7 +494,7 @@ class DrawingViewController: UIViewController {
         }
         
         actionSheet.popoverPresentationController?.permittedArrowDirections = UIPopoverArrowDirection.any
-
+        
         self.present(actionSheet, animated: true) { () -> Void in
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 self.dismiss(animated: true, completion: nil)
@@ -614,11 +615,11 @@ class DrawingViewController: UIViewController {
         if let page = self.pdfView.currentPage,
            let point = point,
            let unusedNumber = unusedNumber {
-//            // 中央部に座標を指定
-//            let imageStamp = ImageAnnotation(with: image, forBounds: CGRect(x: point.x, y: point.y, width: 15, height: 15), withProperties: [:])
-//            imageStamp.contents = "\(unusedNumber)"
-//            // 対象のページへ注釈を追加
-//            page.addAnnotation(imageStamp)
+            //            // 中央部に座標を指定
+            //            let imageStamp = ImageAnnotation(with: image, forBounds: CGRect(x: point.x, y: point.y, width: 15, height: 15), withProperties: [:])
+            //            imageStamp.contents = "\(unusedNumber)"
+            //            // 対象のページへ注釈を追加
+            //            page.addAnnotation(imageStamp)
             
             // freeText
             let font = UIFont.systemFont(ofSize: 15)
@@ -664,7 +665,7 @@ class DrawingViewController: UIViewController {
             border.lineWidth = 10
             border.style = dashPattern == .pattern1 ? .solid : .dashed
             border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
-
+            
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
                 .linePoints: [beganLocation.x, beganLocation.y, endLocation.x, endLocation.y],
@@ -734,7 +735,7 @@ class DrawingViewController: UIViewController {
             border.lineWidth = 10
             border.style = dashPattern == .pattern1 ? .solid : .dashed
             border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
-
+            
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
                 .linePoints: [beganLocation.x, beganLocation.y, endLocation.x, endLocation.y],
@@ -782,7 +783,7 @@ class DrawingViewController: UIViewController {
             border.lineWidth = 5.0
             border.style = dashPattern == .pattern1 ? .solid : .dashed
             border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
-
+            
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
                 .color: UIColor.green,
@@ -792,8 +793,8 @@ class DrawingViewController: UIViewController {
             // Create an annotation to add to a page (empty)
             let newAnnotation = PDFAnnotation(
                 bounds: CGRect(x: boundsX, y: boundsY, width: width, height: height),
-             forType: .square,
-             withProperties: lineAttributes
+                forType: .square,
+                withProperties: lineAttributes
             )
             // UUID
             newAnnotation.userName = UUID().uuidString
@@ -829,7 +830,7 @@ class DrawingViewController: UIViewController {
             border.lineWidth = 2.0
             border.style = dashPattern == .pattern1 ? .solid : .dashed
             border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
-
+            
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
                 .color: UIColor.green,
@@ -839,8 +840,8 @@ class DrawingViewController: UIViewController {
             // Create an annotation to add to a page (empty)
             let newAnnotation = PDFAnnotation(
                 bounds: CGRect(x: boundsX, y: boundsY, width: width, height: height),
-             forType: .circle,
-             withProperties: lineAttributes
+                forType: .circle,
+                withProperties: lineAttributes
             )
             // UUID
             newAnnotation.userName = UUID().uuidString
@@ -910,7 +911,7 @@ class DrawingViewController: UIViewController {
             let after = isEditingAnnotation.copy() as! PDFAnnotation
             after.bounds = isEditingAnnotation.bounds
             after.page = isEditingAnnotation.page
-
+            
             if let before = before,
                let inputText = inputText,
                !inputText.isEmpty {
@@ -979,7 +980,7 @@ class DrawingViewController: UIViewController {
                 // Annotationを再度作成
                 page.addAnnotation(after)
                 // 古いものを削除する
-                 page.removeAnnotation(before)
+                page.removeAnnotation(before)
                 // 初期化
                 self.before = nil
                 // Undo Redo 更新
@@ -994,7 +995,7 @@ class DrawingViewController: UIViewController {
             }
         }
     }
-
+    
     // 写真マーカーを削除する
     func removeMarkerAnotation(annotation: PDFAnnotation) {
         // 現在開いているページを取得
@@ -1115,7 +1116,7 @@ class DrawingViewController: UIViewController {
             }
         }
     }
-
+    
     // MARK: PDFAnnotationがタップされた
     @objc
     func action(_ sender: Any) {
@@ -1490,7 +1491,7 @@ extension DrawingViewController: PHPickerViewControllerDelegate {
                             // Live Photoのプロパティから静止画を抜き出す(HEIC形式)
                             if let imageUrl = livePhoto.value(forKey: "imageURL") as? URL {
                                 // URLからDataを生成（HEIC内のデータを参照してるため取得できる
-                                 let imageData: Data = try Data(contentsOf: imageUrl)
+                                let imageData: Data = try Data(contentsOf: imageUrl)
                                 // パスを生成して画像を保存する
                                 // 選択された画像のURL
                                 self.imageURL = imageUrl // imageUrl    Foundation.URL    "file:///private/var/mobile/Containers/Data/Application/D7A1BFB4-0443-473F-9154-0E93D2D2766A/tmp/live-photo-bundle/53151B11-9D5F-407E-AEE3-CE515F2A7659.pvt/IMG_2099.HEIC"
@@ -1615,9 +1616,9 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
             let locationOnPage = pdfView.convert(sender.location(in: pdfView), to: page) // 座標系がUIViewとは異なるので気をつけましょう。
             
             if drawingMode == .photoMarker { // 写真マーカー
-
+                
             } else if drawingMode == .drawing {// 手書き
-
+                
             } else if drawingMode == .arrow { // 矢印
                 switch sender.state {
                 case .began:
@@ -1782,9 +1783,9 @@ enum Colors: Int, CaseIterable {
 }
 
 extension UIButton {
-  func makeRounded(_ cornerSize: CGFloat, borderWidth: CGFloat, borderColor: UIColor) {
-      layer.cornerRadius = cornerSize
-      layer.borderWidth = borderWidth
-      layer.borderColor = borderColor.cgColor
-  }
+    func makeRounded(_ cornerSize: CGFloat, borderWidth: CGFloat, borderColor: UIColor) {
+        layer.cornerRadius = cornerSize
+        layer.borderWidth = borderWidth
+        layer.borderColor = borderColor.cgColor
+    }
 }
