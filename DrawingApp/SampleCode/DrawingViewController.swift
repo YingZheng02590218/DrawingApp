@@ -14,7 +14,7 @@ import UIKit
 class DrawingViewController: UIViewController {
     
     // セグメントコントロール
-    let segmentedControl = UISegmentedControl(items: ["ビューモード", "移動", "選択", "写真マーカー", "手書き", "直線", "矢印", "四角", "円", "テキスト", "消しゴム"])
+    let segmentedControl = UISegmentedControl(items: ["ビューモード", "移動", "グループ選択", "写真マーカー", "手書き", "直線", "矢印", "四角", "円", "テキスト", "消しゴム"])
     // モード
     var drawingMode: DrawingMode = .viewingMode
     
@@ -96,6 +96,7 @@ class DrawingViewController: UIViewController {
         editButtonItem.tintColor = .black
         navigationItem.rightBarButtonItem = editButtonItem
         navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: nil, action: #selector(doSomething))
+        
         // Annotation設定スイッチ
         let switchButton = UISwitch(frame: CGRect(x: 0, y: 0, width: 0, height: 0))
         switchButton.onTintColor = .green
@@ -103,18 +104,9 @@ class DrawingViewController: UIViewController {
         switchButton.addTarget(self, action: #selector(switchTriggered), for: .valueChanged)
         let switchBarButtonItem = UIBarButtonItem(customView: switchButton)
         navigationItem.rightBarButtonItems?.append(switchBarButtonItem)
+        
         // セグメントコントロール
-        segmentedControl.sizeToFit()
-        if #available(iOS 13.0, *) {
-            segmentedControl.selectedSegmentTintColor = UIColor.red
-        } else {
-            segmentedControl.tintColor = UIColor.red
-        }
-        segmentedControl.selectedSegmentIndex = 0
-        segmentedControl.addTarget(self, action: #selector(segmentedControlChanged), for: .valueChanged)
-        //        segment.setTitleTextAttributes([NSAttributedString.Key.font : UIFont(name: "ProximaNova-Light", size: 15)!], for: .normal)
-        let segmentBarButtonItem = UIBarButtonItem(customView: segmentedControl)
-        navigationItem.rightBarButtonItems?.append(segmentBarButtonItem)
+        setupSegmentedControl()
         
         // title設定
         navigationItem.title = "マーカーを追加する"
@@ -137,6 +129,7 @@ class DrawingViewController: UIViewController {
         // 現在開いているページ currentPage にのみマーカーを追加
         pdfView.autoScales = true
         pdfView.scaleFactor += 3.0
+        
         // PDF 全てのpageに存在するAnnotationを保持する
         getAllAnnotations() {
             // TODO: マーカーを拡大してセンターに表示させる
@@ -230,6 +223,22 @@ class DrawingViewController: UIViewController {
             // title設定
             navigationItem.title = "マーカーを追加する"
         }
+    }
+    
+    // セグメントコントロール
+    func setupSegmentedControl() {
+        segmentedControl.sizeToFit()
+        if #available(iOS 13.0, *) {
+            segmentedControl.selectedSegmentTintColor = UIColor.red
+        } else {
+            segmentedControl.tintColor = UIColor.red
+        }
+        segmentedControl.selectedSegmentIndex = 0
+        segmentedControl.addTarget(self, action: #selector(segmentedControlChanged), for: .valueChanged)
+        //        segment.setTitleTextAttributes([NSAttributedString.Key.font : UIFont(name: "ProximaNova-Light", size: 15)!], for: .normal)
+        let segmentBarButtonItem = UIBarButtonItem(customView: segmentedControl)
+        navigationItem.leftBarButtonItem = segmentBarButtonItem
+        // navigationItem.rightBarButtonItems?.append(segmentBarButtonItem)
     }
     
     // MARK: - 手書きパレット
@@ -360,6 +369,7 @@ class DrawingViewController: UIViewController {
     
     // MARK: - 編集モード
 
+    // セグメントコントロール
     @objc
     func segmentedControlChanged() {
         drawingMode = DrawingMode(index: segmentedControl.selectedSegmentIndex)
@@ -400,50 +410,6 @@ class DrawingViewController: UIViewController {
             pdfDrawer.isActive = false
             colorStackView?.isHidden = true
             toolStackView?.isHidden = true
-        }
-    }
-    
-    enum DrawingMode {
-        // TODO: ビューモード
-        case viewingMode
-        case move
-        case select
-        case photoMarker
-        case drawing
-        case line
-        case arrow
-        case rectangle
-        case circle
-        case text
-        case eraser
-        // 引数ありコンストラクタ
-        init(index: Int) {
-            switch index {
-            case 0:
-                self = .viewingMode
-            case 1:
-                self = .move
-            case 2:
-                self = .select
-            case 3:
-                self = .photoMarker
-            case 4:
-                self = .drawing
-            case 5:
-                self = .line
-            case 6:
-                self = .arrow
-            case 7:
-                self = .rectangle
-            case 8:
-                self = .circle
-            case 9:
-                self = .text
-            case 10:
-                self = .eraser
-            default:
-                self = .move
-            }
         }
     }
     

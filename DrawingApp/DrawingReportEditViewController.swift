@@ -44,8 +44,18 @@ class DrawingReportEditViewController: UIViewController {
         }
     }
 
+    // セグメントコントロール
+    let segmentedControl = UISegmentedControl(items: ["ビューモード", "移動", "グループ選択", "写真マーカー", "手書き", "直線", "矢印", "四角", "円", "テキスト", "消しゴム"])
+    // モード
+    var drawingMode: DrawingMode = .viewingMode
+
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        // セグメントコントロール
+        setupSegmentedControl()
+        
        // NOTE: 下記は不要　CollectionView自体の高さを指定している
 //        let numberOfPages = CGFloat(document.pageCount)
 //        let cellSpacing = CGFloat(2.0)
@@ -87,6 +97,37 @@ class DrawingReportEditViewController: UIViewController {
         }
     }
     
+    // セグメントコントロール
+    func setupSegmentedControl() {
+        segmentedControl.sizeToFit()
+        if #available(iOS 13.0, *) {
+            segmentedControl.selectedSegmentTintColor = UIColor.red
+        } else {
+            segmentedControl.tintColor = UIColor.red
+        }
+        segmentedControl.selectedSegmentIndex = 0
+        segmentedControl.addTarget(self, action: #selector(segmentedControlChanged), for: .valueChanged)
+        //        segment.setTitleTextAttributes([NSAttributedString.Key.font : UIFont(name: "ProximaNova-Light", size: 15)!], for: .normal)
+        let segmentBarButtonItem = UIBarButtonItem(customView: segmentedControl)
+        navigationItem.leftBarButtonItem = segmentBarButtonItem
+    }
+    
+    
+    // MARK: - 編集モード
+
+    // セグメントコントロール
+    @objc
+    func segmentedControlChanged() {
+        drawingMode = DrawingMode(index: segmentedControl.selectedSegmentIndex)
+        
+        // スワイプジェスチャーを禁止
+        if drawingMode == .viewingMode {
+            NotificationCenter.default.post(name: SegmentedControlPageViewController.needToChangeSwipeEnabledNotification, object: true)
+        } else {
+            NotificationCenter.default.post(name: SegmentedControlPageViewController.needToChangeSwipeEnabledNotification, object: false)
+        }
+    }
+    
     override public func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if let controller = segue.destination as? PDFThumbnailCollectionViewController {
             thumbnailCollectionController = controller
@@ -113,5 +154,49 @@ extension DrawingReportEditViewController: PDFThumbnailControllerDelegate {
         currentPageIndex = indexPath.row
         // サムネイル一覧
         thumbnailCollectionController?.currentPageIndex = indexPath.row
+    }
+}
+
+enum DrawingMode {
+    // TODO: ビューモード
+    case viewingMode
+    case move
+    case select
+    case photoMarker
+    case drawing
+    case line
+    case arrow
+    case rectangle
+    case circle
+    case text
+    case eraser
+    // 引数ありコンストラクタ
+    init(index: Int) {
+        switch index {
+        case 0:
+            self = .viewingMode
+        case 1:
+            self = .move
+        case 2:
+            self = .select
+        case 3:
+            self = .photoMarker
+        case 4:
+            self = .drawing
+        case 5:
+            self = .line
+        case 6:
+            self = .arrow
+        case 7:
+            self = .rectangle
+        case 8:
+            self = .circle
+        case 9:
+            self = .text
+        case 10:
+            self = .eraser
+        default:
+            self = .move
+        }
     }
 }
