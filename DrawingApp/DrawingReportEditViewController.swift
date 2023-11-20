@@ -109,7 +109,11 @@ class DrawingReportEditViewController: UIViewController {
         segmentedControl.addTarget(self, action: #selector(segmentedControlChanged), for: .valueChanged)
         //        segment.setTitleTextAttributes([NSAttributedString.Key.font : UIFont(name: "ProximaNova-Light", size: 15)!], for: .normal)
         let segmentBarButtonItem = UIBarButtonItem(customView: segmentedControl)
-        navigationItem.leftBarButtonItem = segmentBarButtonItem
+        if let _ = navigationItem.leftBarButtonItems {
+            navigationItem.rightBarButtonItems?.append(segmentBarButtonItem)
+        } else {
+            navigationItem.rightBarButtonItem = segmentBarButtonItem
+        }
     }
     
     

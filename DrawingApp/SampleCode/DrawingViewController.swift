@@ -95,6 +95,8 @@ class DrawingViewController: UIViewController {
         // setEditingメソッドを使用するため、Storyboard上の編集ボタンを上書きしてボタンを生成する
         editButtonItem.tintColor = .black
         navigationItem.rightBarButtonItem = editButtonItem
+        
+        // Xボタン
         navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: nil, action: #selector(doSomething))
         
         // Annotation設定スイッチ
@@ -128,40 +130,7 @@ class DrawingViewController: UIViewController {
         pdfView.displayMode = .singlePage
         // 現在開いているページ currentPage にのみマーカーを追加
         pdfView.autoScales = true
-        pdfView.scaleFactor += 3.0
         
-        // PDF 全てのpageに存在するAnnotationを保持する
-        getAllAnnotations() {
-            // TODO: マーカーを拡大してセンターに表示させる
-            if let annotation = self.annotationsInAllPages.filter({ String($0.contents ?? "") == "3" }).first {
-                print("$$$$", annotation.contents)
-
-                if let pdfPage = annotation.page {
-                    // UIViewからPDFの座標へ変換する
-                    let rect = self.pdfView.convert(UIScreen.main.bounds, to: pdfPage) // 座標系がUIViewとは異なるので気をつけましょう。
-
-                    let screenHeight = rect.height
-                     let screenWidth = rect.width
-                    print(screenHeight)
-                    print(screenWidth)
-                    print(annotation.bounds.origin.x)
-                    print(annotation.bounds.origin.y)
-
-                    let cgRect = CGRect(
-                        x: annotation.bounds.origin.x - screenWidth / 2,
-                        y: annotation.bounds.origin.y + screenHeight / 2,
-                        width: annotation.bounds.width,
-                        height: annotation.bounds.height
-                    )
-                    
-                    print(cgRect)
-                    self.pdfView.go(to: cgRect, on: pdfPage)
-//                    self.pdfView.center.y = annotation.bounds.center.y - 100
-                }
-            } else {
-                self.annotationsInAllPages.map { print("$$$$$$", $0.contents) }
-            }
-        }
         // ②PDF Annotationがタップされたかを監視、タップに対する処理を行う
         //　PDFAnnotationがタップされたかを監視する
         NotificationCenter.default.addObserver(self, selector: #selector(action(_:)), name: .PDFViewAnnotationHit, object: nil)
@@ -206,7 +175,7 @@ class DrawingViewController: UIViewController {
         DispatchQueue.main.async {
             // 図面調書一覧画面で選択したページへジャンプする
             if let pageNumber = self.pageNumber, // ページ番号
-                let page = self.pdfView.document?.page(at: pageNumber) {
+               let page = self.pdfView.document?.page(at: pageNumber) {
                 self.pdfView.go(to: page)
             }
         }
@@ -237,8 +206,51 @@ class DrawingViewController: UIViewController {
         segmentedControl.addTarget(self, action: #selector(segmentedControlChanged), for: .valueChanged)
         //        segment.setTitleTextAttributes([NSAttributedString.Key.font : UIFont(name: "ProximaNova-Light", size: 15)!], for: .normal)
         let segmentBarButtonItem = UIBarButtonItem(customView: segmentedControl)
-        navigationItem.leftBarButtonItem = segmentBarButtonItem
-        // navigationItem.rightBarButtonItems?.append(segmentBarButtonItem)
+        if let _ = navigationItem.leftBarButtonItems {
+            navigationItem.rightBarButtonItems?.append(segmentBarButtonItem)
+        } else {
+            navigationItem.rightBarButtonItem = segmentBarButtonItem
+        }
+    }
+    
+    // MARK: - 写真マーカー　ズームイン
+
+    // 写真マーカー　ズームイン
+    func zoomInAtPhotoMarker(photoMarkerNumber: String) {
+        // 拡大
+        pdfView.scaleFactor = 5.0
+        // PDF 全てのpageに存在するAnnotationを保持する
+        getAllAnnotations() {
+            // TODO: マーカーを拡大してセンターに表示させる
+            if let annotation = self.annotationsInAllPages.filter({ String($0.contents ?? "") == photoMarkerNumber }).first {
+                print("$$$$", annotation.contents)
+                
+                if let pdfPage = annotation.page {
+                    // UIViewからPDFの座標へ変換する
+                    let rect = self.pdfView.convert(UIScreen.main.bounds, to: pdfPage) // 座標系がUIViewとは異なるので気をつけましょう。
+                    
+                    let screenHeight = rect.height
+                    let screenWidth = rect.width
+                    print(screenHeight)
+                    print(screenWidth)
+                    print(annotation.bounds.origin.x)
+                    print(annotation.bounds.origin.y)
+                    
+                    let cgRect = CGRect(
+                        x: annotation.bounds.origin.x - screenWidth / 2,
+                        y: annotation.bounds.origin.y + screenHeight / 2,
+                        width: annotation.bounds.width,
+                        height: annotation.bounds.height
+                    )
+                    
+                    print(cgRect)
+                    self.pdfView.go(to: cgRect, on: pdfPage)
+                    // self.pdfView.center.y = annotation.bounds.center.y - 100
+                }
+            } else {
+                self.annotationsInAllPages.map { print("$$$$$$", $0.contents) }
+            }
+        }
     }
     
     // MARK: - 手書きパレット
@@ -1139,7 +1151,7 @@ class DrawingViewController: UIViewController {
                     present(viewController, animated: true, completion: nil)
                 }
             }
-        } else {
+        } else { // 編集中ではない
             if drawingMode == .arrow { // 矢印
                 print(annotation)
                 // 現在開いているページを取得
@@ -1228,6 +1240,17 @@ class DrawingViewController: UIViewController {
                         print("Error : \(err.localizedDescription)")
                     }
                     completion(nil)
+                }
+                
+                if drawingMode == .viewingMode { // ビューモード
+                    // 写真マーカー
+                    print(annotation.self)
+                    print(annotation.type)
+                    print(annotation.contents)
+                    if PDFAnnotationSubtype(rawValue: "/\(annotation.type!)") == PDFAnnotationSubtype.freeText.self && ((annotation.contents?.isEmpty) != nil)  {
+                        // 写真マーカー　ズームイン
+                        zoomInAtPhotoMarker(photoMarkerNumber: annotation.contents!)
+                    }
                 }
             }
         }
