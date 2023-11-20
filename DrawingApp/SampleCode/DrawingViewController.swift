@@ -14,9 +14,9 @@ import UIKit
 class DrawingViewController: UIViewController {
     
     // セグメントコントロール
-    let segmentedControl = UISegmentedControl(items: ["写真マーカー", "手書き", "矢印", "直線", "四角", "円", "テキスト", "移動", "選択", "消しゴム"])
+    let segmentedControl = UISegmentedControl(items: ["ビューモード", "移動", "選択", "写真マーカー", "手書き", "直線", "矢印", "四角", "円", "テキスト", "消しゴム"])
     // モード
-    var drawingMode: DrawingMode = .photoMarker
+    var drawingMode: DrawingMode = .viewingMode
     
     @IBOutlet var imageView: UIImageView!
     @IBOutlet weak var pdfThumbnailView: PDFThumbnailView!
@@ -364,6 +364,13 @@ class DrawingViewController: UIViewController {
     func segmentedControlChanged() {
         drawingMode = DrawingMode(index: segmentedControl.selectedSegmentIndex)
         
+        // スワイプジェスチャーを禁止
+        if drawingMode == .viewingMode {
+            NotificationCenter.default.post(name: SegmentedControlPageViewController.needToChangeSwipeEnabledNotification, object: true)
+        } else {
+            NotificationCenter.default.post(name: SegmentedControlPageViewController.needToChangeSwipeEnabledNotification, object: false)
+        }
+
         if drawingMode == .arrow || drawingMode == .line || drawingMode == .rectangle || drawingMode == .circle || drawingMode == .move {
             // 拡大縮小を禁止してマーカーの起点と終点を選択しやすくする
             print(pdfView.maxScaleFactor) // 5.0
@@ -397,38 +404,42 @@ class DrawingViewController: UIViewController {
     }
     
     enum DrawingMode {
+        // TODO: ビューモード
+        case viewingMode
+        case move
+        case select
         case photoMarker
         case drawing
-        case arrow
         case line
+        case arrow
         case rectangle
         case circle
         case text
-        case move
-        case select
         case eraser
         // 引数ありコンストラクタ
         init(index: Int) {
             switch index {
             case 0:
-                 self = .photoMarker
+                self = .viewingMode
             case 1:
-                self = .drawing
-            case 2:
-                self = .arrow
-            case 3:
-                self = .line
-            case 4:
-                self = .rectangle
-            case 5:
-                self = .circle
-            case 6:
-                self = .text
-            case 7:
                 self = .move
-            case 8:
+            case 2:
                 self = .select
+            case 3:
+                self = .photoMarker
+            case 4:
+                self = .drawing
+            case 5:
+                self = .line
+            case 6:
+                self = .arrow
+            case 7:
+                self = .rectangle
+            case 8:
+                self = .circle
             case 9:
+                self = .text
+            case 10:
                 self = .eraser
             default:
                 self = .move

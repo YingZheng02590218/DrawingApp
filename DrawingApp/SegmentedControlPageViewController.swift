@@ -20,7 +20,13 @@ class SegmentedControlPageViewController: InportViewController {
     
     var viewControllers = [UIViewController]()
 
-    
+    // スワイプジェスチャーを禁止
+    static let needToChangeSwipeEnabledNotification = Notification.Name("NotificationForChangeMainPageSwipeEnabled")
+    // スワイプジェスチャーを禁止
+    private func changeSwipeEnabled(to canSwipe: Bool) {
+        pageViewController.dataSource = canSwipe ? self : nil
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -50,6 +56,17 @@ class SegmentedControlPageViewController: InportViewController {
         pageViewController.dataSource = self
         
         segmentedControl.addTarget(self, action: #selector(segmentedControlChanged(segmentedControl:)), for: UIControl.Event.valueChanged)
+        
+        // スワイプジェスチャーを禁止
+        NotificationCenter.default
+            .addObserver(forName: SegmentedControlPageViewController.needToChangeSwipeEnabledNotification,
+                         object: nil,
+                         queue: nil,
+                         using: { [weak self] notification in
+                            guard let canSwipe = notification.object as? Bool else { return }
+                            self?.changeSwipeEnabled(to: canSwipe)
+                         })
+
     }
     
     @objc 

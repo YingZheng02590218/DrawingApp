@@ -78,7 +78,8 @@ extension MainViewController: SidemenuViewControllerDelegate {
     
     func shouldPresentForSidemenuViewController(_ sidemenuViewController: SidemenuViewController) -> Bool {
         /* You can specify sidemenu availability */
-        return true
+        // スワイプジェスチャーでハンバーガーメニューを表示する機能をOFFにする
+        return false
     }
     
     func sidemenuViewControllerDidRequestShowing(_ sidemenuViewController: SidemenuViewController, contentAvailability: Bool, animated: Bool) {
