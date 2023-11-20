@@ -10,7 +10,7 @@ import UIKit
 /// An individual thumbnail in the collection view
 internal final class PDFThumbnailCell: UICollectionViewCell {
     /// Preferred size of each cell
-    static let cellSize = CGSize(width: 80, height: 120)
+    static let cellSize = CGSize(width: 80, height: 80)
     
     @IBOutlet var imageView: UIImageView?
     @IBOutlet var pageNumberLabel: UILabel!

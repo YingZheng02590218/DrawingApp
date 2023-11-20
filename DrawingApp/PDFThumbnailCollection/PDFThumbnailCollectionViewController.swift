@@ -104,5 +104,8 @@ internal final class PDFThumbnailCollectionViewController: UICollectionViewContr
         cell.isSelected = self.currentPageIndex == indexPath.row
         // ページ番号
         cell.pageNumberLabel.text = "\(indexPath.row)"
+        DispatchQueue.main.async {
+            cell.alpha = self.currentPageIndex == indexPath.row ? 1 : 0.5
+        }
     }
 }

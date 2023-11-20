@@ -21,11 +21,12 @@
                                 <rect key="frame" x="0.0" y="59" width="393" height="50"/>
                                 <subviews>
                                     <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="g51-8e-MAK">
-                                        <rect key="frame" x="124" y="9.6666666666666714" width="145" height="32"/>
+                                        <rect key="frame" x="50" y="9.6666666666666714" width="293" height="32"/>
                                         <segments>
                                             <segment title="図面調書"/>
                                             <segment title="撮影写真"/>
                                         </segments>
+                                        <color key="selectedSegmentTintColor" systemColor="systemCyanColor"/>
                                     </segmentedControl>
                                 </subviews>
                                 <color key="backgroundColor" systemColor="systemYellowColor"/>
@@ -33,6 +34,7 @@
                                     <constraint firstAttribute="height" constant="50" id="Mg4-Qi-GI5"/>
                                     <constraint firstItem="g51-8e-MAK" firstAttribute="centerY" secondItem="w4B-34-m3e" secondAttribute="centerY" id="TU9-tm-Ayg"/>
                                     <constraint firstItem="g51-8e-MAK" firstAttribute="centerX" secondItem="w4B-34-m3e" secondAttribute="centerX" id="VK9-QG-0QP"/>
+                                    <constraint firstItem="g51-8e-MAK" firstAttribute="width" secondItem="w4B-34-m3e" secondAttribute="width" constant="-100" id="una-Y5-Vbv"/>
                                 </constraints>
                             </view>
                             <containerView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="qzU-1i-zp0">
@@ -74,6 +76,9 @@
     <resources>
         <systemColor name="systemBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
+        <systemColor name="systemCyanColor">
+            <color red="0.1960784314" green="0.67843137249999996" blue="0.90196078430000004" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemYellowColor">
             <color red="1" green="0.80000000000000004" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
