@@ -37,6 +37,11 @@ enum DrawingTool: Int {
     }
 }
 
+// 手書きのアノテーションを追加する処理
+protocol DrawingManageAnnotationDelegate: AnyObject {
+    func addAnnotation(_ currentAnnotation : PDFAnnotation)
+}
+
 class PDFDrawer {
     // 手書きモード
     var isActive = false
@@ -48,6 +53,9 @@ class PDFDrawer {
     var color = UIColor.red // default color is red
     var lineWidth: CGFloat = 5.0
     var dashPattern: [CGFloat] = [1.0, 5.0]
+
+    // 手書きのアノテーションを追加する処理
+    weak var drawingManageAnnotationDelegate: DrawingManageAnnotationDelegate?
 
     func changeTool(tool: DrawingTool) {
         self.drawingTool = tool
@@ -121,7 +129,9 @@ extension PDFDrawer: DrawingGestureRecognizerDelegate {
                 
                 // Final annotation
                 page.removeAnnotation(currentAnnotation!)
+                // このアノテーションをDrawingViewControllerへ渡してから、追加する
                 let finalAnnotation = createFinalAnnotation(path: path, page: page)
+                drawingManageAnnotationDelegate?.addAnnotation(finalAnnotation)
                 currentAnnotation = nil
             }
         }

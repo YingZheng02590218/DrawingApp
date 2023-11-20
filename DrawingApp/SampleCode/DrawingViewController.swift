@@ -72,8 +72,8 @@ class DrawingViewController: UIViewController {
 //    let eraser = PKEraserTool(.bitmap)
     
     private var path: UIBezierPath?
-    private var currentAnnotation : DrawingAnnotation?
-
+//    private var currentAnnotation : DrawingAnnotation?
+    
     private let pdfDrawer = PDFDrawer()
 
     let pdfDrawingGestureRecognizer = DrawingGestureRecognizer()
@@ -381,8 +381,8 @@ class DrawingViewController: UIViewController {
             NotificationCenter.default.post(name: SegmentedControlPageViewController.needToChangeSwipeEnabledNotification, object: false)
         }
 
-        if drawingMode == .arrow || drawingMode == .line || drawingMode == .rectangle || drawingMode == .circle || drawingMode == .move {
-            // 拡大縮小を禁止してマーカーの起点と終点を選択しやすくする
+        // 拡大縮小を禁止してマーカーの起点と終点を選択しやすくする
+        if drawingMode == .move || drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle {
             print(pdfView.maxScaleFactor) // 5.0
             print(pdfView.minScaleFactor) // 0.25
             print(pdfView.contentScaleFactor) // 1.0
@@ -398,6 +398,8 @@ class DrawingViewController: UIViewController {
             pdfView.addGestureRecognizer(pdfDrawingGestureRecognizer)
             pdfDrawingGestureRecognizer.drawingDelegate = pdfDrawer
             pdfDrawer.pdfView = pdfView
+            // 手書きのアノテーションを追加する処理
+            pdfDrawer.drawingManageAnnotationDelegate = self
             
 //            canvas.isHidden = false
             pdfDrawer.isActive = true
@@ -405,7 +407,9 @@ class DrawingViewController: UIViewController {
             toolStackView?.isHidden = false
         } else {
             pdfView.removeGestureRecognizer(pdfDrawingGestureRecognizer)
-            
+            // 手書きのアノテーションを追加する処理
+            pdfDrawer.drawingManageAnnotationDelegate = nil
+
 //            canvas.isHidden = true
             pdfDrawer.isActive = false
             colorStackView?.isHidden = true
@@ -955,7 +959,7 @@ class DrawingViewController: UIViewController {
                     height: after.bounds.size.height
                 )
                 after.contents = before.contents
-                after.setValue(UIColor.green.withAlphaComponent(0.1), forAnnotationKey: .color)
+                after.setValue(UIColor.green.withAlphaComponent(0.5), forAnnotationKey: .color)
                 after.page = before.page
                 
                 // UUID
@@ -1031,7 +1035,24 @@ class DrawingViewController: UIViewController {
     }
     
     // 手書きや図形を追加する
-    func addDrawingAnotation() {
+    func addDrawingAnotation(annotation: PDFAnnotation) {
+        // 現在開いているページを取得
+        if let page = self.pdfView.currentPage {
+            // UUID
+            annotation.userName = UUID().uuidString
+            // 対象のページへ注釈を追加
+            page.addAnnotation(annotation)
+            
+            // Undo Redo
+            undoRedoManager.addAnnotation(annotation)
+            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+            })
+            // ボタン　活性状態
+            undoButton.isEnabled = undoRedoManager.canUndo()
+            redoButton.isEnabled = undoRedoManager.canRedo()
+        }
     }
     
     // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
@@ -1488,6 +1509,14 @@ extension DrawingViewController: PHPickerViewControllerDelegate {
     }
 }
 
+// 手書きのアノテーションを追加する処理
+extension DrawingViewController: DrawingManageAnnotationDelegate {
+    func addAnnotation(_ currentAnnotation: PDFAnnotation) {
+        
+        addDrawingAnotation(annotation: currentAnnotation)
+    }
+}
+
 extension DrawingViewController: UINavigationControllerDelegate {
     
 }
@@ -1656,7 +1685,8 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
                 case .began:
                     guard let annotation = page.annotation(at: locationOnPage) else {   return }
                     if annotation.isKind(of: PDFAnnotation.self) ||
-                        annotation.isKind(of: ImageAnnotation.self) {
+                        annotation.isKind(of: ImageAnnotation.self) ||
+                        annotation.isKind(of: PhotoAnnotation.self) {
                         currentlySelectedAnnotation = annotation
                         // 変更前
                         before = annotation.copy() as! PDFAnnotation
