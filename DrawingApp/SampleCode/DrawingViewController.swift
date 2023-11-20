@@ -688,7 +688,7 @@ class DrawingViewController: UIViewController {
             undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                 // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                 self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-            })            
+            })
             // ボタン　活性状態
             undoButton.isEnabled = undoRedoManager.canUndo()
             redoButton.isEnabled = undoRedoManager.canRedo()
@@ -758,7 +758,7 @@ class DrawingViewController: UIViewController {
             undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                 // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                 self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-            })            
+            })
             // ボタン　活性状態
             undoButton.isEnabled = undoRedoManager.canUndo()
             redoButton.isEnabled = undoRedoManager.canRedo()
@@ -805,7 +805,7 @@ class DrawingViewController: UIViewController {
             undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                 // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                 self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-            })            
+            })
             // ボタン　活性状態
             undoButton.isEnabled = undoRedoManager.canUndo()
             redoButton.isEnabled = undoRedoManager.canRedo()
@@ -852,7 +852,7 @@ class DrawingViewController: UIViewController {
             undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                 // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                 self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-            })            
+            })
             // ボタン　活性状態
             undoButton.isEnabled = undoRedoManager.canUndo()
             redoButton.isEnabled = undoRedoManager.canRedo()
@@ -960,7 +960,7 @@ class DrawingViewController: UIViewController {
             // 選択しているAnnotation 移動中のAnnotation
             guard let currentlySelectedAnnotation = currentlySelectedAnnotation else { return }
             // 変更後
-            let after = currentlySelectedAnnotation.copy() as! PDFAnnotation
+            let after = currentlySelectedAnnotation // .copy() as! PDFAnnotation コピーしなくてよい
             after.bounds = currentlySelectedAnnotation.bounds
             after.page = currentlySelectedAnnotation.page
             
