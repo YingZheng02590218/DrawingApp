@@ -1220,22 +1220,22 @@ class DrawingViewController: UIViewController {
             } else {
                 // 選択したマーカーの画像を表示させる
                 selectedAnnotation = annotation
-                // マーカーに紐付けされた画像
-                if let fileURL = fileURL,
-                   let contents = annotation.contents {
-                    // 写真を iCloud Container から取得する
-                    if let photoUrl = BackupManager.shared.getPhotoFromDocumentsDirectory(contents: contents, fileURL: fileURL) {
-                        // マーカーに紐付けされた画像
-                        getThumbnailImage(url: photoUrl) { image in
-                            if let image = image {
-                                DispatchQueue.main.async {
-                                    self.imageView.image = image
-                                    self.imageView.isHidden = false
-                                }
-                            }
-                        }
-                    }
-                }
+                //                // マーカーに紐付けされた画像
+                //                if let fileURL = fileURL,
+                //                   let contents = annotation.contents {
+                //                    // 写真を iCloud Container から取得する
+                //                    if let photoUrl = BackupManager.shared.getPhotoFromDocumentsDirectory(contents: contents, fileURL: fileURL) {
+                //                        // マーカーに紐付けされた画像
+                //                        getThumbnailImage(url: photoUrl) { image in
+                //                            if let image = image {
+                //                                DispatchQueue.main.async {
+                //                                    self.imageView.image = image
+                //                                    self.imageView.isHidden = false
+                //                                }
+                //                            }
+                //                        }
+                //                    }
+                //                }
                 // マーカーに紐付けされた画像
                 func getThumbnailImage(url: URL, completion: @escaping (_ image: UIImage?) -> Void) {
                     do {
@@ -1325,33 +1325,33 @@ class DrawingViewController: UIViewController {
     
     // MARK: - フォトライブラリ
     
-    // 写真選択画面を表示させる
-    func showPickingPhotoScreen() {
-        if #available(iOS 14, *) {
-            // iOS14以降の設定
-            var configuration = PHPickerConfiguration()
-            configuration.filter = PHPickerFilter.images
-            configuration.selectionLimit = 1
-            let picker = PHPickerViewController(configuration: configuration)
-            picker.delegate = self
-            DispatchQueue.main.async {
-                self.present(picker, animated: true, completion: nil)
-            }
-        } else {
-            // インスタンス生成
-            imagePickerController = UIImagePickerController()
-            // デリゲート設定
-            imagePickerController.delegate = self
-            // 画像の取得先はフォトライブラリ
-            imagePickerController.sourceType = UIImagePickerController.SourceType.photoLibrary
-            // 画像取得後の編集を不可に
-            imagePickerController.allowsEditing = false
-            
-            DispatchQueue.main.async {
-                self.present(self.imagePickerController, animated: true, completion: nil)
-            }
-        }
-    }
+//    // 写真選択画面を表示させる
+//    func showPickingPhotoScreen() {
+//        if #available(iOS 14, *) {
+//            // iOS14以降の設定
+//            var configuration = PHPickerConfiguration()
+//            configuration.filter = PHPickerFilter.images
+//            configuration.selectionLimit = 1
+//            let picker = PHPickerViewController(configuration: configuration)
+//            picker.delegate = self
+//            DispatchQueue.main.async {
+//                self.present(picker, animated: true, completion: nil)
+//            }
+//        } else {
+//            // インスタンス生成
+//            imagePickerController = UIImagePickerController()
+//            // デリゲート設定
+//            imagePickerController.delegate = self
+//            // 画像の取得先はフォトライブラリ
+//            imagePickerController.sourceType = UIImagePickerController.SourceType.photoLibrary
+//            // 画像取得後の編集を不可に
+//            imagePickerController.allowsEditing = false
+//            
+//            DispatchQueue.main.async {
+//                self.present(self.imagePickerController, animated: true, completion: nil)
+//            }
+//        }
+//    }
     
     // 写真のアクセス権限
     private func albumAction() {
@@ -1414,134 +1414,134 @@ class DrawingViewController: UIViewController {
     }
 }
 
-extension DrawingViewController: UIImagePickerControllerDelegate {
-    /**
-     画像が選択された時に呼ばれる.
-     */
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-        // 選択された画像のURL
-        let imageURL: AnyObject?  = info[UIImagePickerController.InfoKey.imageURL] as AnyObject
-        //        Printing description of info:
-        //        ▿ 4 elements
-        //          ▿ 0 : 2 elements
-        //            ▿ key : UIImagePickerControllerInfoKey
-        //              - _rawValue : UIImagePickerControllerImageURL
-        //            - value : file:///private/var/mobile/Containers/Data/Application/26495648-C0BE-4E00-8413-DEAD08D7690F/tmp/7FA25608-1700-4A19-8A9C-CB13AA1CA0DD.jpeg
-        //          ▿ 1 : 2 elements
-        //            ▿ key : UIImagePickerControllerInfoKey
-        //              - _rawValue : UIImagePickerControllerMediaType
-        //            - value : public.image
-        //          ▿ 2 : 2 elements
-        //            ▿ key : UIImagePickerControllerInfoKey
-        //              - _rawValue : UIImagePickerControllerOriginalImage
-        //            - value : <UIImage:0x281927180 anonymous {3024, 4032} renderingMode=automatic(original)>
-        //          ▿ 3 : 2 elements
-        //            ▿ key : UIImagePickerControllerInfoKey
-        //              - _rawValue : UIImagePickerControllerReferenceURL
-        //            - value : assets-library://asset/asset.HEIC?id=49B92187-72A5-41BD-B1EE-1718C2F0F1A9&ext=HEIC
-        
-        // モーダルビューを閉じる
-        self.dismiss(animated: true) {
-            // 選択された画像のURL
-            self.imageURL = imageURL as? URL // imageURL    AnyObject?    "file:///private/var/mobile/Containers/Data/Application/1786FFAB-B2B2-418B-963E-04C2EC8AE382/tmp/4F5EC81E-7D85-437B-857C-6B6369915BDB.jpeg"    0x0000000280a5d080
-            // マーカーを追加する
-            self.addMarkerAnotation()
-            // 写真をカメラロールからiCloud Container にコピーする
-            self.addPhotoToProjectFolder()
-        }
-    }
-    
-    /**
-     画像選択がキャンセルされた時に呼ばれる.
-     */
-    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-        // モーダルビューを閉じる
-        self.dismiss(animated: true, completion: nil)
-    }
-}
+//extension DrawingViewController: UIImagePickerControllerDelegate {
+//    /**
+//     画像が選択された時に呼ばれる.
+//     */
+//    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+//        // 選択された画像のURL
+//        let imageURL: AnyObject?  = info[UIImagePickerController.InfoKey.imageURL] as AnyObject
+//        //        Printing description of info:
+//        //        ▿ 4 elements
+//        //          ▿ 0 : 2 elements
+//        //            ▿ key : UIImagePickerControllerInfoKey
+//        //              - _rawValue : UIImagePickerControllerImageURL
+//        //            - value : file:///private/var/mobile/Containers/Data/Application/26495648-C0BE-4E00-8413-DEAD08D7690F/tmp/7FA25608-1700-4A19-8A9C-CB13AA1CA0DD.jpeg
+//        //          ▿ 1 : 2 elements
+//        //            ▿ key : UIImagePickerControllerInfoKey
+//        //              - _rawValue : UIImagePickerControllerMediaType
+//        //            - value : public.image
+//        //          ▿ 2 : 2 elements
+//        //            ▿ key : UIImagePickerControllerInfoKey
+//        //              - _rawValue : UIImagePickerControllerOriginalImage
+//        //            - value : <UIImage:0x281927180 anonymous {3024, 4032} renderingMode=automatic(original)>
+//        //          ▿ 3 : 2 elements
+//        //            ▿ key : UIImagePickerControllerInfoKey
+//        //              - _rawValue : UIImagePickerControllerReferenceURL
+//        //            - value : assets-library://asset/asset.HEIC?id=49B92187-72A5-41BD-B1EE-1718C2F0F1A9&ext=HEIC
+//        
+//        // モーダルビューを閉じる
+//        self.dismiss(animated: true) {
+//            // 選択された画像のURL
+//            self.imageURL = imageURL as? URL // imageURL    AnyObject?    "file:///private/var/mobile/Containers/Data/Application/1786FFAB-B2B2-418B-963E-04C2EC8AE382/tmp/4F5EC81E-7D85-437B-857C-6B6369915BDB.jpeg"    0x0000000280a5d080
+//            // マーカーを追加する
+//            self.addMarkerAnotation()
+//            // 写真をカメラロールからiCloud Container にコピーする
+//            self.addPhotoToProjectFolder()
+//        }
+//    }
+//    
+//    /**
+//     画像選択がキャンセルされた時に呼ばれる.
+//     */
+//    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+//        // モーダルビューを閉じる
+//        self.dismiss(animated: true, completion: nil)
+//    }
+//}
 
-extension DrawingViewController: PHPickerViewControllerDelegate {
-    //    iPhoneでは高効率画像フォーマット「HEIC」「HEVC」が標準仕様となり、
-    //    Apple端末以外では、写真データの取り扱い難易度も上がってます。
-    //    以下、デフォルトの「高効率」時のデータ保存形式。
-    //
-    //    高効率時のデータ形式
-    //
-    //    タイムラプス：HEVC（H.265）
-    //    スロー：HEVC（H.265）
-    //    ビデオ：HEVC（H.265）
-    //    写真：HEIF
-    //    バースト（連射）：JPEG
-    //    LivePhotos：HEIF + HEVC（H.265）
-    //    ポートレート： HEIF + HEIF + AAE
-    //    パノラマ：HEIF
-    //    スクリーンショット：PNG
-    //    写真はHEIF、動画はHEVC、
-    //    だけど、バーストで連射撮影した場合はJPEGにて保存となる。
-    //
-    //    以前は、ポートレート写真は、JPEGでしたけども、
-    //    最新のiOS14から？HEIFに変わってました。
-    //    ポートレートHEIFは、Windowsに取り込むとバグるけどな。
-    
-    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-        // キャンセル
-        guard let provider = results.first?.itemProvider else {
-            picker.dismiss(animated: true, completion: nil)
-            return
-        }
-        guard let typeIdentifer = provider.registeredTypeIdentifiers.first else { return }
-        // 判定可能な識別子であるかチェック
-        if provider.hasItemConformingToTypeIdentifier(typeIdentifer) {
-            //Live Photoとして取得可能化
-            if provider.canLoadObject(ofClass: PHLivePhoto.self) {
-                //LivePhotoはClassを指定してLoadObjectで読み込み
-                provider.loadObject(ofClass: PHLivePhoto.self) { (livePhotoObject, error) in
-                    do {
-                        if let livePhoto:PHLivePhoto = livePhotoObject as? PHLivePhoto {
-                            // Live Photoのプロパティから静止画を抜き出す(HEIC形式)
-                            if let imageUrl = livePhoto.value(forKey: "imageURL") as? URL {
-                                // URLからDataを生成（HEIC内のデータを参照してるため取得できる
-                                let imageData: Data = try Data(contentsOf: imageUrl)
-                                // パスを生成して画像を保存する
-                                // 選択された画像のURL
-                                self.imageURL = imageUrl // imageUrl    Foundation.URL    "file:///private/var/mobile/Containers/Data/Application/D7A1BFB4-0443-473F-9154-0E93D2D2766A/tmp/live-photo-bundle/53151B11-9D5F-407E-AEE3-CE515F2A7659.pvt/IMG_2099.HEIC"
-                                // 写真をカメラロールからiCloud Container にコピーする Dataから
-                                self.addPhotoToProjectFolder(photoData: imageData)
-                            }
-                        }
-                    } catch let error {
-                        print(error)
-                    }
-                }
-            } else if provider.canLoadObject(ofClass: UIImage.self) {
-                //一般的な画像
-                // 画像の場合はloadObjectでUIImageまたはloadDataで取得する。
-                // loadItemでURLを取得する場合、URLからUIImageまたはDataの取得はアルバムへのアクセス権限が必要になる。
-                
-                // 写真のパスを取得
-                provider.loadItem(forTypeIdentifier: typeIdentifer) { imageURL, error  in
-                    guard let imageURL = imageURL as? URL else {
-                        return
-                    }
-                    // 選択された画像のURL
-                    self.imageURL = imageURL // imageURL    Foundation.URL    "file:///private/var/mobile/Containers/Shared/AppGroup/53934DC7-1B16-461D-81AB-C6A8E9A6C473/File%20Provider%20Storage/photospicker/version=1&uuid=1D5FF822-7CF5-48CA-A1F9-E0C04A4CB1BD&mode=compatible&noloc=0.jpeg"
-                }
-                // 写真のデータを取得
-                provider.loadDataRepresentation(forTypeIdentifier: typeIdentifer) { (data, error) in
-                    if let imageData = data {
-                        // 写真をカメラロールからiCloud Container にコピーする Dataから
-                        self.addPhotoToProjectFolder(photoData: imageData)
-                    }
-                }
-            }
-            
-            picker.dismiss(animated: true, completion: {
-                // マーカーを追加する
-                self.addMarkerAnotation()
-            })
-        }
-    }
-}
+//extension DrawingViewController: PHPickerViewControllerDelegate {
+//    //    iPhoneでは高効率画像フォーマット「HEIC」「HEVC」が標準仕様となり、
+//    //    Apple端末以外では、写真データの取り扱い難易度も上がってます。
+//    //    以下、デフォルトの「高効率」時のデータ保存形式。
+//    //
+//    //    高効率時のデータ形式
+//    //
+//    //    タイムラプス：HEVC（H.265）
+//    //    スロー：HEVC（H.265）
+//    //    ビデオ：HEVC（H.265）
+//    //    写真：HEIF
+//    //    バースト（連射）：JPEG
+//    //    LivePhotos：HEIF + HEVC（H.265）
+//    //    ポートレート： HEIF + HEIF + AAE
+//    //    パノラマ：HEIF
+//    //    スクリーンショット：PNG
+//    //    写真はHEIF、動画はHEVC、
+//    //    だけど、バーストで連射撮影した場合はJPEGにて保存となる。
+//    //
+//    //    以前は、ポートレート写真は、JPEGでしたけども、
+//    //    最新のiOS14から？HEIFに変わってました。
+//    //    ポートレートHEIFは、Windowsに取り込むとバグるけどな。
+//    
+//    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+//        // キャンセル
+//        guard let provider = results.first?.itemProvider else {
+//            picker.dismiss(animated: true, completion: nil)
+//            return
+//        }
+//        guard let typeIdentifer = provider.registeredTypeIdentifiers.first else { return }
+//        // 判定可能な識別子であるかチェック
+//        if provider.hasItemConformingToTypeIdentifier(typeIdentifer) {
+//            //Live Photoとして取得可能化
+//            if provider.canLoadObject(ofClass: PHLivePhoto.self) {
+//                //LivePhotoはClassを指定してLoadObjectで読み込み
+//                provider.loadObject(ofClass: PHLivePhoto.self) { (livePhotoObject, error) in
+//                    do {
+//                        if let livePhoto:PHLivePhoto = livePhotoObject as? PHLivePhoto {
+//                            // Live Photoのプロパティから静止画を抜き出す(HEIC形式)
+//                            if let imageUrl = livePhoto.value(forKey: "imageURL") as? URL {
+//                                // URLからDataを生成（HEIC内のデータを参照してるため取得できる
+//                                let imageData: Data = try Data(contentsOf: imageUrl)
+//                                // パスを生成して画像を保存する
+//                                // 選択された画像のURL
+//                                self.imageURL = imageUrl // imageUrl    Foundation.URL    "file:///private/var/mobile/Containers/Data/Application/D7A1BFB4-0443-473F-9154-0E93D2D2766A/tmp/live-photo-bundle/53151B11-9D5F-407E-AEE3-CE515F2A7659.pvt/IMG_2099.HEIC"
+//                                // 写真をカメラロールからiCloud Container にコピーする Dataから
+//                                //                                self.addPhotoToProjectFolder(photoData: imageData)
+//                            }
+//                        }
+//                    } catch let error {
+//                        print(error)
+//                    }
+//                }
+//            } else if provider.canLoadObject(ofClass: UIImage.self) {
+//                //一般的な画像
+//                // 画像の場合はloadObjectでUIImageまたはloadDataで取得する。
+//                // loadItemでURLを取得する場合、URLからUIImageまたはDataの取得はアルバムへのアクセス権限が必要になる。
+//                
+//                // 写真のパスを取得
+//                provider.loadItem(forTypeIdentifier: typeIdentifer) { imageURL, error  in
+//                    guard let imageURL = imageURL as? URL else {
+//                        return
+//                    }
+//                    // 選択された画像のURL
+//                    self.imageURL = imageURL // imageURL    Foundation.URL    "file:///private/var/mobile/Containers/Shared/AppGroup/53934DC7-1B16-461D-81AB-C6A8E9A6C473/File%20Provider%20Storage/photospicker/version=1&uuid=1D5FF822-7CF5-48CA-A1F9-E0C04A4CB1BD&mode=compatible&noloc=0.jpeg"
+//                }
+//                // 写真のデータを取得
+//                provider.loadDataRepresentation(forTypeIdentifier: typeIdentifer) { (data, error) in
+//                    if let imageData = data {
+//                        // 写真をカメラロールからiCloud Container にコピーする Dataから
+//                        //                        self.addPhotoToProjectFolder(photoData: imageData)
+//                    }
+//                }
+//            }
+//            
+//            picker.dismiss(animated: true, completion: {
+//                // マーカーを追加する
+//                self.addMarkerAnotation()
+//            })
+//        }
+//    }
+//}
 
 // 手書きのアノテーションを追加する処理
 extension DrawingViewController: DrawingManageAnnotationDelegate {
@@ -1589,7 +1589,9 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
                             // PDFのタップされた位置の座標
                             self.point = point
                             // 写真選択画面を表示させる
-                            self.showPickingPhotoScreen()
+                            // self.showPickingPhotoScreen()
+                            // マーカーを追加する 写真
+                            self.addMarkerAnotation()
                         } else {
                             print("SF Symbols に画像が存在しない")
                         }

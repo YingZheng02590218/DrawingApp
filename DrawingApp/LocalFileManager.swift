@@ -178,7 +178,7 @@ class LocalFileManager {
             // Desktop のPDFファイルを共有しようとすると、エラーが発生する → USBメモリなど外部記憶装置内のファイルにアクセスするにはセキュリティで保護されたリソースへのアクセス許可が必要 url.startAccessingSecurityScopedResource()
         }
         do {
-            // コピーの前にはチェック&削除が必要
+            // コピーの前にはチェック&削除が必要 TODO: 必要？
             if FileManager.default.fileExists(atPath: backupFileUrl.path) {
                 // すでに backupFileUrl が存在する場合はファイルを削除する
                 try FileManager.default.removeItem(at: backupFileUrl)
