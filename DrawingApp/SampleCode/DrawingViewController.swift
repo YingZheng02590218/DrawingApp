@@ -6,153 +6,34 @@
 //
 
 import PDFKit
-import Photos
-import PhotosUI
+//import Photos
+//import PhotosUI
 import UIKit
 //import PencilKit
 
 class DrawingViewController: UIViewController {
     
-    // セグメントコントロール
-    let segmentedControl = UISegmentedControl(items: ["ビューモード", "移動", "グループ選択", "写真マーカー", "手書き", "直線", "矢印", "四角", "円", "テキスト", "消しゴム"])
-    // モード
-    var drawingMode: DrawingMode = .viewingMode
-    
-    @IBOutlet var imageView: UIImageView!
-    @IBOutlet weak var pdfThumbnailView: PDFThumbnailView!
-    @IBOutlet weak var pdfView: NonSelectablePDFView!
-    // iCloud Container に保存しているPDFファイルのパス
-    var fileURL: URL?
-    // ページ番号
-    var pageNumber: Int?
-    // ローカル Container に保存している編集中のPDFファイルのパス
-    var tempFilePath: URL?
-    // PDF 全てのpageに存在する写真マーカーAnnotationを保持する
-    var annotationsInAllPages: [PDFAnnotation] = []
-    // 選択しているAnnotation
-    var currentlySelectedAnnotation: PDFAnnotation?
-    // 写真マーカー　連番 // TODO: SF Symbols は50までしか存在しない
-//    var numbersList = [0,1,2,3,4,5,6,7,8,9,
-//                       10,11,12,13,14,15,16,17,18,19,
-//                       20,21,22,23,24,25,26,27,28,29,
-//                       30,31,32,33,34,35,36,37,38,39,
-//                       40,41,42,43,44,45,46,47,48,49,
-//                       50]
-    var numbersList = Array(1...32767) // Int16    32767
-
-    // 使用していない連番
-    var unusedNumber: Int?
-    // マーカー画像
-    var image: UIImage?
-    // 選択された画像のURL
-    var imageURL: URL?
-    // PDFのタップされた位置の座標
-    var point: CGPoint?
-    // 起点
-    var beganLocation: CGPoint?
-    // 途中点
-    var changedLocation: CGPoint?
-    // 終点
-    var endLocation: CGPoint?
-    // 選択されたマーカー
-    var selectedAnnotation: PDFAnnotation?
-    // 編集中のAnnotation
-    var isEditingAnnotation: PDFAnnotation?
-    
-    var imagePickerController: UIImagePickerController!
-    // 手書き　ツール
-    var toolStackView: UIStackView?
-    // 手書き　カラー
-    var colorStackView: UIStackView?
-    // 破線のパターン
-    var dashPattern: DashPattern = .pattern1
-    
-    //    let canvas = PKCanvasView()
-    //    var crayon = PKInkingTool(.pencil, color: Colors.babyBlue.getColor(), width: 70)
-    //    var pencil = PKInkingTool(.pencil, color: Colors.babyBlue.getColor(), width: 10)
-    //    var marker = PKInkingTool(.marker, color: Colors.babyBlue.getColor(), width: 40)
-    //    let eraser = PKEraserTool(.bitmap)
-    
-    private var path: UIBezierPath?
-    //    private var currentAnnotation : DrawingAnnotation?
-    
-    private let pdfDrawer = PDFDrawer()
-    
-    let pdfDrawingGestureRecognizer = DrawingGestureRecognizer()
-    
-    // 変更前
-    var before: PDFAnnotation?
-    // Undo Redo
-    let undoRedoManager = UndoRedoManager()
-    // Undo Redo が可能なAnnotation
-    private var editingAnnotations: [PDFAnnotation]?
-    
-    @IBOutlet var undoButton: UIButton!
-    @IBOutlet var redoButton: UIButton!
-    
+    // MARK: - ライフサイクル
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // setEditingメソッドを使用するため、Storyboard上の編集ボタンを上書きしてボタンを生成する
-        editButtonItem.tintColor = .black
-        navigationItem.rightBarButtonItem = editButtonItem
-        
-        // Xボタン　戻るボタン
-        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(closeScreen))
-        
-        // Annotation設定スイッチ
-        let switchButton = UISwitch(frame: CGRect(x: 0, y: 0, width: 0, height: 0))
-        switchButton.onTintColor = .green
-        switchButton.isOn = true
-        switchButton.addTarget(self, action: #selector(switchTriggered), for: .valueChanged)
-        let switchBarButtonItem = UIBarButtonItem(customView: switchButton)
-        navigationItem.rightBarButtonItems?.append(switchBarButtonItem)
-        
+        // 編集ボタン Xボタン Annotation表示非表示スイッチ
+        setupButtons()
         // セグメントコントロール
         setupSegmentedControl()
         
         // title設定
         navigationItem.title = "マーカーを追加する"
         
-        // iCloud Container に保存しているPDFファイルのパス
-        guard let fileURL = fileURL else { return }
-//        // 一時ファイルを削除する
-//        deleteTempDirectory()
-//        // PDFファイルを一時ディレクトリにコピーする
-//        if let tempFilePath = saveToTempDirectory(fileURL: fileURL) {
-//            // ローカル Container に保存している編集中のPDFファイルのパス
-//            self.tempFilePath = tempFilePath
-//        }
-//        
-//        guard let tempFilePath = tempFilePath else { return }
-//        guard let document = PDFDocument(url: tempFilePath) else { return }
-        guard let document = PDFDocument(url: fileURL) else { return }
-        pdfView.document = document
-        // 単一ページのみ
-        pdfView.displayMode = .singlePage
-        // 現在開いているページ currentPage にのみマーカーを追加
-        pdfView.autoScales = true
+        // 編集するPDFページを表示させる
+        setupPdfView()
         
-        // ②PDF Annotationがタップされたかを監視、タップに対する処理を行う
-        //　PDFAnnotationがタップされたかを監視する
-        NotificationCenter.default.addObserver(self, selector: #selector(action(_:)), name: .PDFViewAnnotationHit, object: nil)
+        // PDF Annotationがタップされたかを監視
+        setupAnnotationRecognizer()
         
-        // マーカーを追加する位置を取得する
-        let singleTapGesture = UITapGestureRecognizer(target: self, action: #selector(tappedView(_:)))
-        singleTapGesture.numberOfTapsRequired = 1
-        singleTapGesture.delegate = self
-        self.pdfView.addGestureRecognizer(singleTapGesture)
-        // 移動
-        let panAnnotationGesture = UIPanGestureRecognizer(target: self, action: #selector(didPanAnnotation(sender:)))
-        panAnnotationGesture.delegate = self
-        pdfView.addGestureRecognizer(panAnnotationGesture)
-        
-        // サムネイル
-        pdfThumbnailView.pdfView = pdfView
-        pdfThumbnailView.layoutMode = .vertical
-        pdfThumbnailView.backgroundColor = UIColor.gray
-        pdfThumbnailView.thumbnailSize = CGSize(width: 40, height: 60)
+        // ページサムネイル一覧
+        setupThumbnailView()
         
         // 手書きパレット
         createButtons()
@@ -167,13 +48,14 @@ class DrawingViewController: UIViewController {
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-
+        
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         // 写真のアクセス権限
-        albumAction()
+        // albumAction()
+        
         DispatchQueue.main.async {
             // 図面調書一覧画面で選択したページへジャンプする
             if let pageNumber = self.pageNumber, // ページ番号
@@ -183,18 +65,88 @@ class DrawingViewController: UIViewController {
         }
     }
     
-    // 編集モード切り替え
-    override func setEditing(_ editing: Bool, animated: Bool) {
-        super.setEditing(editing, animated: animated)
-        // 編集中
-        if isEditing {
-            // title設定
-            navigationItem.title = "マーカーを削除する"
-        } else {
-            // title設定
-            navigationItem.title = "マーカーを追加する"
-        }
+    // MARK: - 編集するPDFページ
+    
+    @IBOutlet weak var pdfView: NonSelectablePDFView!
+    // iCloud Container に保存しているPDFファイルのパス
+    var fileURL: URL?
+    //    // ローカル Container に保存している編集中のPDFファイルのパス
+    //    var tempFilePath: URL?
+    // ページ番号
+    var pageNumber: Int?
+    
+    // 編集するPDFページを表示させる
+    func setupPdfView() {
+        // iCloud Container に保存しているPDFファイルのパス
+        guard let fileURL = fileURL else { return }
+        //        // 一時ファイルを削除する
+        //        deleteTempDirectory()
+        //        // PDFファイルを一時ディレクトリにコピーする
+        //        if let tempFilePath = saveToTempDirectory(fileURL: fileURL) {
+        //            // ローカル Container に保存している編集中のPDFファイルのパス
+        //            self.tempFilePath = tempFilePath
+        //        }
+        //
+        //        guard let tempFilePath = tempFilePath else { return }
+        //        guard let document = PDFDocument(url: tempFilePath) else { return }
+        guard let document = PDFDocument(url: fileURL) else { return }
+        pdfView.document = document
+        // 単一ページのみ
+        pdfView.displayMode = .singlePage
+        // 現在開いているページ currentPage にのみマーカーを追加
+        pdfView.autoScales = true
     }
+    
+    // MARK: - ページサムネイル一覧
+    
+    @IBOutlet weak var pdfThumbnailView: PDFThumbnailView!
+    
+    // ページサムネイル一覧
+    func setupThumbnailView() {
+        pdfThumbnailView.pdfView = pdfView
+        pdfThumbnailView.layoutMode = .vertical
+        pdfThumbnailView.backgroundColor = UIColor.gray
+        pdfThumbnailView.thumbnailSize = CGSize(width: 40, height: 60)
+    }
+    
+    // MARK: - 編集ボタン Xボタン Annotation表示非表示スイッチ
+    
+    // 編集ボタン Xボタン Annotation表示非表示スイッチ
+    func setupButtons() {
+        // setEditingメソッドを使用するため、Storyboard上の編集ボタンを上書きしてボタンを生成する
+        editButtonItem.tintColor = .black
+        navigationItem.rightBarButtonItem = editButtonItem
+        
+        // Xボタン　戻るボタン
+        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(closeScreen))
+        
+        // Annotation表示非表示スイッチ 切り替え
+        let switchButton = UISwitch(frame: CGRect(x: 0, y: 0, width: 0, height: 0))
+        switchButton.onTintColor = .green
+        switchButton.isOn = true
+        switchButton.addTarget(self, action: #selector(switchTriggered), for: .valueChanged)
+        let switchBarButtonItem = UIBarButtonItem(customView: switchButton)
+        navigationItem.rightBarButtonItems?.append(switchBarButtonItem)
+    }
+    
+    // MARK: - 戻るボタン
+    
+    // Xボタン　戻るボタン
+    @objc
+    func closeScreen() {
+        // 戻るボタンの動作処理
+        // マーカーを追加しPDFを上書き保存する
+        save(completion: {
+            self.dismiss(animated: true)
+        })
+    }
+    
+    // MARK: - 編集モード
+    
+    // セグメントコントロール
+    let segmentedControl = UISegmentedControl(items: ["ビューモード", "移動", "グループ選択", "写真マーカー", "手書き", "直線", "矢印", "四角", "円", "テキスト", "消しゴム"])
+    // モード
+    var drawingMode: DrawingMode = .viewingMode
     
     // セグメントコントロール
     func setupSegmentedControl() {
@@ -214,178 +166,6 @@ class DrawingViewController: UIViewController {
             navigationItem.rightBarButtonItem = segmentBarButtonItem
         }
     }
-    
-    // MARK: - 写真マーカー　ズームイン
-    
-    // 写真マーカー　ズームイン
-    func zoomInAtPhotoMarker(photoMarkerNumber: String) {
-        // 拡大
-        pdfView.scaleFactor = 5.0
-        // PDF 全てのpageに存在するAnnotationを保持する
-        getAllAnnotations() {
-            // TODO: マーカーを拡大してセンターに表示させる
-            if let annotation = self.annotationsInAllPages.filter({ String($0.contents ?? "") == photoMarkerNumber }).first {
-                print("$$$$", annotation.contents)
-                
-                if let pdfPage = annotation.page {
-                    // UIViewからPDFの座標へ変換する
-                    let rect = self.pdfView.convert(UIScreen.main.bounds, to: pdfPage) // 座標系がUIViewとは異なるので気をつけましょう。
-                    
-                    let screenHeight = rect.height
-                    let screenWidth = rect.width
-                    print(screenHeight)
-                    print(screenWidth)
-                    print(annotation.bounds.origin.x)
-                    print(annotation.bounds.origin.y)
-                    
-                    let cgRect = CGRect(
-                        x: annotation.bounds.origin.x - screenWidth / 2,
-                        y: annotation.bounds.origin.y + screenHeight / 2,
-                        width: annotation.bounds.width,
-                        height: annotation.bounds.height
-                    )
-                    
-                    print(cgRect)
-                    self.pdfView.go(to: cgRect, on: pdfPage)
-                    // self.pdfView.center.y = annotation.bounds.center.y - 100
-                }
-            } else {
-                self.annotationsInAllPages.map { print("$$$$$$", $0.contents) }
-            }
-        }
-    }
-    
-    // MARK: - 手書きパレット
-    
-    // 手書きパレット
-    func createButtons() {
-        //        canvas.frame = view.bounds
-        //        canvas.drawingPolicy = .anyInput
-        //        canvas.backgroundColor = .clear
-        //        canvas.isOpaque = false //背景を透明にする(だいじ)
-        //        view.addSubview(canvas)
-        //        canvas.tool = crayon
-        
-        //Create the color palette
-        var buttons: [UIButton] = []
-        
-        for color in Colors.allCases {
-            let button = UIButton(primaryAction: UIAction(handler: { action in
-                self.updatePens(sender: action.sender)
-            }))
-            button.heightAnchor.constraint(equalToConstant: 100.0).isActive = true
-            button.widthAnchor.constraint(equalToConstant: 100.0).isActive = true
-            button.makeRounded(50, borderWidth: 10, borderColor: .black)
-            button.backgroundColor = color.getColor()
-            button.tag = color.rawValue
-            buttons.append(button)
-        }
-        
-        colorStackView = UIStackView(arrangedSubviews: buttons)
-        if let colorStackView = colorStackView {
-            colorStackView.axis = .horizontal
-            colorStackView.distribution = .equalSpacing
-            colorStackView.alignment = .center
-            
-            view.addSubview(colorStackView)
-            
-            colorStackView.translatesAutoresizingMaskIntoConstraints = false
-            
-            NSLayoutConstraint.activate([colorStackView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -20),
-                                         colorStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-                                         colorStackView.widthAnchor.constraint(equalToConstant: view.bounds.width / 2),
-                                         colorStackView.heightAnchor.constraint(equalToConstant: 100)])
-            colorStackView.isHidden = true
-        }
-        
-        //Setup tools
-        let crayonButton = createButton(title: "Crayon", action: UIAction(handler: { _ in
-            //            self.canvas.tool = self.crayon
-        }))
-        
-        let pencilButton = createButton(title: "Pencil", action: UIAction(handler: { _ in
-            //            self.canvas.tool = self.pencil
-            self.pdfDrawer.changeTool(tool: .pencil)
-        }))
-        
-        let markerButton = createButton(title: "Marker", action: UIAction(handler: { _ in
-            //            self.canvas.tool = self.marker
-        }))
-        
-        let eraserButton = createButton(title: "Eraser", action: UIAction(handler: { _ in
-            //            self.canvas.tool = self.eraser
-        }))
-        
-        let undoButton = createButton(title: "Undo", action: UIAction(handler: { _ in
-            // TODO: 効いていない
-            self.undoManager?.undo()
-        }))
-        
-        let redoButton = createButton(title: "Redo", action: UIAction(handler: { _ in
-            // TODO: 効いていない
-            self.undoManager?.redo()
-        }))
-        
-        toolStackView = UIStackView(arrangedSubviews: [crayonButton,
-                                                       pencilButton,
-                                                       markerButton,
-                                                       eraserButton,
-                                                       undoButton,
-                                                       redoButton])
-        if let toolStackView = toolStackView {
-            toolStackView.axis = .vertical
-            toolStackView.distribution = .fillEqually
-            toolStackView.alignment = .fill
-            toolStackView.spacing = 10
-            
-            view.addSubview(toolStackView)
-            
-            toolStackView.translatesAutoresizingMaskIntoConstraints = false
-            NSLayoutConstraint.activate([toolStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: 10),
-                                         toolStackView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-                                         toolStackView.widthAnchor.constraint(equalToConstant: 150)])
-            toolStackView.isHidden = true
-        }
-    }
-    
-    //helper function for creating the tools
-    private func createButton(title: String, action: UIAction) -> UIButton {
-        let button = UIButton(type: .system, primaryAction: action)
-        button.frame = CGRect(x: 0, y: 0, width: 150, height: 50)
-        button.setTitle(title, for: .normal)
-        button.tintColor = .lightGray
-        button.makeRounded(10, borderWidth: 2, borderColor: .black)
-        return button
-    }
-    
-    private func updatePens(sender: Any?) {
-        if let button = sender as? UIButton,
-           let color = Colors(rawValue: button.tag)?.getColor() { //,
-            //           var currentTool = canvas.tool as? PKInkingTool {
-            //            //update the current tool being used by the canvas
-            //            currentTool.color = color
-            //            canvas.tool = currentTool
-            //            //update all the tools
-            //            crayon.color = color
-            //            pencil.color = color
-            //            marker.color = color
-            pdfDrawer.changeColor(color: color)
-        }
-    }
-    
-    // MARK: - 戻るボタン
-    
-    // Xボタン　戻るボタン
-    @objc
-    func closeScreen() {
-        // 戻るボタンの動作処理
-        // マーカーを追加しPDFを上書き保存する
-        save(completion: {
-            self.dismiss(animated: true)
-        })
-    }
-    
-    // MARK: - 編集モード
     
     // セグメントコントロール
     @objc
@@ -435,596 +215,36 @@ class DrawingViewController: UIViewController {
         }
     }
     
-    enum DashPattern {
-        case pattern1
-        case pattern2
-        case pattern3
-        case pattern4
-        case pattern5
-        
-        var style: [CGFloat] {
-            switch self {
-            case .pattern1:
-                return [1.0]
-            case .pattern2:
-                return [30.0, 10.0]
-            case .pattern3:
-                return [40.0, 20.0]
-            case .pattern4:
-                return [50.0, 5.0, 5.0, 5.0]
-            case .pattern5:
-                return [50.0, 5.0, 5.0, 5.0, 5.0, 5.0]
-            }
-        }
-    }
-    
-    @IBAction func dashPatternChanged(_ sender: UIButton) {
-        
-        switch sender.tag {
-        case 1:
-            dashPattern = .pattern1
-        case 2:
-            dashPattern = .pattern2
-        case 3:
-            dashPattern = .pattern3
-        case 4:
-            dashPattern = .pattern4
-        case 5:
-            dashPattern = .pattern5
-        default:
-            break
-        }
-    }
-    
-    
-    // ダイアログ
-    func showDialogForSucceed(message: String, color: UIColor, frame: CGRect) {
-        let actionSheet = UIAlertController(title: "Annotation", message: message, preferredStyle: .actionSheet)
-        actionSheet.view.backgroundColor = color
-        // iPad の場合のみ、ActionSheetを表示するための必要な設定
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            actionSheet.popoverPresentationController?.sourceView = pdfView
-            actionSheet.popoverPresentationController?.sourceRect = frame
-            //            CGRect(
-            //                x: frame.origin.x - frame.width,
-            //                y: frame.origin.y - frame.height,
-            //                width: 0,
-            //                height: 0
-            //            )
-            // iPadの場合、アクションシートの背後の画面をタップできる
+    // 編集モード切り替え
+    override func setEditing(_ editing: Bool, animated: Bool) {
+        super.setEditing(editing, animated: animated)
+        // 編集中
+        if isEditing {
+            // title設定
+            navigationItem.title = "マーカーを削除する"
         } else {
-            // ③表示するViewと表示位置を指定する
-            actionSheet.popoverPresentationController?.sourceView = pdfView
-            actionSheet.popoverPresentationController?.sourceRect = frame
+            // title設定
+            navigationItem.title = "マーカーを追加する"
         }
+    }
+    
+    // MARK: - アノテーション
+    
+    // PDF Annotationがタップされたかを監視
+    func setupAnnotationRecognizer() {
+        // ②PDF Annotationがタップされたかを監視、タップに対する処理を行う
+        //　PDFAnnotationがタップされたかを監視する
+        NotificationCenter.default.addObserver(self, selector: #selector(action(_:)), name: .PDFViewAnnotationHit, object: nil)
         
-        actionSheet.popoverPresentationController?.permittedArrowDirections = UIPopoverArrowDirection.any
-        
-        self.present(actionSheet, animated: true) { () -> Void in
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                self.dismiss(animated: true, completion: nil)
-            }
-        }
-    }
-    
-    // MARK: - PDF ファイル　マークアップ　編集中の一時ファイル
-    
-//    // 一時ファイルを削除する
-//    func deleteTempDirectory() {
-//        guard let tempDirectory = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false) else { return }
-//        // 一時ファイル用のフォルダ
-//        let pDFsDirectory = tempDirectory.appendingPathComponent("PDFs", isDirectory: true)
-//        do {
-//            try FileManager.default.createDirectory(at: pDFsDirectory, withIntermediateDirectories: true, attributes: nil)
-//        } catch {
-//            print("失敗した")
-//        }
-//        do {
-//            let directoryContents = try FileManager.default.contentsOfDirectory(at: pDFsDirectory, includingPropertiesForKeys: nil) // ファイル一覧を取得
-//            // if you want to filter the directory contents you can do like this:
-//            let pdfFiles = directoryContents.filter { $0.pathExtension == "pdf" }
-//            print("pdf urls: ", pdfFiles)
-//            let pdfFileNames = pdfFiles.map { $0.deletingPathExtension().lastPathComponent }
-//            print("pdf list: ", pdfFileNames)
-//            // ファイルのデータを取得
-//            for fileName in pdfFileNames {
-//                let content = pDFsDirectory.appendingPathComponent(fileName + ".pdf")
-//                do {
-//                    try FileManager.default.removeItem(at: content)
-//                } catch let error {
-//                    print(error)
-//                }
-//            }
-//        } catch {
-//            print(error)
-//        }
-//    }
-    
-//    // 一時ファイルを作成する
-//    func saveToTempDirectory(fileURL: URL) -> URL? {
-//        guard let documentDirectory = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false) else { return nil }
-//        let pDFsDirectory = documentDirectory.appendingPathComponent("PDFs", isDirectory: true)
-//        do {
-//            try FileManager.default.createDirectory(at: pDFsDirectory, withIntermediateDirectories: true, attributes: nil)
-//        } catch {
-//            print("失敗した")
-//        }
-//        
-//        let pdfFileName = fileURL.deletingPathExtension().lastPathComponent
-//        
-//        let filePath = pDFsDirectory.appendingPathComponent("\(pdfFileName)-temp" + ".pdf")
-//        do {
-//            // コピーの前にはチェック&削除が必要
-//            if FileManager.default.fileExists(atPath: filePath.path) {
-//                // すでに backupFileUrl が存在する場合はファイルを削除する
-//                try FileManager.default.removeItem(at: filePath)
-//            }
-//            // PDFファイルを一時フォルダへコピー
-//            try FileManager.default.copyItem(at: fileURL, to: filePath)
-//            
-//            print(filePath)
-//            return filePath
-//        } catch {
-//            print(error.localizedDescription)
-//            return nil
-//        }
-//    }
-    
-    
-    // MARK: - PDF ファイル　マーカー　Annotation
-    
-    // Annotation設定スイッチ 切り替え
-    @objc
-    func switchTriggered(sender: UISwitch) {
-        // PDF 全てのpageに存在するAnnotationを表示非表示を切り替える
-        changeAllAnnotationsVisibility(shouldDisplay: sender.isOn)
-    }
-    
-    // PDF 全てのpageに存在するAnnotationを表示非表示を切り替える
-    func changeAllAnnotationsVisibility(shouldDisplay: Bool) {
-        guard let document = pdfView.document else { return }
-        for i in 0..<document.pageCount {
-            if let page = document.page(at: i) {
-                //
-                let annotations = page.annotations
-                for annotation in annotations {
-                    
-                    annotation.shouldDisplay = shouldDisplay
-                }
-            }
-        }
-    }
-    
-    // PDF 全てのpageに存在する写真マーカーAnnotationを保持する
-    func getAllAnnotations(completion: @escaping () -> Void) {
-        guard let document = pdfView.document else { return }
-        // 初期化
-        annotationsInAllPages = []
-        for i in 0..<document.pageCount {
-            if let page = document.page(at: i) {
-                // freeText
-                let annotations = page.annotations.filter({ "/\($0.type!)" == PDFAnnotationSubtype.freeText.rawValue })
-                for annotation in annotations {
-                    
-                    annotationsInAllPages.append(annotation)
-                }
-            }
-        }
-        print(annotationsInAllPages.count)
-        completion()
-    }
-    
-    // マーカーを追加する 写真
-    func addMarkerAnotation() {
-        // 現在開いているページを取得
-        if let page = self.pdfView.currentPage,
-           let point = point,
-           let unusedNumber = unusedNumber {
-            //            // 中央部に座標を指定
-            //            let imageStamp = ImageAnnotation(with: image, forBounds: CGRect(x: point.x, y: point.y, width: 15, height: 15), withProperties: [:])
-            //            imageStamp.contents = "\(unusedNumber)"
-            //            // 対象のページへ注釈を追加
-            //            page.addAnnotation(imageStamp)
-            
-            // freeText
-            let font = UIFont.systemFont(ofSize: 15)
-            let size = "\(unusedNumber)".size(with: font)
-            // Create dictionary of annotation properties
-            let lineAttributes: [PDFAnnotationKey: Any] = [
-                .color: UIColor.green.withAlphaComponent(0.5),
-                .contents: "\(unusedNumber)",
-            ]
-            
-            let freeText = PhotoAnnotation(bounds: CGRect(x: point.x, y: point.y, width: size.width + 5, height: size.height + 5), forType: .freeText, withProperties: lineAttributes)
-            // UUID
-            freeText.userName = UUID().uuidString
-            // 対象のページへ注釈を追加
-            page.addAnnotation(freeText)
-            // Undo Redo
-            undoRedoManager.addAnnotation(freeText)
-            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
-                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-            })
-            // ボタン　活性状態
-            undoButton.isEnabled = undoRedoManager.canUndo()
-            redoButton.isEnabled = undoRedoManager.canRedo()
-        }
-    }
-    
-    // マーカーを追加する 矢印
-    func addArrowMarkerAnotation() {
-        // 現在開いているページを取得
-        if let page = self.pdfView.currentPage,
-           let beganLocation = beganLocation,
-           let changedLocation = changedLocation,
-           let endLocation = endLocation {
-            
-            let boundsX = beganLocation.x > endLocation.x ? endLocation.x : beganLocation.x
-            let boundsY = beganLocation.y > endLocation.y ? endLocation.y : beganLocation.y
-            
-            let width = beganLocation.x > endLocation.x ? beganLocation.x - endLocation.x : endLocation.x - beganLocation.x
-            let height = beganLocation.y > endLocation.y ? beganLocation.y - endLocation.y : endLocation.y - beganLocation.y
-            
-            let border = PDFBorder()
-            border.lineWidth = 10
-            border.style = dashPattern == .pattern1 ? .solid : .dashed
-            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
-            
-            // Create dictionary of annotation properties
-            let lineAttributes: [PDFAnnotationKey: Any] = [
-                .linePoints: [beganLocation.x, beganLocation.y, endLocation.x, endLocation.y],
-                .lineEndingStyles: [PDFAnnotationLineEndingStyle.none,
-                                    PDFAnnotationLineEndingStyle.closedArrow],
-                .color: UIColor.red,
-                .border: border
-            ]
-            let lineAnnotation = PDFAnnotation(
-                bounds: CGRect(x: boundsX, y: boundsY, width: width, height: height),
-                forType: .line,
-                withProperties: lineAttributes
-            )
-            // UUID
-            lineAnnotation.userName = UUID().uuidString
-            page.addAnnotation(lineAnnotation)
-            
-            // Undo Redo
-            undoRedoManager.addAnnotation(lineAnnotation)
-            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
-                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-            })
-            // ボタン　活性状態
-            undoButton.isEnabled = undoRedoManager.canUndo()
-            redoButton.isEnabled = undoRedoManager.canRedo()
-        }
-    }
-    
-    @IBAction func undoTapped(_ sender: Any) {
-        
-        undoRedoManager.undo(completion: { didUndoAnnotations in
-            // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-            self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-        })
-        // ボタン　活性状態
-        undoButton.isEnabled = undoRedoManager.canUndo()
-        redoButton.isEnabled = undoRedoManager.canRedo()
-    }
-    
-    @IBAction func redoTapped(_ sender: Any) {
-        
-        undoRedoManager.redo(completion: { didUndoAnnotations in
-            // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-            self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-        })
-        // ボタン　活性状態
-        undoButton.isEnabled = undoRedoManager.canUndo()
-        redoButton.isEnabled = undoRedoManager.canRedo()
-    }
-    
-    // マーカーを追加する 直線
-    func addLineMarkerAnotation() {
-        // 現在開いているページを取得
-        if let page = self.pdfView.currentPage,
-           let beganLocation = beganLocation,
-           let changedLocation = changedLocation,
-           let endLocation = endLocation {
-            
-            let boundsX = beganLocation.x > endLocation.x ? endLocation.x : beganLocation.x
-            let boundsY = beganLocation.y > endLocation.y ? endLocation.y : beganLocation.y
-            
-            let width = beganLocation.x > endLocation.x ? beganLocation.x - endLocation.x : endLocation.x - beganLocation.x
-            let height = beganLocation.y > endLocation.y ? beganLocation.y - endLocation.y : endLocation.y - beganLocation.y
-            
-            let border = PDFBorder()
-            border.lineWidth = 10
-            border.style = dashPattern == .pattern1 ? .solid : .dashed
-            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
-            
-            // Create dictionary of annotation properties
-            let lineAttributes: [PDFAnnotationKey: Any] = [
-                .linePoints: [beganLocation.x, beganLocation.y, endLocation.x, endLocation.y],
-                .lineEndingStyles: [PDFAnnotationLineEndingStyle.none,
-                                    PDFAnnotationLineEndingStyle.none],
-                .color: UIColor.red,
-                .border: border
-            ]
-            let lineAnnotation = PDFAnnotation(
-                bounds: CGRect(x: boundsX, y: boundsY, width: width, height: height),
-                forType: .line,
-                withProperties: lineAttributes
-            )
-            // UUID
-            lineAnnotation.userName = UUID().uuidString
-            page.addAnnotation(lineAnnotation)
-            
-            // Undo Redo
-            undoRedoManager.addAnnotation(lineAnnotation)
-            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
-                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-            })
-            // ボタン　活性状態
-            undoButton.isEnabled = undoRedoManager.canUndo()
-            redoButton.isEnabled = undoRedoManager.canRedo()
-        }
-    }
-    
-    // マーカーを追加する 四角
-    func addRectangleMarkerAnotation() {
-        // 現在開いているページを取得
-        if let page = self.pdfView.currentPage,
-           let beganLocation = beganLocation,
-           let changedLocation = changedLocation,
-           let endLocation = endLocation {
-            
-            let boundsX = beganLocation.x > endLocation.x ? endLocation.x : beganLocation.x
-            let boundsY = beganLocation.y > endLocation.y ? endLocation.y : beganLocation.y
-            
-            let width = beganLocation.x > endLocation.x ? beganLocation.x - endLocation.x : endLocation.x - beganLocation.x
-            let height = beganLocation.y > endLocation.y ? beganLocation.y - endLocation.y : endLocation.y - beganLocation.y
-            
-            let border = PDFBorder()
-            border.lineWidth = 5.0
-            border.style = dashPattern == .pattern1 ? .solid : .dashed
-            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
-            
-            // Create dictionary of annotation properties
-            let lineAttributes: [PDFAnnotationKey: Any] = [
-                .color: UIColor.green,
-                .border: border
-            ]
-            
-            // Create an annotation to add to a page (empty)
-            let newAnnotation = PDFAnnotation(
-                bounds: CGRect(x: boundsX, y: boundsY, width: width, height: height),
-                forType: .square,
-                withProperties: lineAttributes
-            )
-            // UUID
-            newAnnotation.userName = UUID().uuidString
-            page.addAnnotation(newAnnotation)
-            
-            // Undo Redo
-            undoRedoManager.addAnnotation(newAnnotation)
-            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
-                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-            })
-            // ボタン　活性状態
-            undoButton.isEnabled = undoRedoManager.canUndo()
-            redoButton.isEnabled = undoRedoManager.canRedo()
-        }
-    }
-    
-    // マーカーを追加する 円
-    func addCircleMarkerAnotation() {
-        // 現在開いているページを取得
-        if let page = self.pdfView.currentPage,
-           let beganLocation = beganLocation,
-           let changedLocation = changedLocation,
-           let endLocation = endLocation {
-            
-            let boundsX = beganLocation.x > endLocation.x ? endLocation.x : beganLocation.x
-            let boundsY = beganLocation.y > endLocation.y ? endLocation.y : beganLocation.y
-            
-            let width = beganLocation.x > endLocation.x ? beganLocation.x - endLocation.x : endLocation.x - beganLocation.x
-            let height = beganLocation.y > endLocation.y ? beganLocation.y - endLocation.y : endLocation.y - beganLocation.y
-            
-            let border = PDFBorder()
-            border.lineWidth = 2.0
-            border.style = dashPattern == .pattern1 ? .solid : .dashed
-            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
-            
-            // Create dictionary of annotation properties
-            let lineAttributes: [PDFAnnotationKey: Any] = [
-                .color: UIColor.green,
-                .border: border
-            ]
-            
-            // Create an annotation to add to a page (empty)
-            let newAnnotation = PDFAnnotation(
-                bounds: CGRect(x: boundsX, y: boundsY, width: width, height: height),
-                forType: .circle,
-                withProperties: lineAttributes
-            )
-            // UUID
-            newAnnotation.userName = UUID().uuidString
-            page.addAnnotation(newAnnotation)
-            
-            // Undo Redo
-            undoRedoManager.addAnnotation(newAnnotation)
-            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
-                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-            })
-            // ボタン　活性状態
-            undoButton.isEnabled = undoRedoManager.canUndo()
-            redoButton.isEnabled = undoRedoManager.canRedo()
-        }
-    }
-    
-    // マーカーを追加する テキスト
-    func addTextMarkerAnotation(inputText: String?, fontSize: CGFloat) {
-        // 現在開いているページを取得
-        if let page = self.pdfView.currentPage,
-           let point = point,
-           let inputText = inputText,
-           !inputText.isEmpty {
-            
-            // freeText
-            let font = UIFont.systemFont(ofSize: fontSize)
-            let size = "\(inputText)".size(with: font)
-            // Create dictionary of annotation properties
-            let attributes: [PDFAnnotationKey: Any] = [
-                .color: UIColor.systemPink.withAlphaComponent(0.1),
-                .contents: "\(inputText)",
-            ]
-            
-            let freeText = PDFAnnotation(
-                bounds: CGRect(x: point.x, y: point.y, width: size.width + 5, height: size.height + 5),
-                forType: .freeText,
-                withProperties: attributes
-            )
-            // UUID
-            freeText.userName = UUID().uuidString
-            // 対象のページへ注釈を追加
-            page.addAnnotation(freeText)
-            
-            // Undo Redo
-            undoRedoManager.addAnnotation(freeText)
-            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
-                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-            })
-            // ボタン　活性状態
-            undoButton.isEnabled = undoRedoManager.canUndo()
-            redoButton.isEnabled = undoRedoManager.canRedo()
-        }
-    }
-    
-    // マーカーを更新する テキスト
-    func updateTextMarkerAnotation(inputText: String?, fontSize: CGFloat) {
-        
-        // 現在開いているページを取得
-        if let page = pdfView.currentPage {
-            
-            guard let isEditingAnnotation = isEditingAnnotation else { return }
-            // 変更前
-            before = isEditingAnnotation
-            // 変更後
-            let after = isEditingAnnotation.copy() as! PDFAnnotation
-            after.bounds = isEditingAnnotation.bounds
-            after.page = isEditingAnnotation.page
-            
-            if let before = before,
-               let inputText = inputText,
-               !inputText.isEmpty {
-                
-                // freeText
-                let font = UIFont.systemFont(ofSize: fontSize)
-                let size = "\(inputText)".size(with: font)
-                // 文字列の長さが変化したらboundsも更新しなければならない
-                after.bounds = CGRect(
-                    x: after.bounds.origin.x,
-                    y: after.bounds.origin.y,
-                    width: size.width + 5,
-                    height: size.height + 5
-                )
-                after.contents = inputText
-                after.setValue(UIColor.yellow.withAlphaComponent(0.5), forAnnotationKey: .color)
-                after.page = before.page
-                print(before.userName, after.userName, UUID().uuidString)
-                print(before.page, after.page, before.page == after.page)
-                // UUID
-                after.userName = UUID().uuidString
-                // Annotationを再度作成
-                page.addAnnotation(after)
-                // 古いものを削除する
-                //                    page.removeAnnotation(before)
-                // 初期化
-                self.before = nil
-                // Undo Redo 更新
-                undoRedoManager.updateAnnotation(before: before, after: after)
-                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
-                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-                    self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-                })
-                // ボタン　活性状態
-                undoButton.isEnabled = undoRedoManager.canUndo()
-                redoButton.isEnabled = undoRedoManager.canRedo()
-            }
-        }
-    }
-    
-    // マーカーを更新する 移動
-    func updateMarkerAnotation() {
-        
-        // 現在開いているページを取得
-        if let page = pdfView.currentPage {
-            // 選択しているAnnotation 移動中のAnnotation
-            guard let currentlySelectedAnnotation = currentlySelectedAnnotation else { return }
-            // 変更後
-            let after = currentlySelectedAnnotation // .copy() as! PDFAnnotation コピーしなくてよい
-            after.bounds = currentlySelectedAnnotation.bounds
-            after.page = currentlySelectedAnnotation.page
-            
-            if let before = before {
-                after.bounds = CGRect(
-                    x: after.bounds.origin.x,
-                    y: after.bounds.origin.y,
-                    width: after.bounds.size.width,
-                    height: after.bounds.size.height
-                )
-                after.contents = before.contents
-                // 効かない
-                // after.setValue(UIColor.orange.withAlphaComponent(0.5), forAnnotationKey: .color)
-                after.color = UIColor.orange.withAlphaComponent(0.5)
-                after.page = before.page
-                
-                // UUID
-                after.userName = UUID().uuidString
-                // Annotationを再度作成
-                page.addAnnotation(after)
-                // 古いものを削除する
-                page.removeAnnotation(before)
-                // 初期化
-                self.before = nil
-                // Undo Redo 更新
-                undoRedoManager.updateAnnotation(before: before, after: after)
-                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
-                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-                    self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-                })
-                // ボタン　活性状態
-                undoButton.isEnabled = undoRedoManager.canUndo()
-                redoButton.isEnabled = undoRedoManager.canRedo()
-            }
-        }
-    }
-    
-    // 写真マーカーを削除する
-    func removeMarkerAnotation(annotation: PDFAnnotation) {
-        // 現在開いているページを取得
-        if let page = pdfView.currentPage {
-            print(PDFAnnotationSubtype(rawValue: annotation.type!).rawValue)
-            print(PDFAnnotationSubtype.stamp.rawValue.self)
-            // 写真マーカー
-            if annotation.isKind(of: PhotoAnnotation.self) && PDFAnnotationSubtype(rawValue: "/\(annotation.type!)") == PDFAnnotationSubtype.freeText.self && ((annotation.contents?.isEmpty) != nil)  {
-                // 対象のページの注釈を削除
-                page.removeAnnotation(annotation)
-                
-                // Undo Redo 削除
-                undoRedoManager.deleteAnnotation(annotation)
-                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
-                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-                    self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-                })
-                // ボタン　活性状態
-                undoButton.isEnabled = undoRedoManager.canUndo()
-                redoButton.isEnabled = undoRedoManager.canRedo()
-            }
-        }
+        // マーカーを追加する位置を取得する
+        let singleTapGesture = UITapGestureRecognizer(target: self, action: #selector(tappedView(_:)))
+        singleTapGesture.numberOfTapsRequired = 1
+        singleTapGesture.delegate = self
+        self.pdfView.addGestureRecognizer(singleTapGesture)
+        // 移動
+        let panAnnotationGesture = UIPanGestureRecognizer(target: self, action: #selector(didPanAnnotation(sender:)))
+        panAnnotationGesture.delegate = self
+        pdfView.addGestureRecognizer(panAnnotationGesture)
     }
     
     // Annotationを削除する
@@ -1054,76 +274,6 @@ class DrawingViewController: UIViewController {
         }
     }
     
-    // 手書きや図形を追加する
-    func addDrawingAnotation(annotation: PDFAnnotation) {
-        // 現在開いているページを取得
-        if let page = self.pdfView.currentPage {
-            // UUID
-            annotation.userName = UUID().uuidString
-            // 対象のページへ注釈を追加
-            page.addAnnotation(annotation)
-            
-            // Undo Redo
-            undoRedoManager.addAnnotation(annotation)
-            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
-                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-            })
-            // ボタン　活性状態
-            undoButton.isEnabled = undoRedoManager.canUndo()
-            redoButton.isEnabled = undoRedoManager.canRedo()
-        }
-    }
-    
-    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-    func reloadPDFAnnotations(didUndoAnnotations: [PDFAnnotation]?) {
-        print(#function)
-        // Undo Redo が可能なAnnotation　を削除する
-        DispatchQueue.main.async {
-            if let editingAnnotations = self.editingAnnotations {
-                for editingAnnotation in editingAnnotations {
-                    // pageを探す
-                    guard let document = self.pdfView.document else { return }
-                    for i in 0..<document.pageCount {
-                        if let page = document.page(at: i),
-                           let editingAnnotationPage = editingAnnotation.page {
-                            // page が同一か？
-                            //                        print(document.index(for: page), document.index(for: editingAnnotationPage))
-                            if document.index(for: page) == document.index(for: editingAnnotationPage) {
-                                print("対象のページの注釈を削除", editingAnnotation.contents)
-                                // 対象のページの注釈を削除
-                                page.removeAnnotation(editingAnnotation)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        // Undo Redo が可能なAnnotation　をUndoする
-        DispatchQueue.main.async {
-            self.editingAnnotations = nil
-            self.editingAnnotations = didUndoAnnotations
-            if let editingAnnotations = self.editingAnnotations {
-                for editingAnnotation in editingAnnotations {
-                    // pageを探す
-                    guard let document = self.pdfView.document else { return }
-                    for i in 0..<document.pageCount {
-                        if let page = document.page(at: i),
-                           let editingAnnotationPage = editingAnnotation.page {
-                            // page が同一か？
-                            //                        print(document.index(for: page), document.index(for: editingAnnotationPage))
-                            if document.index(for: page) == document.index(for: editingAnnotationPage) {
-                                print("対象のページの注釈を追加", editingAnnotation.contents)
-                                // 対象のページの注釈を追加
-                                page.addAnnotation(editingAnnotation)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
     // MARK: PDFAnnotationがタップされた
     @objc
     func action(_ sender: Any) {
@@ -1141,7 +291,7 @@ class DrawingViewController: UIViewController {
                 // マーカーを削除する
                 removeMarkerAnotation(annotation: annotation)
                 // iCloud Container に保存した写真を削除する
-                removePhotoToProjectFolder(contents: annotation.contents)
+                // removePhotoToProjectFolder(contents: annotation.contents)
             } else if drawingMode == .text {
                 // 編集中のAnnotation
                 isEditingAnnotation = annotation
@@ -1264,156 +414,1059 @@ class DrawingViewController: UIViewController {
         }
     }
     
+    //    // ダイアログ　アノテーション
+    //    func showDialogForSucceed(message: String, color: UIColor, frame: CGRect) {
+    //        let actionSheet = UIAlertController(title: "Annotation", message: message, preferredStyle: .actionSheet)
+    //        actionSheet.view.backgroundColor = color
+    //        // iPad の場合のみ、ActionSheetを表示するための必要な設定
+    //        if UIDevice.current.userInterfaceIdiom == .pad {
+    //            actionSheet.popoverPresentationController?.sourceView = pdfView
+    //            actionSheet.popoverPresentationController?.sourceRect = frame
+    //            //            CGRect(
+    //            //                x: frame.origin.x - frame.width,
+    //            //                y: frame.origin.y - frame.height,
+    //            //                width: 0,
+    //            //                height: 0
+    //            //            )
+    //            // iPadの場合、アクションシートの背後の画面をタップできる
+    //        } else {
+    //            // ③表示するViewと表示位置を指定する
+    //            actionSheet.popoverPresentationController?.sourceView = pdfView
+    //            actionSheet.popoverPresentationController?.sourceRect = frame
+    //        }
+    //
+    //        actionSheet.popoverPresentationController?.permittedArrowDirections = UIPopoverArrowDirection.any
+    //
+    //        self.present(actionSheet, animated: true) { () -> Void in
+    //            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+    //                self.dismiss(animated: true, completion: nil)
+    //            }
+    //        }
+    //    }
+    
+    // MARK: - 移動
+    // 選択しているAnnotation
+    var currentlySelectedAnnotation: PDFAnnotation?
+    
+    // マーカーを更新する 移動
+    func updateMarkerAnotation() {
+        // 現在開いているページを取得
+        if let page = pdfView.currentPage {
+            // 選択しているAnnotation 移動中のAnnotation
+            guard let currentlySelectedAnnotation = currentlySelectedAnnotation else { return }
+            // 変更後
+            let after = currentlySelectedAnnotation // .copy() as! PDFAnnotation コピーしなくてよい
+            after.bounds = currentlySelectedAnnotation.bounds
+            after.page = currentlySelectedAnnotation.page
+            
+            if let before = before {
+                after.bounds = CGRect(
+                    x: after.bounds.origin.x,
+                    y: after.bounds.origin.y,
+                    width: after.bounds.size.width,
+                    height: after.bounds.size.height
+                )
+                after.contents = before.contents
+                // 効かない
+                // after.setValue(UIColor.orange.withAlphaComponent(0.5), forAnnotationKey: .color)
+                after.color = UIColor.orange.withAlphaComponent(0.5)
+                after.page = before.page
+                
+                // UUID
+                after.userName = UUID().uuidString
+                // Annotationを再度作成
+                page.addAnnotation(after)
+                // 古いものを削除する
+                page.removeAnnotation(before)
+                // 初期化
+                self.before = nil
+                // Undo Redo 更新
+                undoRedoManager.updateAnnotation(before: before, after: after)
+                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                    self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                })
+                // ボタン　活性状態
+                undoButton.isEnabled = undoRedoManager.canUndo()
+                redoButton.isEnabled = undoRedoManager.canRedo()
+            }
+        }
+    }
+    
+    // MARK: - 写真マーカー
+    
+    // PDF 全てのpageに存在する写真マーカーAnnotationを保持する
+    var annotationsInAllPages: [PDFAnnotation] = []
+    // 写真マーカー　連番
+    var numbersList = Array(1...32767) // Int16    32767
+    // TODO: SF Symbols は50までしか存在しない
+    //    var numbersList = [0,1,2,3,4,5,6,7,8,9,
+    //                       10,11,12,13,14,15,16,17,18,19,
+    //                       20,21,22,23,24,25,26,27,28,29,
+    //                       30,31,32,33,34,35,36,37,38,39,
+    //                       40,41,42,43,44,45,46,47,48,49,
+    //                       50]
+    // 使用していない連番
+    var unusedNumber: Int?
+    // PDFのタップされた位置の座標
+    var point: CGPoint?
+    
+    // PDF 全てのpageに存在する写真マーカーAnnotationを保持する
+    func getAllAnnotations(completion: @escaping () -> Void) {
+        guard let document = pdfView.document else { return }
+        // 初期化
+        annotationsInAllPages = []
+        for i in 0..<document.pageCount {
+            if let page = document.page(at: i) {
+                // freeText
+                let annotations = page.annotations.filter({ "/\($0.type!)" == PDFAnnotationSubtype.freeText.rawValue })
+                for annotation in annotations {
+                    
+                    annotationsInAllPages.append(annotation)
+                }
+            }
+        }
+        print(annotationsInAllPages.count)
+        completion()
+    }
+    
+    // 使用していない連番を取得する
+    func getUnusedNumber() -> Int? {
+        for number in numbersList {
+            if let annotation = self.annotationsInAllPages.first(where: { $0.contents == "\(number)" }) {
+                print("annotation.contents", annotation.contents)
+            } else {
+                return number
+            }
+        }
+        return nil
+    }
+    
+    // マーカーを追加する 写真
+    func addMarkerAnotation() {
+        // 現在開いているページを取得
+        if let page = self.pdfView.currentPage,
+           let point = point,
+           let unusedNumber = unusedNumber {
+            //            // 中央部に座標を指定
+            //            let imageStamp = ImageAnnotation(with: image, forBounds: CGRect(x: point.x, y: point.y, width: 15, height: 15), withProperties: [:])
+            //            imageStamp.contents = "\(unusedNumber)"
+            //            // 対象のページへ注釈を追加
+            //            page.addAnnotation(imageStamp)
+            
+            // freeText
+            let font = UIFont.systemFont(ofSize: 15)
+            let size = "\(unusedNumber)".size(with: font)
+            // Create dictionary of annotation properties
+            let lineAttributes: [PDFAnnotationKey: Any] = [
+                .color: UIColor.green.withAlphaComponent(0.5),
+                .contents: "\(unusedNumber)",
+            ]
+            
+            let freeText = PhotoAnnotation(bounds: CGRect(x: point.x, y: point.y, width: size.width + 5, height: size.height + 5), forType: .freeText, withProperties: lineAttributes)
+            // UUID
+            freeText.userName = UUID().uuidString
+            // 対象のページへ注釈を追加
+            page.addAnnotation(freeText)
+            // Undo Redo
+            undoRedoManager.addAnnotation(freeText)
+            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+            })
+            // ボタン　活性状態
+            undoButton.isEnabled = undoRedoManager.canUndo()
+            redoButton.isEnabled = undoRedoManager.canRedo()
+        }
+    }
+    
+    // 写真マーカーを削除する
+    func removeMarkerAnotation(annotation: PDFAnnotation) {
+        // 現在開いているページを取得
+        if let page = pdfView.currentPage {
+            print(PDFAnnotationSubtype(rawValue: annotation.type!).rawValue)
+            print(PDFAnnotationSubtype.stamp.rawValue.self)
+            // 写真マーカー
+            if annotation.isKind(of: PhotoAnnotation.self) && PDFAnnotationSubtype(rawValue: "/\(annotation.type!)") == PDFAnnotationSubtype.freeText.self && ((annotation.contents?.isEmpty) != nil)  {
+                // 対象のページの注釈を削除
+                page.removeAnnotation(annotation)
+                
+                // Undo Redo 削除
+                undoRedoManager.deleteAnnotation(annotation)
+                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                    self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                })
+                // ボタン　活性状態
+                undoButton.isEnabled = undoRedoManager.canUndo()
+                redoButton.isEnabled = undoRedoManager.canRedo()
+            }
+        }
+    }
+    
+    // MARK: - 写真マーカー　詳細
+    
+    // マーカーに紐付けされた画像
+    @IBOutlet var imageView: UIImageView!
+    // マーカー画像
+    var image: UIImage?
+    // 選択されたマーカー
+    var selectedAnnotation: PDFAnnotation?
+    
+    // 写真マーカー　ズームイン
+    func zoomInAtPhotoMarker(photoMarkerNumber: String) {
+        // 拡大
+        pdfView.scaleFactor = 5.0
+        // PDF 全てのpageに存在するAnnotationを保持する
+        getAllAnnotations() {
+            // TODO: マーカーを拡大してセンターに表示させる
+            if let annotation = self.annotationsInAllPages.filter({ String($0.contents ?? "") == photoMarkerNumber }).first {
+                print("$$$$", annotation.contents)
+                
+                if let pdfPage = annotation.page {
+                    // UIViewからPDFの座標へ変換する
+                    let rect = self.pdfView.convert(UIScreen.main.bounds, to: pdfPage) // 座標系がUIViewとは異なるので気をつけましょう。
+                    
+                    let screenHeight = rect.height
+                    let screenWidth = rect.width
+                    print(screenHeight)
+                    print(screenWidth)
+                    print(annotation.bounds.origin.x)
+                    print(annotation.bounds.origin.y)
+                    
+                    let cgRect = CGRect(
+                        x: annotation.bounds.origin.x - screenWidth / 2,
+                        y: annotation.bounds.origin.y + screenHeight / 2,
+                        width: annotation.bounds.width,
+                        height: annotation.bounds.height
+                    )
+                    
+                    print(cgRect)
+                    self.pdfView.go(to: cgRect, on: pdfPage)
+                    // self.pdfView.center.y = annotation.bounds.center.y - 100
+                }
+            } else {
+                self.annotationsInAllPages.map { print("$$$$$$", $0.contents) }
+            }
+        }
+    }
+    
+    // MARK: - 手書きパレット
+    
+    private let pdfDrawer = PDFDrawer()
+    let pdfDrawingGestureRecognizer = DrawingGestureRecognizer()
+    // 手書き　ツール
+    var toolStackView: UIStackView?
+    // 手書き　カラー
+    var colorStackView: UIStackView?
+    //    let canvas = PKCanvasView()
+    //    var crayon = PKInkingTool(.pencil, color: Colors.babyBlue.getColor(), width: 70)
+    //    var pencil = PKInkingTool(.pencil, color: Colors.babyBlue.getColor(), width: 10)
+    //    var marker = PKInkingTool(.marker, color: Colors.babyBlue.getColor(), width: 40)
+    //    let eraser = PKEraserTool(.bitmap)
+    //    private var path: UIBezierPath?
+    //    private var currentAnnotation : DrawingAnnotation?
+    
+    // 手書きパレット
+    func createButtons() {
+        //        canvas.frame = view.bounds
+        //        canvas.drawingPolicy = .anyInput
+        //        canvas.backgroundColor = .clear
+        //        canvas.isOpaque = false //背景を透明にする(だいじ)
+        //        view.addSubview(canvas)
+        //        canvas.tool = crayon
+        
+        //Create the color palette
+        var buttons: [UIButton] = []
+        
+        for color in Colors.allCases {
+            let button = UIButton(primaryAction: UIAction(handler: { action in
+                self.updatePens(sender: action.sender)
+            }))
+            button.heightAnchor.constraint(equalToConstant: 100.0).isActive = true
+            button.widthAnchor.constraint(equalToConstant: 100.0).isActive = true
+            button.makeRounded(50, borderWidth: 10, borderColor: .black)
+            button.backgroundColor = color.getColor()
+            button.tag = color.rawValue
+            buttons.append(button)
+        }
+        
+        colorStackView = UIStackView(arrangedSubviews: buttons)
+        if let colorStackView = colorStackView {
+            colorStackView.axis = .horizontal
+            colorStackView.distribution = .equalSpacing
+            colorStackView.alignment = .center
+            
+            view.addSubview(colorStackView)
+            
+            colorStackView.translatesAutoresizingMaskIntoConstraints = false
+            
+            NSLayoutConstraint.activate([colorStackView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -20),
+                                         colorStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+                                         colorStackView.widthAnchor.constraint(equalToConstant: view.bounds.width / 2),
+                                         colorStackView.heightAnchor.constraint(equalToConstant: 100)])
+            colorStackView.isHidden = true
+        }
+        
+        //Setup tools
+        let crayonButton = createButton(title: "Crayon", action: UIAction(handler: { _ in
+            //            self.canvas.tool = self.crayon
+        }))
+        
+        let pencilButton = createButton(title: "Pencil", action: UIAction(handler: { _ in
+            //            self.canvas.tool = self.pencil
+            self.pdfDrawer.changeTool(tool: .pencil)
+        }))
+        
+        let markerButton = createButton(title: "Marker", action: UIAction(handler: { _ in
+            //            self.canvas.tool = self.marker
+        }))
+        
+        let eraserButton = createButton(title: "Eraser", action: UIAction(handler: { _ in
+            //            self.canvas.tool = self.eraser
+        }))
+        
+        let undoButton = createButton(title: "Undo", action: UIAction(handler: { _ in
+            // TODO: 効いていない
+            self.undoManager?.undo()
+        }))
+        
+        let redoButton = createButton(title: "Redo", action: UIAction(handler: { _ in
+            // TODO: 効いていない
+            self.undoManager?.redo()
+        }))
+        
+        toolStackView = UIStackView(arrangedSubviews: [crayonButton,
+                                                       pencilButton,
+                                                       markerButton,
+                                                       eraserButton,
+                                                       undoButton,
+                                                       redoButton])
+        if let toolStackView = toolStackView {
+            toolStackView.axis = .vertical
+            toolStackView.distribution = .fillEqually
+            toolStackView.alignment = .fill
+            toolStackView.spacing = 10
+            
+            view.addSubview(toolStackView)
+            
+            toolStackView.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([toolStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: 10),
+                                         toolStackView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+                                         toolStackView.widthAnchor.constraint(equalToConstant: 150)])
+            toolStackView.isHidden = true
+        }
+    }
+    
+    //helper function for creating the tools
+    private func createButton(title: String, action: UIAction) -> UIButton {
+        let button = UIButton(type: .system, primaryAction: action)
+        button.frame = CGRect(x: 0, y: 0, width: 150, height: 50)
+        button.setTitle(title, for: .normal)
+        button.tintColor = .lightGray
+        button.makeRounded(10, borderWidth: 2, borderColor: .black)
+        return button
+    }
+    
+    private func updatePens(sender: Any?) {
+        if let button = sender as? UIButton,
+           let color = Colors(rawValue: button.tag)?.getColor() { //,
+            //           var currentTool = canvas.tool as? PKInkingTool {
+            //            //update the current tool being used by the canvas
+            //            currentTool.color = color
+            //            canvas.tool = currentTool
+            //            //update all the tools
+            //            crayon.color = color
+            //            pencil.color = color
+            //            marker.color = color
+            pdfDrawer.changeColor(color: color)
+        }
+    }
+    
+    // 破線のパターン
+    enum DashPattern {
+        case pattern1
+        case pattern2
+        case pattern3
+        case pattern4
+        case pattern5
+        
+        var style: [CGFloat] {
+            switch self {
+            case .pattern1:
+                return [1.0]
+            case .pattern2:
+                return [30.0, 10.0]
+            case .pattern3:
+                return [40.0, 20.0]
+            case .pattern4:
+                return [50.0, 5.0, 5.0, 5.0]
+            case .pattern5:
+                return [50.0, 5.0, 5.0, 5.0, 5.0, 5.0]
+            }
+        }
+    }
+    
+    // 破線のパターン
+    @IBAction func dashPatternChanged(_ sender: UIButton) {
+        
+        switch sender.tag {
+        case 1:
+            dashPattern = .pattern1
+        case 2:
+            dashPattern = .pattern2
+        case 3:
+            dashPattern = .pattern3
+        case 4:
+            dashPattern = .pattern4
+        case 5:
+            dashPattern = .pattern5
+        default:
+            break
+        }
+    }
+    
+    // 手書きや図形を追加する
+    func addDrawingAnotation(annotation: PDFAnnotation) {
+        // 現在開いているページを取得
+        if let page = self.pdfView.currentPage {
+            // UUID
+            annotation.userName = UUID().uuidString
+            // 対象のページへ注釈を追加
+            page.addAnnotation(annotation)
+            
+            // Undo Redo
+            undoRedoManager.addAnnotation(annotation)
+            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+            })
+            // ボタン　活性状態
+            undoButton.isEnabled = undoRedoManager.canUndo()
+            redoButton.isEnabled = undoRedoManager.canRedo()
+        }
+    }
+    
+    // MARK: - 図形
+    
+    // 起点
+    var beganLocation: CGPoint?
+    // 途中点
+    var changedLocation: CGPoint?
+    // 終点
+    var endLocation: CGPoint?
+    // 破線のパターン
+    var dashPattern: DashPattern = .pattern1
+    // 変更前
+    var before: PDFAnnotation?
+    
+    // マーカーを追加する 直線
+    func addLineMarkerAnotation() {
+        // 現在開いているページを取得
+        if let page = self.pdfView.currentPage,
+           let beganLocation = beganLocation,
+           let changedLocation = changedLocation,
+           let endLocation = endLocation {
+            
+            let boundsX = beganLocation.x > endLocation.x ? endLocation.x : beganLocation.x
+            let boundsY = beganLocation.y > endLocation.y ? endLocation.y : beganLocation.y
+            
+            let width = beganLocation.x > endLocation.x ? beganLocation.x - endLocation.x : endLocation.x - beganLocation.x
+            let height = beganLocation.y > endLocation.y ? beganLocation.y - endLocation.y : endLocation.y - beganLocation.y
+            
+            let border = PDFBorder()
+            border.lineWidth = 10
+            border.style = dashPattern == .pattern1 ? .solid : .dashed
+            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
+            
+            // Create dictionary of annotation properties
+            let lineAttributes: [PDFAnnotationKey: Any] = [
+                .linePoints: [beganLocation.x, beganLocation.y, endLocation.x, endLocation.y],
+                .lineEndingStyles: [PDFAnnotationLineEndingStyle.none,
+                                    PDFAnnotationLineEndingStyle.none],
+                .color: UIColor.red,
+                .border: border
+            ]
+            let lineAnnotation = PDFAnnotation(
+                bounds: CGRect(x: boundsX, y: boundsY, width: width, height: height),
+                forType: .line,
+                withProperties: lineAttributes
+            )
+            // UUID
+            lineAnnotation.userName = UUID().uuidString
+            page.addAnnotation(lineAnnotation)
+            
+            // Undo Redo
+            undoRedoManager.addAnnotation(lineAnnotation)
+            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+            })
+            // ボタン　活性状態
+            undoButton.isEnabled = undoRedoManager.canUndo()
+            redoButton.isEnabled = undoRedoManager.canRedo()
+        }
+    }
+    
+    // マーカーを追加する 矢印
+    func addArrowMarkerAnotation() {
+        // 現在開いているページを取得
+        if let page = self.pdfView.currentPage,
+           let beganLocation = beganLocation,
+           let changedLocation = changedLocation,
+           let endLocation = endLocation {
+            
+            let boundsX = beganLocation.x > endLocation.x ? endLocation.x : beganLocation.x
+            let boundsY = beganLocation.y > endLocation.y ? endLocation.y : beganLocation.y
+            
+            let width = beganLocation.x > endLocation.x ? beganLocation.x - endLocation.x : endLocation.x - beganLocation.x
+            let height = beganLocation.y > endLocation.y ? beganLocation.y - endLocation.y : endLocation.y - beganLocation.y
+            
+            let border = PDFBorder()
+            border.lineWidth = 10
+            border.style = dashPattern == .pattern1 ? .solid : .dashed
+            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
+            
+            // Create dictionary of annotation properties
+            let lineAttributes: [PDFAnnotationKey: Any] = [
+                .linePoints: [beganLocation.x, beganLocation.y, endLocation.x, endLocation.y],
+                .lineEndingStyles: [PDFAnnotationLineEndingStyle.none,
+                                    PDFAnnotationLineEndingStyle.closedArrow],
+                .color: UIColor.red,
+                .border: border
+            ]
+            let lineAnnotation = PDFAnnotation(
+                bounds: CGRect(x: boundsX, y: boundsY, width: width, height: height),
+                forType: .line,
+                withProperties: lineAttributes
+            )
+            // UUID
+            lineAnnotation.userName = UUID().uuidString
+            page.addAnnotation(lineAnnotation)
+            
+            // Undo Redo
+            undoRedoManager.addAnnotation(lineAnnotation)
+            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+            })
+            // ボタン　活性状態
+            undoButton.isEnabled = undoRedoManager.canUndo()
+            redoButton.isEnabled = undoRedoManager.canRedo()
+        }
+    }
+    
+    // マーカーを追加する 四角
+    func addRectangleMarkerAnotation() {
+        // 現在開いているページを取得
+        if let page = self.pdfView.currentPage,
+           let beganLocation = beganLocation,
+           let changedLocation = changedLocation,
+           let endLocation = endLocation {
+            
+            let boundsX = beganLocation.x > endLocation.x ? endLocation.x : beganLocation.x
+            let boundsY = beganLocation.y > endLocation.y ? endLocation.y : beganLocation.y
+            
+            let width = beganLocation.x > endLocation.x ? beganLocation.x - endLocation.x : endLocation.x - beganLocation.x
+            let height = beganLocation.y > endLocation.y ? beganLocation.y - endLocation.y : endLocation.y - beganLocation.y
+            
+            let border = PDFBorder()
+            border.lineWidth = 5.0
+            border.style = dashPattern == .pattern1 ? .solid : .dashed
+            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
+            
+            // Create dictionary of annotation properties
+            let lineAttributes: [PDFAnnotationKey: Any] = [
+                .color: UIColor.green,
+                .border: border
+            ]
+            
+            // Create an annotation to add to a page (empty)
+            let newAnnotation = PDFAnnotation(
+                bounds: CGRect(x: boundsX, y: boundsY, width: width, height: height),
+                forType: .square,
+                withProperties: lineAttributes
+            )
+            // UUID
+            newAnnotation.userName = UUID().uuidString
+            page.addAnnotation(newAnnotation)
+            
+            // Undo Redo
+            undoRedoManager.addAnnotation(newAnnotation)
+            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+            })
+            // ボタン　活性状態
+            undoButton.isEnabled = undoRedoManager.canUndo()
+            redoButton.isEnabled = undoRedoManager.canRedo()
+        }
+    }
+    
+    // マーカーを追加する 円
+    func addCircleMarkerAnotation() {
+        // 現在開いているページを取得
+        if let page = self.pdfView.currentPage,
+           let beganLocation = beganLocation,
+           let changedLocation = changedLocation,
+           let endLocation = endLocation {
+            
+            let boundsX = beganLocation.x > endLocation.x ? endLocation.x : beganLocation.x
+            let boundsY = beganLocation.y > endLocation.y ? endLocation.y : beganLocation.y
+            
+            let width = beganLocation.x > endLocation.x ? beganLocation.x - endLocation.x : endLocation.x - beganLocation.x
+            let height = beganLocation.y > endLocation.y ? beganLocation.y - endLocation.y : endLocation.y - beganLocation.y
+            
+            let border = PDFBorder()
+            border.lineWidth = 2.0
+            border.style = dashPattern == .pattern1 ? .solid : .dashed
+            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
+            
+            // Create dictionary of annotation properties
+            let lineAttributes: [PDFAnnotationKey: Any] = [
+                .color: UIColor.green,
+                .border: border
+            ]
+            
+            // Create an annotation to add to a page (empty)
+            let newAnnotation = PDFAnnotation(
+                bounds: CGRect(x: boundsX, y: boundsY, width: width, height: height),
+                forType: .circle,
+                withProperties: lineAttributes
+            )
+            // UUID
+            newAnnotation.userName = UUID().uuidString
+            page.addAnnotation(newAnnotation)
+            
+            // Undo Redo
+            undoRedoManager.addAnnotation(newAnnotation)
+            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+            })
+            // ボタン　活性状態
+            undoButton.isEnabled = undoRedoManager.canUndo()
+            redoButton.isEnabled = undoRedoManager.canRedo()
+        }
+    }
+    
+    // MARK: - テキスト
+    
+    // 編集中のAnnotation
+    var isEditingAnnotation: PDFAnnotation?
+    
+    // マーカーを追加する テキスト
+    func addTextMarkerAnotation(inputText: String?, fontSize: CGFloat) {
+        // 現在開いているページを取得
+        if let page = self.pdfView.currentPage,
+           let point = point,
+           let inputText = inputText,
+           !inputText.isEmpty {
+            
+            // freeText
+            let font = UIFont.systemFont(ofSize: fontSize)
+            let size = "\(inputText)".size(with: font)
+            // Create dictionary of annotation properties
+            let attributes: [PDFAnnotationKey: Any] = [
+                .color: UIColor.systemPink.withAlphaComponent(0.1),
+                .contents: "\(inputText)",
+            ]
+            
+            let freeText = PDFAnnotation(
+                bounds: CGRect(x: point.x, y: point.y, width: size.width + 5, height: size.height + 5),
+                forType: .freeText,
+                withProperties: attributes
+            )
+            // UUID
+            freeText.userName = UUID().uuidString
+            // 対象のページへ注釈を追加
+            page.addAnnotation(freeText)
+            
+            // Undo Redo
+            undoRedoManager.addAnnotation(freeText)
+            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+            })
+            // ボタン　活性状態
+            undoButton.isEnabled = undoRedoManager.canUndo()
+            redoButton.isEnabled = undoRedoManager.canRedo()
+        }
+    }
+    
+    // マーカーを更新する テキスト
+    func updateTextMarkerAnotation(inputText: String?, fontSize: CGFloat) {
+        // 現在開いているページを取得
+        if let page = pdfView.currentPage {
+            
+            guard let isEditingAnnotation = isEditingAnnotation else { return }
+            // 変更前
+            before = isEditingAnnotation
+            // 変更後
+            let after = isEditingAnnotation.copy() as! PDFAnnotation
+            after.bounds = isEditingAnnotation.bounds
+            after.page = isEditingAnnotation.page
+            
+            if let before = before,
+               let inputText = inputText,
+               !inputText.isEmpty {
+                
+                // freeText
+                let font = UIFont.systemFont(ofSize: fontSize)
+                let size = "\(inputText)".size(with: font)
+                // 文字列の長さが変化したらboundsも更新しなければならない
+                after.bounds = CGRect(
+                    x: after.bounds.origin.x,
+                    y: after.bounds.origin.y,
+                    width: size.width + 5,
+                    height: size.height + 5
+                )
+                after.contents = inputText
+                after.setValue(UIColor.yellow.withAlphaComponent(0.5), forAnnotationKey: .color)
+                after.page = before.page
+                print(before.userName, after.userName, UUID().uuidString)
+                print(before.page, after.page, before.page == after.page)
+                // UUID
+                after.userName = UUID().uuidString
+                // Annotationを再度作成
+                page.addAnnotation(after)
+                // 古いものを削除する
+                //                    page.removeAnnotation(before)
+                // 初期化
+                self.before = nil
+                // Undo Redo 更新
+                undoRedoManager.updateAnnotation(before: before, after: after)
+                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                    self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                })
+                // ボタン　活性状態
+                undoButton.isEnabled = undoRedoManager.canUndo()
+                redoButton.isEnabled = undoRedoManager.canRedo()
+            }
+        }
+    }
+    
+    // MARK: - PDF ファイル　マーカー　Annotation表示非表示スイッチ
+    
+    // Annotation表示非表示スイッチ 切り替え
+    @objc
+    func switchTriggered(sender: UISwitch) {
+        // PDF 全てのpageに存在するAnnotationを表示非表示を切り替える
+        changeAllAnnotationsVisibility(shouldDisplay: sender.isOn)
+    }
+    
+    // PDF 全てのpageに存在するAnnotationを表示非表示を切り替える
+    func changeAllAnnotationsVisibility(shouldDisplay: Bool) {
+        guard let document = pdfView.document else { return }
+        for i in 0..<document.pageCount {
+            if let page = document.page(at: i) {
+                //
+                let annotations = page.annotations
+                for annotation in annotations {
+                    
+                    annotation.shouldDisplay = shouldDisplay
+                }
+            }
+        }
+    }
+    
+    // MARK: - Undo Redo
+    
+    @IBOutlet var undoButton: UIButton!
+    @IBOutlet var redoButton: UIButton!
+    // Undo Redo
+    let undoRedoManager = UndoRedoManager()
+    // Undo Redo が可能なAnnotation
+    private var editingAnnotations: [PDFAnnotation]?
+    
+    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+    func reloadPDFAnnotations(didUndoAnnotations: [PDFAnnotation]?) {
+        print(#function)
+        // Undo Redo が可能なAnnotation　を削除する
+        DispatchQueue.main.async {
+            if let editingAnnotations = self.editingAnnotations {
+                for editingAnnotation in editingAnnotations {
+                    // pageを探す
+                    guard let document = self.pdfView.document else { return }
+                    for i in 0..<document.pageCount {
+                        if let page = document.page(at: i),
+                           let editingAnnotationPage = editingAnnotation.page {
+                            // page が同一か？
+                            //                        print(document.index(for: page), document.index(for: editingAnnotationPage))
+                            if document.index(for: page) == document.index(for: editingAnnotationPage) {
+                                print("対象のページの注釈を削除", editingAnnotation.contents)
+                                // 対象のページの注釈を削除
+                                page.removeAnnotation(editingAnnotation)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // Undo Redo が可能なAnnotation　をUndoする
+        DispatchQueue.main.async {
+            self.editingAnnotations = nil
+            self.editingAnnotations = didUndoAnnotations
+            if let editingAnnotations = self.editingAnnotations {
+                for editingAnnotation in editingAnnotations {
+                    // pageを探す
+                    guard let document = self.pdfView.document else { return }
+                    for i in 0..<document.pageCount {
+                        if let page = document.page(at: i),
+                           let editingAnnotationPage = editingAnnotation.page {
+                            // page が同一か？
+                            //                        print(document.index(for: page), document.index(for: editingAnnotationPage))
+                            if document.index(for: page) == document.index(for: editingAnnotationPage) {
+                                print("対象のページの注釈を追加", editingAnnotation.contents)
+                                // 対象のページの注釈を追加
+                                page.addAnnotation(editingAnnotation)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    @IBAction func undoTapped(_ sender: Any) {
+        
+        undoRedoManager.undo(completion: { didUndoAnnotations in
+            // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+            self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+        })
+        // ボタン　活性状態
+        undoButton.isEnabled = undoRedoManager.canUndo()
+        redoButton.isEnabled = undoRedoManager.canRedo()
+    }
+    
+    @IBAction func redoTapped(_ sender: Any) {
+        
+        undoRedoManager.redo(completion: { didUndoAnnotations in
+            // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+            self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+        })
+        // ボタン　活性状態
+        undoButton.isEnabled = undoRedoManager.canUndo()
+        redoButton.isEnabled = undoRedoManager.canRedo()
+    }
+    
+    // MARK: - PDF ファイル　マークアップ　編集中の一時ファイル
+    
     // マーカーを追加しPDFを上書き保存する
     func save(completion: (() -> Void)) {
         if let fileURL = fileURL {
             // 一時ファイルをiCloud Container に保存しているPDFファイルへ上書き保存する
             let isFinished = pdfView.document?.write(to: fileURL)
             if let isFinished = isFinished,
-                 isFinished {
-                    completion()
-                }
+               isFinished {
+                completion()
+            }
             
         }
     }
     
+    //    // 一時ファイルを削除する
+    //    func deleteTempDirectory() {
+    //        guard let tempDirectory = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false) else { return }
+    //        // 一時ファイル用のフォルダ
+    //        let pDFsDirectory = tempDirectory.appendingPathComponent("PDFs", isDirectory: true)
+    //        do {
+    //            try FileManager.default.createDirectory(at: pDFsDirectory, withIntermediateDirectories: true, attributes: nil)
+    //        } catch {
+    //            print("失敗した")
+    //        }
+    //        do {
+    //            let directoryContents = try FileManager.default.contentsOfDirectory(at: pDFsDirectory, includingPropertiesForKeys: nil) // ファイル一覧を取得
+    //            // if you want to filter the directory contents you can do like this:
+    //            let pdfFiles = directoryContents.filter { $0.pathExtension == "pdf" }
+    //            print("pdf urls: ", pdfFiles)
+    //            let pdfFileNames = pdfFiles.map { $0.deletingPathExtension().lastPathComponent }
+    //            print("pdf list: ", pdfFileNames)
+    //            // ファイルのデータを取得
+    //            for fileName in pdfFileNames {
+    //                let content = pDFsDirectory.appendingPathComponent(fileName + ".pdf")
+    //                do {
+    //                    try FileManager.default.removeItem(at: content)
+    //                } catch let error {
+    //                    print(error)
+    //                }
+    //            }
+    //        } catch {
+    //            print(error)
+    //        }
+    //    }
+    
+    //    // 一時ファイルを作成する
+    //    func saveToTempDirectory(fileURL: URL) -> URL? {
+    //        guard let documentDirectory = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false) else { return nil }
+    //        let pDFsDirectory = documentDirectory.appendingPathComponent("PDFs", isDirectory: true)
+    //        do {
+    //            try FileManager.default.createDirectory(at: pDFsDirectory, withIntermediateDirectories: true, attributes: nil)
+    //        } catch {
+    //            print("失敗した")
+    //        }
+    //
+    //        let pdfFileName = fileURL.deletingPathExtension().lastPathComponent
+    //
+    //        let filePath = pDFsDirectory.appendingPathComponent("\(pdfFileName)-temp" + ".pdf")
+    //        do {
+    //            // コピーの前にはチェック&削除が必要
+    //            if FileManager.default.fileExists(atPath: filePath.path) {
+    //                // すでに backupFileUrl が存在する場合はファイルを削除する
+    //                try FileManager.default.removeItem(at: filePath)
+    //            }
+    //            // PDFファイルを一時フォルダへコピー
+    //            try FileManager.default.copyItem(at: fileURL, to: filePath)
+    //
+    //            print(filePath)
+    //            return filePath
+    //        } catch {
+    //            print(error.localizedDescription)
+    //            return nil
+    //        }
+    //    }
+    
     // MARK: - フォトライブラリ
+    //    
+    //    // 写真をカメラロールからiCloud Container にコピーする URLから
+    //    func addPhotoToProjectFolder() {
+    //        
+    //        if let unusedNumber = unusedNumber,
+    //           let fileURL = fileURL,
+    //           let imageURL = imageURL {
+    //            // 写真を iCloud Container に保存する
+    //            if let fileName = BackupManager.shared.savePhotoToDocumentsDirectory(
+    //                unusedNumber: unusedNumber,
+    //                fileURL: fileURL,
+    //                modifiedContentsURL: imageURL) {
+    //                print(fileName)
+    //            }
+    //        }
+    //    }
+    //    
+    //    // 写真をカメラロールからiCloud Container にコピーする Dataから
+    //    func addPhotoToProjectFolder(photoData: Data) {
+    //        
+    //        if let unusedNumber = unusedNumber,
+    //           let fileURL = fileURL,
+    //           let imageURL = imageURL {
+    //            // 写真を iCloud Container に保存する
+    //            if let fileName = BackupManager.shared.savePhotoToDocumentsDirectory(
+    //                unusedNumber: unusedNumber,
+    //                fileURL: fileURL,
+    //                modifiedContentsURL: imageURL,
+    //                photoData: photoData) {
+    //                print(fileName)
+    //            }
+    //        }
+    //    }
     
-    // 写真をカメラロールからiCloud Container にコピーする URLから
-    func addPhotoToProjectFolder() {
-        
-        if let unusedNumber = unusedNumber,
-           let fileURL = fileURL,
-           let imageURL = imageURL {
-            // 写真を iCloud Container に保存する
-            if let fileName = BackupManager.shared.savePhotoToDocumentsDirectory(
-                unusedNumber: unusedNumber,
-                fileURL: fileURL,
-                modifiedContentsURL: imageURL) {
-                print(fileName)
-            }
-        }
-    }
-    
-    // 写真をカメラロールからiCloud Container にコピーする Dataから
-    func addPhotoToProjectFolder(photoData: Data) {
-        
-        if let unusedNumber = unusedNumber,
-           let fileURL = fileURL,
-           let imageURL = imageURL {
-            // 写真を iCloud Container に保存する
-            if let fileName = BackupManager.shared.savePhotoToDocumentsDirectory(
-                unusedNumber: unusedNumber,
-                fileURL: fileURL,
-                modifiedContentsURL: imageURL,
-                photoData: photoData) {
-                print(fileName)
-            }
-        }
-    }
-    
-    // iCloud Container に保存した写真を削除する
-    func removePhotoToProjectFolder(contents: String?) {
-        
-        if let contents = contents {
-            // 写真を iCloud Container から削除する
-            let result = BackupManager.shared.deletePhotoFromDocumentsDirectory(
-                contents: contents,
-                fileURL: fileURL
-            )
-            print("写真を削除", result)
-        }
-    }
+    //    // iCloud Container に保存した写真を削除する
+    //    func removePhotoToProjectFolder(contents: String?) {
+    //        
+    //        if let contents = contents {
+    //            // 写真を iCloud Container から削除する
+    //            let result = BackupManager.shared.deletePhotoFromDocumentsDirectory(
+    //                contents: contents,
+    //                fileURL: fileURL
+    //            )
+    //            print("写真を削除", result)
+    //        }
+    //    }
     
     // MARK: - フォトライブラリ
+    //    // 選択された画像のURL
+    //    var imageURL: URL?
+    //    var imagePickerController: UIImagePickerController!
     
-//    // 写真選択画面を表示させる
-//    func showPickingPhotoScreen() {
-//        if #available(iOS 14, *) {
-//            // iOS14以降の設定
-//            var configuration = PHPickerConfiguration()
-//            configuration.filter = PHPickerFilter.images
-//            configuration.selectionLimit = 1
-//            let picker = PHPickerViewController(configuration: configuration)
-//            picker.delegate = self
-//            DispatchQueue.main.async {
-//                self.present(picker, animated: true, completion: nil)
-//            }
-//        } else {
-//            // インスタンス生成
-//            imagePickerController = UIImagePickerController()
-//            // デリゲート設定
-//            imagePickerController.delegate = self
-//            // 画像の取得先はフォトライブラリ
-//            imagePickerController.sourceType = UIImagePickerController.SourceType.photoLibrary
-//            // 画像取得後の編集を不可に
-//            imagePickerController.allowsEditing = false
-//            
-//            DispatchQueue.main.async {
-//                self.present(self.imagePickerController, animated: true, completion: nil)
-//            }
-//        }
-//    }
+    //    // 写真選択画面を表示させる
+    //    func showPickingPhotoScreen() {
+    //        if #available(iOS 14, *) {
+    //            // iOS14以降の設定
+    //            var configuration = PHPickerConfiguration()
+    //            configuration.filter = PHPickerFilter.images
+    //            configuration.selectionLimit = 1
+    //            let picker = PHPickerViewController(configuration: configuration)
+    //            picker.delegate = self
+    //            DispatchQueue.main.async {
+    //                self.present(picker, animated: true, completion: nil)
+    //            }
+    //        } else {
+    //            // インスタンス生成
+    //            imagePickerController = UIImagePickerController()
+    //            // デリゲート設定
+    //            imagePickerController.delegate = self
+    //            // 画像の取得先はフォトライブラリ
+    //            imagePickerController.sourceType = UIImagePickerController.SourceType.photoLibrary
+    //            // 画像取得後の編集を不可に
+    //            imagePickerController.allowsEditing = false
+    //            
+    //            DispatchQueue.main.async {
+    //                self.present(self.imagePickerController, animated: true, completion: nil)
+    //            }
+    //        }
+    //    }
     
-    // 写真のアクセス権限
-    private func albumAction() {
-        // 端末にアルバムがあるかを確認
-        if UIImagePickerController.isSourceTypeAvailable(UIImagePickerController.SourceType.photoLibrary) {
-            if #available(iOS 14, *) {
-                // iOS14以降の設定
-                let authorizationStatus = PHPhotoLibrary.authorizationStatus(for: .readWrite)
-                self.albumCommonAction(authorizationStatus)
-            } else {
-                // iOS14より前の設定
-                let authorizationStatus = PHPhotoLibrary.authorizationStatus()
-                self.albumCommonAction(authorizationStatus)
-            }
-        }
-    }
+    //    // 写真のアクセス権限
+    //    private func albumAction() {
+    //        // 端末にアルバムがあるかを確認
+    //        if UIImagePickerController.isSourceTypeAvailable(UIImagePickerController.SourceType.photoLibrary) {
+    //            if #available(iOS 14, *) {
+    //                // iOS14以降の設定
+    //                let authorizationStatus = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+    //                self.albumCommonAction(authorizationStatus)
+    //            } else {
+    //                // iOS14より前の設定
+    //                let authorizationStatus = PHPhotoLibrary.authorizationStatus()
+    //                self.albumCommonAction(authorizationStatus)
+    //            }
+    //        }
+    //    }
     
-    private func albumCommonAction(_ authorizationStatus: PHAuthorizationStatus) {
-        
-        switch authorizationStatus {
-        case .notDetermined:
-            // 初回起動時アルバムアクセス権限確認
-            PHPhotoLibrary.requestAuthorization { status in
-                switch status {
-                case .authorized:
-                    // アクセスを許可するとカメラロールが出てくるようにもできる
-                    break
-                case .denied:
-                    // エラーダイアログを表示させる
-                    self.showAlert()
-                default:
-                    break
-                }
-            }
-        case .denied:
-            // アクセス権限がないとき
-            // エラーダイアログを表示させる
-            showAlert()
-        case .authorized, .restricted, .limited:
-            // アクセス権限があるとき
-            break
-        @unknown default:
-            break
-        }
-    }
+    //    private func albumCommonAction(_ authorizationStatus: PHAuthorizationStatus) {
+    //        
+    //        switch authorizationStatus {
+    //        case .notDetermined:
+    //            // 初回起動時アルバムアクセス権限確認
+    //            PHPhotoLibrary.requestAuthorization { status in
+    //                switch status {
+    //                case .authorized:
+    //                    // アクセスを許可するとカメラロールが出てくるようにもできる
+    //                    break
+    //                case .denied:
+    //                    // エラーダイアログを表示させる
+    //                    self.showAlert()
+    //                default:
+    //                    break
+    //                }
+    //            }
+    //        case .denied:
+    //            // アクセス権限がないとき
+    //            // エラーダイアログを表示させる
+    //            showAlert()
+    //        case .authorized, .restricted, .limited:
+    //            // アクセス権限があるとき
+    //            break
+    //        @unknown default:
+    //            break
+    //        }
+    //    }
     
-    // エラーダイアログを表示させる
-    func showAlert() {
-        let alert = UIAlertController(title: "", message: "写真へのアクセスを許可してください", preferredStyle: .alert)
-        let settingsAction = UIAlertAction(title: "設定", style: .default, handler: { (_) -> Void in
-            guard let settingsURL = URL(string: UIApplication.openSettingsURLString ) else {
-                return
-            }
-            UIApplication.shared.open(settingsURL, options: [:], completionHandler: nil)
-        })
-        let closeAction: UIAlertAction = UIAlertAction(title: "キャンセル", style: .cancel, handler: nil)
-        alert.addAction(settingsAction)
-        alert.addAction(closeAction)
-        self.present(alert, animated: true, completion: nil)
-    }
+    //    // エラーダイアログを表示させる
+    //    func showAlert() {
+    //        let alert = UIAlertController(title: "", message: "写真へのアクセスを許可してください", preferredStyle: .alert)
+    //        let settingsAction = UIAlertAction(title: "設定", style: .default, handler: { (_) -> Void in
+    //            guard let settingsURL = URL(string: UIApplication.openSettingsURLString ) else {
+    //                return
+    //            }
+    //            UIApplication.shared.open(settingsURL, options: [:], completionHandler: nil)
+    //        })
+    //        let closeAction: UIAlertAction = UIAlertAction(title: "キャンセル", style: .cancel, handler: nil)
+    //        alert.addAction(settingsAction)
+    //        alert.addAction(closeAction)
+    //        self.present(alert, animated: true, completion: nil)
+    //    }
 }
 
 //extension DrawingViewController: UIImagePickerControllerDelegate {
@@ -1754,18 +1807,6 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
                 }
             }
         }
-    }
-    
-    // 使用していない連番を取得する
-    func getUnusedNumber() -> Int? {
-        for number in numbersList {
-            if let annotation = self.annotationsInAllPages.first(where: { $0.contents == "\(number)" }) {
-                print("annotation.contents", annotation.contents)
-            } else {
-                return number
-            }
-        }
-        return nil
     }
     
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
