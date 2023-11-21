@@ -27,17 +27,19 @@ class DrawingViewController: UIViewController {
     var pageNumber: Int?
     // ローカル Container に保存している編集中のPDFファイルのパス
     var tempFilePath: URL?
-    // PDF 全てのpageに存在するAnnotationを保持する
+    // PDF 全てのpageに存在する写真マーカーAnnotationを保持する
     var annotationsInAllPages: [PDFAnnotation] = []
     // 選択しているAnnotation
     var currentlySelectedAnnotation: PDFAnnotation?
-    // 連番 // TODO: SF Symbols は50までしか存在しない
-    var numbersList = [0,1,2,3,4,5,6,7,8,9,
-                       10,11,12,13,14,15,16,17,18,19,
-                       20,21,22,23,24,25,26,27,28,29,
-                       30,31,32,33,34,35,36,37,38,39,
-                       40,41,42,43,44,45,46,47,48,49,
-                       50]
+    // 写真マーカー　連番 // TODO: SF Symbols は50までしか存在しない
+//    var numbersList = [0,1,2,3,4,5,6,7,8,9,
+//                       10,11,12,13,14,15,16,17,18,19,
+//                       20,21,22,23,24,25,26,27,28,29,
+//                       30,31,32,33,34,35,36,37,38,39,
+//                       40,41,42,43,44,45,46,47,48,49,
+//                       50]
+    var numbersList = Array(1...32767) // Int16    32767
+
     // 使用していない連番
     var unusedNumber: Int?
     // マーカー画像
@@ -593,7 +595,7 @@ class DrawingViewController: UIViewController {
         }
     }
     
-    // PDF 全てのpageに存在するAnnotationを保持する
+    // PDF 全てのpageに存在する写真マーカーAnnotationを保持する
     func getAllAnnotations(completion: @escaping () -> Void) {
         guard let document = pdfView.document else { return }
         // 初期化
