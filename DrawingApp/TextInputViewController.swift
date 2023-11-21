@@ -25,7 +25,9 @@ class TextInputViewController: UIViewController {
     var text: String?
     var fontSize: CGFloat = 15.0 {
         didSet {
-            fontSizeLabel.text = "\(Int(fontSize))"
+            if let fontSizeLabel = fontSizeLabel {
+                fontSizeLabel.text = "\(Int(fontSize)) px"
+            }
         }
     }
     var annotationIsEditing = false

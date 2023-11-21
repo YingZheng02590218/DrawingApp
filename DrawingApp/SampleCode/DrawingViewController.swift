@@ -306,7 +306,13 @@ class DrawingViewController: UIViewController {
                     viewController.modalTransitionStyle = .crossDissolve
                     viewController.annotationIsEditing = true
                     viewController.text = annotation.contents
-                    present(viewController, animated: true, completion: nil)
+                    present(viewController, animated: true, completion: {
+                        print(annotation.font)
+                        print(annotation.font?.pointSize)
+                        if let pointSize = annotation.font?.pointSize {
+                            viewController.fontSize = pointSize
+                        }
+                    })
                 }
             }
         } else { // 編集中ではない
@@ -1677,7 +1683,9 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
                         ) as? TextInputViewController {
                             viewController.modalPresentationStyle = .overCurrentContext
                             viewController.modalTransitionStyle = .crossDissolve
-                            present(viewController, animated: true, completion: nil)
+                            present(viewController, animated: true, completion: {
+                                viewController.fontSize = 15.0
+                            })
                         }
                     }
                 }
