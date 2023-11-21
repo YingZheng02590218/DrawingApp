@@ -115,16 +115,17 @@ class DrawingViewController: UIViewController {
         
         // iCloud Container に保存しているPDFファイルのパス
         guard let fileURL = fileURL else { return }
-        // 一時ファイルを削除する
-        deleteTempDirectory()
-        // PDFファイルを一時ディレクトリにコピーする
-        if let tempFilePath = saveToTempDirectory(fileURL: fileURL) {
-            // ローカル Container に保存している編集中のPDFファイルのパス
-            self.tempFilePath = tempFilePath
-        }
-        
-        guard let tempFilePath = tempFilePath else { return }
-        guard let document = PDFDocument(url: tempFilePath) else { return }
+//        // 一時ファイルを削除する
+//        deleteTempDirectory()
+//        // PDFファイルを一時ディレクトリにコピーする
+//        if let tempFilePath = saveToTempDirectory(fileURL: fileURL) {
+//            // ローカル Container に保存している編集中のPDFファイルのパス
+//            self.tempFilePath = tempFilePath
+//        }
+//        
+//        guard let tempFilePath = tempFilePath else { return }
+//        guard let document = PDFDocument(url: tempFilePath) else { return }
+        guard let document = PDFDocument(url: fileURL) else { return }
         pdfView.document = document
         // 単一ページのみ
         pdfView.displayMode = .singlePage
@@ -164,8 +165,7 @@ class DrawingViewController: UIViewController {
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        // マーカーを追加しPDFを上書き保存する
-        save()
+
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -377,7 +377,10 @@ class DrawingViewController: UIViewController {
     @objc
     func closeScreen() {
         // 戻るボタンの動作処理
-        self.dismiss(animated: true)
+        // マーカーを追加しPDFを上書き保存する
+        save(completion: {
+            self.dismiss(animated: true)
+        })
     }
     
     // MARK: - 編集モード
@@ -504,66 +507,66 @@ class DrawingViewController: UIViewController {
     
     // MARK: - PDF ファイル　マークアップ　編集中の一時ファイル
     
-    // 一時ファイルを削除する
-    func deleteTempDirectory() {
-        guard let tempDirectory = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false) else { return }
-        // 一時ファイル用のフォルダ
-        let pDFsDirectory = tempDirectory.appendingPathComponent("PDFs", isDirectory: true)
-        do {
-            try FileManager.default.createDirectory(at: pDFsDirectory, withIntermediateDirectories: true, attributes: nil)
-        } catch {
-            print("失敗した")
-        }
-        do {
-            let directoryContents = try FileManager.default.contentsOfDirectory(at: pDFsDirectory, includingPropertiesForKeys: nil) // ファイル一覧を取得
-            // if you want to filter the directory contents you can do like this:
-            let pdfFiles = directoryContents.filter { $0.pathExtension == "pdf" }
-            print("pdf urls: ", pdfFiles)
-            let pdfFileNames = pdfFiles.map { $0.deletingPathExtension().lastPathComponent }
-            print("pdf list: ", pdfFileNames)
-            // ファイルのデータを取得
-            for fileName in pdfFileNames {
-                let content = pDFsDirectory.appendingPathComponent(fileName + ".pdf")
-                do {
-                    try FileManager.default.removeItem(at: content)
-                } catch let error {
-                    print(error)
-                }
-            }
-        } catch {
-            print(error)
-        }
-    }
+//    // 一時ファイルを削除する
+//    func deleteTempDirectory() {
+//        guard let tempDirectory = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false) else { return }
+//        // 一時ファイル用のフォルダ
+//        let pDFsDirectory = tempDirectory.appendingPathComponent("PDFs", isDirectory: true)
+//        do {
+//            try FileManager.default.createDirectory(at: pDFsDirectory, withIntermediateDirectories: true, attributes: nil)
+//        } catch {
+//            print("失敗した")
+//        }
+//        do {
+//            let directoryContents = try FileManager.default.contentsOfDirectory(at: pDFsDirectory, includingPropertiesForKeys: nil) // ファイル一覧を取得
+//            // if you want to filter the directory contents you can do like this:
+//            let pdfFiles = directoryContents.filter { $0.pathExtension == "pdf" }
+//            print("pdf urls: ", pdfFiles)
+//            let pdfFileNames = pdfFiles.map { $0.deletingPathExtension().lastPathComponent }
+//            print("pdf list: ", pdfFileNames)
+//            // ファイルのデータを取得
+//            for fileName in pdfFileNames {
+//                let content = pDFsDirectory.appendingPathComponent(fileName + ".pdf")
+//                do {
+//                    try FileManager.default.removeItem(at: content)
+//                } catch let error {
+//                    print(error)
+//                }
+//            }
+//        } catch {
+//            print(error)
+//        }
+//    }
     
-    // 一時ファイルを作成する
-    func saveToTempDirectory(fileURL: URL) -> URL? {
-        guard let documentDirectory = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false) else { return nil }
-        let pDFsDirectory = documentDirectory.appendingPathComponent("PDFs", isDirectory: true)
-        do {
-            try FileManager.default.createDirectory(at: pDFsDirectory, withIntermediateDirectories: true, attributes: nil)
-        } catch {
-            print("失敗した")
-        }
-        
-        let pdfFileName = fileURL.deletingPathExtension().lastPathComponent
-        
-        let filePath = pDFsDirectory.appendingPathComponent("\(pdfFileName)-temp" + ".pdf")
-        do {
-            // コピーの前にはチェック&削除が必要
-            if FileManager.default.fileExists(atPath: filePath.path) {
-                // すでに backupFileUrl が存在する場合はファイルを削除する
-                try FileManager.default.removeItem(at: filePath)
-            }
-            // PDFファイルを一時フォルダへコピー
-            try FileManager.default.copyItem(at: fileURL, to: filePath)
-            
-            print(filePath)
-            return filePath
-        } catch {
-            print(error.localizedDescription)
-            return nil
-        }
-    }
+//    // 一時ファイルを作成する
+//    func saveToTempDirectory(fileURL: URL) -> URL? {
+//        guard let documentDirectory = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false) else { return nil }
+//        let pDFsDirectory = documentDirectory.appendingPathComponent("PDFs", isDirectory: true)
+//        do {
+//            try FileManager.default.createDirectory(at: pDFsDirectory, withIntermediateDirectories: true, attributes: nil)
+//        } catch {
+//            print("失敗した")
+//        }
+//        
+//        let pdfFileName = fileURL.deletingPathExtension().lastPathComponent
+//        
+//        let filePath = pDFsDirectory.appendingPathComponent("\(pdfFileName)-temp" + ".pdf")
+//        do {
+//            // コピーの前にはチェック&削除が必要
+//            if FileManager.default.fileExists(atPath: filePath.path) {
+//                // すでに backupFileUrl が存在する場合はファイルを削除する
+//                try FileManager.default.removeItem(at: filePath)
+//            }
+//            // PDFファイルを一時フォルダへコピー
+//            try FileManager.default.copyItem(at: fileURL, to: filePath)
+//            
+//            print(filePath)
+//            return filePath
+//        } catch {
+//            print(error.localizedDescription)
+//            return nil
+//        }
+//    }
     
     
     // MARK: - PDF ファイル　マーカー　Annotation
@@ -927,7 +930,7 @@ class DrawingViewController: UIViewController {
                     height: size.height + 5
                 )
                 after.contents = inputText
-                after.setValue(UIColor.orange.withAlphaComponent(0.1), forAnnotationKey: .color)
+                after.setValue(UIColor.yellow.withAlphaComponent(0.5), forAnnotationKey: .color)
                 after.page = before.page
                 print(before.userName, after.userName, UUID().uuidString)
                 print(before.page, after.page, before.page == after.page)
@@ -972,7 +975,9 @@ class DrawingViewController: UIViewController {
                     height: after.bounds.size.height
                 )
                 after.contents = before.contents
-                after.setValue(UIColor.green.withAlphaComponent(0.5), forAnnotationKey: .color)
+                // 効かない
+                // after.setValue(UIColor.orange.withAlphaComponent(0.5), forAnnotationKey: .color)
+                after.color = UIColor.orange.withAlphaComponent(0.5)
                 after.page = before.page
                 
                 // UUID
@@ -1258,10 +1263,15 @@ class DrawingViewController: UIViewController {
     }
     
     // マーカーを追加しPDFを上書き保存する
-    func save() {
+    func save(completion: (() -> Void)) {
         if let fileURL = fileURL {
             // 一時ファイルをiCloud Container に保存しているPDFファイルへ上書き保存する
-            pdfView.document?.write(to: fileURL)
+            let isFinished = pdfView.document?.write(to: fileURL)
+            if let isFinished = isFinished,
+                 isFinished {
+                    completion()
+                }
+            
         }
     }
     
