@@ -160,7 +160,7 @@ class DrawingViewController: UIViewController {
         segmentedControl.addTarget(self, action: #selector(segmentedControlChanged), for: .valueChanged)
         //        segment.setTitleTextAttributes([NSAttributedString.Key.font : UIFont(name: "ProximaNova-Light", size: 15)!], for: .normal)
         let segmentBarButtonItem = UIBarButtonItem(customView: segmentedControl)
-        if let _ = navigationItem.leftBarButtonItems {
+        if let _ = navigationItem.rightBarButtonItems {
             navigationItem.rightBarButtonItems?.append(segmentBarButtonItem)
         } else {
             navigationItem.rightBarButtonItem = segmentBarButtonItem
@@ -1251,7 +1251,7 @@ class DrawingViewController: UIViewController {
         redoButton.isEnabled = undoRedoManager.canRedo()
     }
     
-    // MARK: - PDF ファイル　マークアップ　編集中の一時ファイル
+    // MARK: - PDF ファイル　マークアップ　保存
     
     // マーカーを追加しPDFを上書き保存する
     func save(completion: (() -> Void)) {
@@ -1266,6 +1266,8 @@ class DrawingViewController: UIViewController {
         }
     }
     
+    // MARK: - PDF ファイル　マークアップ　編集中の一時ファイル
+
     //    // 一時ファイルを削除する
     //    func deleteTempDirectory() {
     //        guard let tempDirectory = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false) else { return }
@@ -1328,10 +1330,10 @@ class DrawingViewController: UIViewController {
     //    }
     
     // MARK: - フォトライブラリ
-    //    
+    //
     //    // 写真をカメラロールからiCloud Container にコピーする URLから
     //    func addPhotoToProjectFolder() {
-    //        
+    //
     //        if let unusedNumber = unusedNumber,
     //           let fileURL = fileURL,
     //           let imageURL = imageURL {
@@ -1344,10 +1346,10 @@ class DrawingViewController: UIViewController {
     //            }
     //        }
     //    }
-    //    
+    //
     //    // 写真をカメラロールからiCloud Container にコピーする Dataから
     //    func addPhotoToProjectFolder(photoData: Data) {
-    //        
+    //
     //        if let unusedNumber = unusedNumber,
     //           let fileURL = fileURL,
     //           let imageURL = imageURL {
@@ -1364,7 +1366,7 @@ class DrawingViewController: UIViewController {
     
     //    // iCloud Container に保存した写真を削除する
     //    func removePhotoToProjectFolder(contents: String?) {
-    //        
+    //
     //        if let contents = contents {
     //            // 写真を iCloud Container から削除する
     //            let result = BackupManager.shared.deletePhotoFromDocumentsDirectory(
@@ -1401,7 +1403,7 @@ class DrawingViewController: UIViewController {
     //            imagePickerController.sourceType = UIImagePickerController.SourceType.photoLibrary
     //            // 画像取得後の編集を不可に
     //            imagePickerController.allowsEditing = false
-    //            
+    //
     //            DispatchQueue.main.async {
     //                self.present(self.imagePickerController, animated: true, completion: nil)
     //            }
@@ -1425,7 +1427,7 @@ class DrawingViewController: UIViewController {
     //    }
     
     //    private func albumCommonAction(_ authorizationStatus: PHAuthorizationStatus) {
-    //        
+    //
     //        switch authorizationStatus {
     //        case .notDetermined:
     //            // 初回起動時アルバムアクセス権限確認
@@ -1494,7 +1496,7 @@ class DrawingViewController: UIViewController {
 //        //            ▿ key : UIImagePickerControllerInfoKey
 //        //              - _rawValue : UIImagePickerControllerReferenceURL
 //        //            - value : assets-library://asset/asset.HEIC?id=49B92187-72A5-41BD-B1EE-1718C2F0F1A9&ext=HEIC
-//        
+//
 //        // モーダルビューを閉じる
 //        self.dismiss(animated: true) {
 //            // 選択された画像のURL
@@ -1505,7 +1507,7 @@ class DrawingViewController: UIViewController {
 //            self.addPhotoToProjectFolder()
 //        }
 //    }
-//    
+//
 //    /**
 //     画像選択がキャンセルされた時に呼ばれる.
 //     */
@@ -1537,7 +1539,7 @@ class DrawingViewController: UIViewController {
 //    //    以前は、ポートレート写真は、JPEGでしたけども、
 //    //    最新のiOS14から？HEIFに変わってました。
 //    //    ポートレートHEIFは、Windowsに取り込むとバグるけどな。
-//    
+//
 //    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
 //        // キャンセル
 //        guard let provider = results.first?.itemProvider else {
@@ -1572,7 +1574,7 @@ class DrawingViewController: UIViewController {
 //                //一般的な画像
 //                // 画像の場合はloadObjectでUIImageまたはloadDataで取得する。
 //                // loadItemでURLを取得する場合、URLからUIImageまたはDataの取得はアルバムへのアクセス権限が必要になる。
-//                
+//
 //                // 写真のパスを取得
 //                provider.loadItem(forTypeIdentifier: typeIdentifer) { imageURL, error  in
 //                    guard let imageURL = imageURL as? URL else {
@@ -1589,7 +1591,7 @@ class DrawingViewController: UIViewController {
 //                    }
 //                }
 //            }
-//            
+//
 //            picker.dismiss(animated: true, completion: {
 //                // マーカーを追加する
 //                self.addMarkerAnotation()
@@ -1615,7 +1617,7 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
     @objc
     func tappedView(_ sender: UITapGestureRecognizer){
         // 編集 終了時
-        if !isEditing {
+//        if !isEditing {
             if let selectedAnnotation = selectedAnnotation {
                 // 選択したマーカーの画像を表示させる
                 self.selectedAnnotation = nil
@@ -1672,7 +1674,7 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
                     }
                 }
             }
-        }
+//        }
     }
     
     @objc
@@ -1814,33 +1816,33 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
     }
 }
 
-enum Colors: Int, CaseIterable {
-    case babyBlue
-    case buttercup
-    case lilac
-    case meadow
-    case rose
-    
-    func getColor() -> UIColor {
-        switch self {
-        case .babyBlue:
-            return UIColor(named: "BabyBlue")!
-        case .buttercup:
-            return UIColor(named: "Buttercup")!
-        case .lilac:
-            return UIColor(named: "Lilac")!
-        case .meadow:
-            return UIColor(named: "Meadow")!
-        case .rose:
-            return UIColor(named: "Rose")!
-        }
-    }
-}
-
-extension UIButton {
-    func makeRounded(_ cornerSize: CGFloat, borderWidth: CGFloat, borderColor: UIColor) {
-        layer.cornerRadius = cornerSize
-        layer.borderWidth = borderWidth
-        layer.borderColor = borderColor.cgColor
-    }
-}
+//enum Colors: Int, CaseIterable {
+//    case babyBlue
+//    case buttercup
+//    case lilac
+//    case meadow
+//    case rose
+//    
+//    func getColor() -> UIColor {
+//        switch self {
+//        case .babyBlue:
+//            return UIColor(named: "BabyBlue")!
+//        case .buttercup:
+//            return UIColor(named: "Buttercup")!
+//        case .lilac:
+//            return UIColor(named: "Lilac")!
+//        case .meadow:
+//            return UIColor(named: "Meadow")!
+//        case .rose:
+//            return UIColor(named: "Rose")!
+//        }
+//    }
+//}
+//
+//extension UIButton {
+//    func makeRounded(_ cornerSize: CGFloat, borderWidth: CGFloat, borderColor: UIColor) {
+//        layer.cornerRadius = cornerSize
+//        layer.borderWidth = borderWidth
+//        layer.borderColor = borderColor.cgColor
+//    }
+//}

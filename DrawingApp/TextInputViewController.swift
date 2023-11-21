@@ -109,6 +109,24 @@ class TextInputViewController: UIViewController {
                 }
             })
         }
+        // ナビゲーションコントローラの最前面を取得
+        if let viewController = navigationController.topViewController as? DrawingReportEditViewController { // 呼び出し元のビューコントローラーを取得
+            self.dismiss(animated: true, completion: { [viewController] () -> Void in
+                if self.annotationIsEditing {
+                    // マーカーを更新する テキスト
+                    viewController.updateTextMarkerAnotation(
+                        inputText: self.textField.text,
+                        fontSize: self.fontSize
+                    )
+                } else {
+                    // マーカーを追加する テキスト
+                    viewController.addTextMarkerAnotation(
+                        inputText: self.textField.text,
+                        fontSize: self.fontSize
+                    )
+                }
+            })
+        }
     }
     
     @IBAction func cancelButtonTapped(_ sender: Any) {
