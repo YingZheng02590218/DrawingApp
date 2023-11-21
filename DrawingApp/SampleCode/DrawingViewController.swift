@@ -1073,10 +1073,14 @@ class DrawingViewController: UIViewController {
             ]
             
             let freeText = PDFAnnotation(
-                bounds: CGRect(x: point.x, y: point.y, width: size.width + 5, height: size.height + 5),
+                bounds: CGRect(x: point.x, y: point.y, width: size.width * 1.1, height: size.height),
                 forType: .freeText,
                 withProperties: attributes
             )
+            // 左寄せ
+            freeText.alignment = .left
+            // フォントサイズ
+            freeText.font = font
             // UUID
             freeText.userName = UUID().uuidString
             // 対象のページへ注釈を追加
@@ -1118,14 +1122,18 @@ class DrawingViewController: UIViewController {
                 after.bounds = CGRect(
                     x: after.bounds.origin.x,
                     y: after.bounds.origin.y,
-                    width: size.width + 5,
-                    height: size.height + 5
+                    width: size.width * 1.1,
+                    height: size.height
                 )
                 after.contents = inputText
                 after.setValue(UIColor.yellow.withAlphaComponent(0.5), forAnnotationKey: .color)
                 after.page = before.page
                 print(before.userName, after.userName, UUID().uuidString)
                 print(before.page, after.page, before.page == after.page)
+                // 左寄せ
+                after.alignment = .left
+                // フォントサイズ
+                after.font = font
                 // UUID
                 after.userName = UUID().uuidString
                 // Annotationを再度作成
@@ -1617,7 +1625,7 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
     @objc
     func tappedView(_ sender: UITapGestureRecognizer){
         // 編集 終了時
-//        if !isEditing {
+        if !isEditing {
             if let selectedAnnotation = selectedAnnotation {
                 // 選択したマーカーの画像を表示させる
                 self.selectedAnnotation = nil
@@ -1674,7 +1682,7 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
                     }
                 }
             }
-//        }
+        }
     }
     
     @objc
