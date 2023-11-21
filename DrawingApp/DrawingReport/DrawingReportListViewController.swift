@@ -129,6 +129,31 @@ class DrawingReportListViewController: UIViewController {
             }
         }
     }
+    // マーカー画面を表示させる
+    func showMarkerView(document: PDFDocumentForList) {
+        if BackupManager.shared.isiCloudEnabled {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                // PDFKit のパターン
+                if let viewController = UIStoryboard(
+                    name: "DrawingViewController",
+                    bundle: nil
+                ).instantiateInitialViewController() as? DrawingViewController {
+                    // iCloud Container に保存しているPDFファイルのパス
+                    viewController.fileURL = document.fileURL
+
+                    if let navigator = self.navigationController {
+                        navigator.pushViewController(viewController, animated: true)
+                    } else {
+                        let navigation = UINavigationController(rootViewController: viewController)
+                        navigation.modalPresentationStyle = .fullScreen
+                        self.present(navigation, animated: true, completion: nil)
+                    }
+                }
+
+            }
+        }
+    }
+
 }
 
 
@@ -177,7 +202,13 @@ extension DrawingReportListViewController: UICollectionViewDelegate {
         }
         // セルの枠線の太さを変える
         cell.isSelected = false
+//        // TODO: 動作確認
+//        if indexPath.section == 0 {
         // PDF編集画面を表示させる
         showEditingView(document: documents[indexPath.section], pageNumber: indexPath.row)
+//        } else {
+//            // マーカー画面を表示させる
+//            showMarkerView(document: documents[indexPath.section])
+//        }
     }
 }
