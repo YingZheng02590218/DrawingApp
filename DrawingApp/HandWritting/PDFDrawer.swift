@@ -39,7 +39,7 @@ enum DrawingTool: Int {
 
 // 手書きのアノテーションを追加する処理
 protocol DrawingManageAnnotationDelegate: AnyObject {
-    func addAnnotation(_ currentAnnotation : PDFAnnotation)
+    func addAnnotation(_ currentAnnotation : DrawingAnnotation)
 }
 
 class PDFDrawer {
@@ -47,16 +47,17 @@ class PDFDrawer {
     var isActive = false
     weak var pdfView: PDFView!
     private var path: UIBezierPath?
+    private var currentLocation: CGPoint?
     private var currentAnnotation : DrawingAnnotation?
     private var currentPage: PDFPage?
     var drawingTool = DrawingTool.pen
     var color = UIColor.red // default color is red
-    var lineWidth: CGFloat = 5.0
-    var dashPattern: [CGFloat] = [1.0, 5.0]
-
+    var lineWidth: CGFloat = 10.0
+    var dashPattern: DashPattern = .pattern1
+    
     // 手書きのアノテーションを追加する処理
     weak var drawingManageAnnotationDelegate: DrawingManageAnnotationDelegate?
-
+    
     func changeTool(tool: DrawingTool) {
         self.drawingTool = tool
     }
@@ -68,47 +69,76 @@ class PDFDrawer {
     func changeLineWidth(lineWidth: CGFloat) {
         self.lineWidth = lineWidth
     }
+    
+    func changeDashPattern(dashPattern: DashPattern) {
+        self.dashPattern = dashPattern
+    }
 }
 
 extension PDFDrawer: DrawingGestureRecognizerDelegate {
     func gestureRecognizerBegan(_ location: CGPoint) {
         if isActive {
+            // ペン先の位置
+            currentLocation = location
+            
             guard let page = pdfView.page(for: location, nearest: true) else { return }
             currentPage = page
             let convertedPoint = pdfView.convert(location, to: currentPage!)
+            // UIBezierPath のインスタンス生成
             path = UIBezierPath()
-            path?.lineCapStyle = .round
+            path?.lineCapStyle = .square
+            path?.lineJoinStyle = .round
             path?.lineWidth = self.lineWidth
-            dashPattern = [self.lineWidth, self.lineWidth]
-            // 第一引数 点線の大きさ, 点線間の間隔
-            // 第二引数 第一引数で指定した配列の要素数
-            // 第三引数 開始位置
-            path?.setLineDash(dashPattern, count: dashPattern.count, phase: 0)
+            // path?.flatness = 30.0
+            if dashPattern == .pattern1 {
+                
+            } else {
+                // 第一引数 点線の大きさ, 点線間の間隔
+                // 第二引数 第一引数で指定した配列の要素数
+                // 第三引数 開始位置
+                path?.setLineDash(dashPattern.style(width: lineWidth), count: dashPattern.style(width: lineWidth).count, phase: 0)
+            }
+            // 起点
             path?.move(to: convertedPoint)
         }
     }
     
     func gestureRecognizerMoved(_ location: CGPoint) {
         if isActive {
-            guard let page = currentPage else { return }
-            let convertedPoint = pdfView.convert(location, to: page)
-            
-            print(convertedPoint)
-            
-            if drawingTool == .eraser {
-                removeAnnotationAtPoint(point: convertedPoint, page: page)
-                return
+            // ペン先の位置
+            if let currentLocation = currentLocation,
+               location.x >= currentLocation.x + lineWidth || location.y >= currentLocation.y + lineWidth ||
+                location.x <= currentLocation.x - lineWidth || location.y <= currentLocation.y - lineWidth {
+                print(self.currentLocation!.x, location.x)
+                print(self.currentLocation!.y, location.y)
+                self.currentLocation = location
+                
+                guard let page = currentPage else { return }
+                let convertedPoint = pdfView.convert(location, to: page)
+                
+                print(convertedPoint)
+                
+                if drawingTool == .eraser {
+                    removeAnnotationAtPoint(point: convertedPoint, page: page)
+                    return
+                }
+                // 帰着点
+                path?.addLine(to: convertedPoint)
+                // path?.move(to: convertedPoint)
+                
+                drawAnnotation(onPage: page)
+            } else {
+                print(self.currentLocation!.x, location.x)
+                print(self.currentLocation!.y, location.y)
             }
-            
-            path?.addLine(to: convertedPoint)
-            path?.move(to: convertedPoint)
-            
-            drawAnnotation(onPage: page)
         }
     }
     
     func gestureRecognizerEnded(_ location: CGPoint) {
         if isActive {
+            // ペン先の位置
+            currentLocation = nil
+            
             guard let page = currentPage else { return }
             let convertedPoint = pdfView.convert(location, to: page)
             
@@ -121,14 +151,15 @@ extension PDFDrawer: DrawingGestureRecognizerDelegate {
             // Drawing
             guard let _ = currentAnnotation else { return }
             
-            if let path = path {
+            if let path = self.path {
+                // 帰着点
                 path.addLine(to: convertedPoint)
-                path.move(to: convertedPoint)
-                // 終わる
-                path.close()
+                // path.move(to: convertedPoint)
+                // ラインを結ぶ
+                // path.close()
                 
                 // Final annotation
-                page.removeAnnotation(currentAnnotation!)
+                page.removeAnnotation(self.currentAnnotation!)
                 // このアノテーションをDrawingViewControllerへ渡してから、追加する
                 let finalAnnotation = createFinalAnnotation(path: path, page: page)
                 drawingManageAnnotationDelegate?.addAnnotation(finalAnnotation)
@@ -140,11 +171,11 @@ extension PDFDrawer: DrawingGestureRecognizerDelegate {
     private func createAnnotation(path: UIBezierPath, page: PDFPage) -> DrawingAnnotation {
         let border = PDFBorder()
         border.lineWidth = lineWidth//drawingTool.width
-        border.style = .dashed
-        border.dashPattern = dashPattern
-
+        border.style = dashPattern == .pattern1 ? .solid : .dashed
+        border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style(width: lineWidth)
+        
         let annotation = DrawingAnnotation(bounds: page.bounds(for: pdfView.displayBox), forType: .ink, withProperties: nil)
-        annotation.color = color.withAlphaComponent(drawingTool.alpha)
+        annotation.color = color//.withAlphaComponent(drawingTool.alpha)
         annotation.border = border
         return annotation
     }
@@ -160,32 +191,39 @@ extension PDFDrawer: DrawingGestureRecognizerDelegate {
         forceRedraw(annotation: currentAnnotation!, onPage: onPage)
     }
     
-    private func createFinalAnnotation(path: UIBezierPath, page: PDFPage) -> PDFAnnotation {
+    private func createFinalAnnotation(path: UIBezierPath, page: PDFPage) -> DrawingAnnotation {
         let border = PDFBorder()
         border.lineWidth = lineWidth//drawingTool.width
-        border.style = .dashed
-        border.dashPattern = dashPattern
-
-        let bounds = CGRect(x: path.bounds.origin.x - 5,
-                            y: path.bounds.origin.y - 5,
-                            width: path.bounds.size.width + 10,
-                            height: path.bounds.size.height + 10)
-//        var signingPathCentered = UIBezierPath()
-//        signingPathCentered.cgPath = path.cgPath
-        path.moveCenter(to: bounds.center)
-        path.lineCapStyle = .round
-
-        // 第一引数 点線の大きさ, 点線間の間隔
-        // 第二引数 第一引数で指定した配列の要素数
-        // 第三引数 開始位置
-        path.setLineDash(dashPattern, count: dashPattern.count, phase: 0)
+        border.style = dashPattern == .pattern1 ? .solid : .dashed
+        border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style(width: lineWidth)
         
-        let annotation = PDFAnnotation(bounds: bounds, forType: .ink, withProperties: nil)
-        annotation.color = color.withAlphaComponent(drawingTool.alpha)
+        let bounds = CGRect(x: path.bounds.origin.x,
+                            y: path.bounds.origin.y,
+                            width: path.bounds.size.width,
+                            height: path.bounds.size.height)
+        //        var signingPathCentered = UIBezierPath()
+        //        signingPathCentered.cgPath = path.cgPath
+        //        path.moveCenter(to: bounds.center)
+        path.lineCapStyle = .square
+        path.lineJoinStyle = .round
+        path.lineWidth = self.lineWidth
+        
+        if dashPattern == .pattern1 {
+            
+        } else {
+            // 第一引数 点線の大きさ, 点線間の間隔
+            // 第二引数 第一引数で指定した配列の要素数
+            // 第三引数 開始位置
+            path.setLineDash(dashPattern.style(width: lineWidth), count: dashPattern.style(width: lineWidth).count, phase: 0)
+        }
+        let annotation = DrawingAnnotation(bounds: bounds, forType: .ink, withProperties: nil)
+        annotation.color = color//.withAlphaComponent(drawingTool.alpha)
         annotation.border = border
-        annotation.add(path)
+        // 効かない
+        // annotation.add(path)
+        annotation.path = path
         page.addAnnotation(annotation)
-                
+        
         return annotation
     }
     
@@ -195,7 +233,7 @@ extension PDFDrawer: DrawingGestureRecognizerDelegate {
         }
     }
     
-    private func forceRedraw(annotation: PDFAnnotation, onPage: PDFPage) {
+    private func forceRedraw(annotation: DrawingAnnotation, onPage: PDFPage) {
         onPage.removeAnnotation(annotation)
         onPage.addAnnotation(annotation)
     }

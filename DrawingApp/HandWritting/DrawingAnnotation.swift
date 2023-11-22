@@ -20,7 +20,7 @@ class DrawingAnnotation: PDFAnnotation {
         
         color.set()
         pathCopy.lineJoinStyle = .round
-        pathCopy.lineCapStyle = .round
+        pathCopy.lineCapStyle = .square
         pathCopy.lineWidth = border?.lineWidth ?? 1.0
         pathCopy.stroke()
         

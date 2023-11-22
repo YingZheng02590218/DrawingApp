@@ -20,6 +20,8 @@ class DrawingViewController: UIViewController {
         
         // 編集ボタン Xボタン Annotation表示非表示スイッチ
         setupButtons()
+        // Undo Redo ボタン
+        setupUndoRedoButtons()
         // セグメントコントロール
         setupSegmentedControl()
         
@@ -202,6 +204,8 @@ class DrawingViewController: UIViewController {
             //            canvas.isHidden = false
             pdfDrawer.isActive = true
             colorStackView?.isHidden = false
+            colorDarkStackView?.isHidden = false
+            colorAlphaStackView?.isHidden = false
             toolStackView?.isHidden = false
         } else {
             pdfView.removeGestureRecognizer(pdfDrawingGestureRecognizer)
@@ -211,6 +215,8 @@ class DrawingViewController: UIViewController {
             //            canvas.isHidden = true
             pdfDrawer.isActive = false
             colorStackView?.isHidden = true
+            colorDarkStackView?.isHidden = true
+            colorAlphaStackView?.isHidden = true
             toolStackView?.isHidden = true
         }
     }
@@ -663,8 +669,17 @@ class DrawingViewController: UIViewController {
     let pdfDrawingGestureRecognizer = DrawingGestureRecognizer()
     // 手書き　ツール
     var toolStackView: UIStackView?
+
+    // 手書き　カラーパレット
+    @IBOutlet var colorPaletteView: UIView!
     // 手書き　カラー
     var colorStackView: UIStackView?
+    // 手書き　ダークカラー
+    var colorDarkStackView: UIStackView?
+    // 手書き　カラーパレット 透明度
+    @IBOutlet var alphaPaletteView: UIView!
+    // 手書き　透明度
+    var colorAlphaStackView: UIStackView?
     //    let canvas = PKCanvasView()
     //    var crayon = PKInkingTool(.pencil, color: Colors.babyBlue.getColor(), width: 70)
     //    var pencil = PKInkingTool(.pencil, color: Colors.babyBlue.getColor(), width: 10)
@@ -672,7 +687,10 @@ class DrawingViewController: UIViewController {
     //    let eraser = PKEraserTool(.bitmap)
     //    private var path: UIBezierPath?
     //    private var currentAnnotation : DrawingAnnotation?
-    
+    // 選択されたカラー
+    var selectedColor: UIColor?
+    // 選択されたカラー　透明度
+    var selectedColorWithAlpha: UIColor?
     // 手書きパレット
     func createButtons() {
         //        canvas.frame = view.bounds
@@ -682,85 +700,181 @@ class DrawingViewController: UIViewController {
         //        view.addSubview(canvas)
         //        canvas.tool = crayon
         
+        // 手書きパレット カラー
+        createColorButtons()
+        // 手書きパレット ダーク
+        createDarkButtons()
+        // 手書きパレット 透明度
+        createAlphaButtons()
+        
+//        //Setup tools
+//        let crayonButton = createButton(title: "Crayon", action: UIAction(handler: { _ in
+//            //            self.canvas.tool = self.crayon
+//        }))
+//        
+//        let pencilButton = createButton(title: "Pencil", action: UIAction(handler: { _ in
+//            //            self.canvas.tool = self.pencil
+//            self.pdfDrawer.changeTool(tool: .pencil)
+//        }))
+//        
+//        let markerButton = createButton(title: "Marker", action: UIAction(handler: { _ in
+//            //            self.canvas.tool = self.marker
+//        }))
+//        
+//        let eraserButton = createButton(title: "Eraser", action: UIAction(handler: { _ in
+//            //            self.canvas.tool = self.eraser
+//        }))
+//        
+//        let undoButton = createButton(title: "Undo", action: UIAction(handler: { _ in
+//            // TODO: 効いていない
+//            self.undoManager?.undo()
+//        }))
+//        
+//        let redoButton = createButton(title: "Redo", action: UIAction(handler: { _ in
+//            // TODO: 効いていない
+//            self.undoManager?.redo()
+//        }))
+//        
+//        toolStackView = UIStackView(arrangedSubviews: [crayonButton,
+//                                                       pencilButton,
+//                                                       markerButton,
+//                                                       eraserButton,
+//                                                       undoButton,
+//                                                       redoButton])
+//        if let toolStackView = toolStackView {
+//            toolStackView.axis = .vertical
+//            toolStackView.distribution = .fillEqually
+//            toolStackView.alignment = .fill
+//            toolStackView.spacing = 10
+//            
+//            view.addSubview(toolStackView)
+//            
+//            toolStackView.translatesAutoresizingMaskIntoConstraints = false
+//            NSLayoutConstraint.activate([toolStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: 10),
+//                                         toolStackView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+//                                         toolStackView.widthAnchor.constraint(equalToConstant: 150)])
+//            toolStackView.isHidden = true
+//        }
+    }
+    
+    // 手書きパレット カラー
+    func createColorButtons() {
         //Create the color palette
         var buttons: [UIButton] = []
         
         for color in Colors.allCases {
-            let button = UIButton(primaryAction: UIAction(handler: { action in
-                self.updatePens(sender: action.sender)
-            }))
-            button.heightAnchor.constraint(equalToConstant: 100.0).isActive = true
-            button.widthAnchor.constraint(equalToConstant: 100.0).isActive = true
-            button.makeRounded(50, borderWidth: 10, borderColor: .black)
+            let button = UIButton(
+                primaryAction: UIAction(handler: { action in
+                    self.updatePens(sender: action.sender)
+                })
+            )
+            button.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+            button.widthAnchor.constraint(equalToConstant: 50.0).isActive = true
+            button.makeRounded(25, borderWidth: 3, borderColor: .black)
             button.backgroundColor = color.getColor()
             button.tag = color.rawValue
             buttons.append(button)
         }
-        
+        // 色の選択
         colorStackView = UIStackView(arrangedSubviews: buttons)
+        colorStackView?.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.1)
         if let colorStackView = colorStackView {
             colorStackView.axis = .horizontal
             colorStackView.distribution = .equalSpacing
             colorStackView.alignment = .center
             
-            view.addSubview(colorStackView)
+            colorPaletteView.addSubview(colorStackView)
             
             colorStackView.translatesAutoresizingMaskIntoConstraints = false
             
-            NSLayoutConstraint.activate([colorStackView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -20),
-                                         colorStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-                                         colorStackView.widthAnchor.constraint(equalToConstant: view.bounds.width / 2),
-                                         colorStackView.heightAnchor.constraint(equalToConstant: 100)])
+            NSLayoutConstraint.activate([
+                colorStackView.topAnchor.constraint(equalTo: colorPaletteView.topAnchor, constant: 10),
+                colorStackView.centerXAnchor.constraint(equalTo: colorPaletteView.centerXAnchor),
+                colorStackView.widthAnchor.constraint(greaterThanOrEqualToConstant: colorPaletteView.bounds.width / 3),
+                colorStackView.heightAnchor.constraint(equalToConstant: 70)
+            ])
             colorStackView.isHidden = true
         }
+    }
+    
+    // 手書きパレット ダーク
+    func createDarkButtons() {
+        //Create the color palette ダーク
+        var buttonsDark: [UIButton] = []
         
-        //Setup tools
-        let crayonButton = createButton(title: "Crayon", action: UIAction(handler: { _ in
-            //            self.canvas.tool = self.crayon
-        }))
-        
-        let pencilButton = createButton(title: "Pencil", action: UIAction(handler: { _ in
-            //            self.canvas.tool = self.pencil
-            self.pdfDrawer.changeTool(tool: .pencil)
-        }))
-        
-        let markerButton = createButton(title: "Marker", action: UIAction(handler: { _ in
-            //            self.canvas.tool = self.marker
-        }))
-        
-        let eraserButton = createButton(title: "Eraser", action: UIAction(handler: { _ in
-            //            self.canvas.tool = self.eraser
-        }))
-        
-        let undoButton = createButton(title: "Undo", action: UIAction(handler: { _ in
-            // TODO: 効いていない
-            self.undoManager?.undo()
-        }))
-        
-        let redoButton = createButton(title: "Redo", action: UIAction(handler: { _ in
-            // TODO: 効いていない
-            self.undoManager?.redo()
-        }))
-        
-        toolStackView = UIStackView(arrangedSubviews: [crayonButton,
-                                                       pencilButton,
-                                                       markerButton,
-                                                       eraserButton,
-                                                       undoButton,
-                                                       redoButton])
-        if let toolStackView = toolStackView {
-            toolStackView.axis = .vertical
-            toolStackView.distribution = .fillEqually
-            toolStackView.alignment = .fill
-            toolStackView.spacing = 10
+        for color in ColorsDark.allCases {
+            let button = UIButton(
+                primaryAction: UIAction(handler: { action in
+                    self.updateDarkPens(sender: action.sender)
+                })
+            )
+            button.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+            button.widthAnchor.constraint(equalToConstant: 50.0).isActive = true
+            button.makeRounded(25, borderWidth: 3, borderColor: .black)
+            button.backgroundColor = color.getColor()
+            button.tag = color.rawValue
+            buttonsDark.append(button)
+        }
+        // 色の選択 ダーク
+        colorDarkStackView = UIStackView(arrangedSubviews: buttonsDark)
+        colorDarkStackView?.backgroundColor = UIColor.blue.withAlphaComponent(0.1)
+        if let colorStackView = colorStackView,
+           let colorDarkStackView = colorDarkStackView {
+            colorDarkStackView.axis = .horizontal
+            colorDarkStackView.distribution = .equalSpacing
+            colorDarkStackView.alignment = .center
             
-            view.addSubview(toolStackView)
+            colorPaletteView.addSubview(colorDarkStackView)
             
-            toolStackView.translatesAutoresizingMaskIntoConstraints = false
-            NSLayoutConstraint.activate([toolStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: 10),
-                                         toolStackView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-                                         toolStackView.widthAnchor.constraint(equalToConstant: 150)])
-            toolStackView.isHidden = true
+            colorDarkStackView.translatesAutoresizingMaskIntoConstraints = false
+            
+            NSLayoutConstraint.activate([
+                colorDarkStackView.topAnchor.constraint(equalTo: colorStackView.bottomAnchor, constant: 0),
+                colorDarkStackView.centerXAnchor.constraint(equalTo: colorPaletteView.centerXAnchor),
+                colorDarkStackView.widthAnchor.constraint(greaterThanOrEqualToConstant: colorPaletteView.bounds.width / 3),
+                colorDarkStackView.heightAnchor.constraint(equalToConstant: 70)
+            ])
+            colorDarkStackView.isHidden = true
+        }
+    }
+    
+    // 手書きパレット 透明度
+    func createAlphaButtons() {
+        //Create the color palette 透明度
+        var buttonsAlpha: [UIButton] = []
+        
+        for alpha in Alpha.allCases {
+            let button = UIButton(
+                primaryAction: UIAction(handler: { action in
+                    self.updateAlphaPens(sender: action.sender)
+                })
+            )
+            button.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+            button.widthAnchor.constraint(equalToConstant: 50.0).isActive = true
+            button.makeRounded(25, borderWidth: 3, borderColor: .black)
+            button.backgroundColor = selectedColor?.withAlphaComponent(alpha.alpha)
+            button.tag = alpha.rawValue
+            buttonsAlpha.append(button)
+        }
+        // 色の選択 透明度
+        colorAlphaStackView = UIStackView(arrangedSubviews: buttonsAlpha)
+        colorAlphaStackView?.backgroundColor = UIColor.orange.withAlphaComponent(0.1)
+        if let colorAlphaStackView = colorAlphaStackView {
+            colorAlphaStackView.axis = .horizontal
+            colorAlphaStackView.distribution = .equalSpacing
+            colorAlphaStackView.alignment = .center
+            
+            alphaPaletteView.addSubview(colorAlphaStackView)
+            
+            colorAlphaStackView.translatesAutoresizingMaskIntoConstraints = false
+            
+            NSLayoutConstraint.activate([
+                colorAlphaStackView.topAnchor.constraint(equalTo: alphaPaletteView.topAnchor, constant: 0),
+                colorAlphaStackView.centerXAnchor.constraint(equalTo: alphaPaletteView.centerXAnchor),
+                colorAlphaStackView.widthAnchor.constraint(greaterThanOrEqualToConstant: alphaPaletteView.bounds.width / 3),
+                colorAlphaStackView.heightAnchor.constraint(equalToConstant: 70)
+            ])
+            colorAlphaStackView.isHidden = true
         }
     }
     
@@ -774,41 +888,46 @@ class DrawingViewController: UIViewController {
         return button
     }
     
+    // カラーパレット
     private func updatePens(sender: Any?) {
         if let button = sender as? UIButton,
-           let color = Colors(rawValue: button.tag)?.getColor() { //,
-            //           var currentTool = canvas.tool as? PKInkingTool {
-            //            //update the current tool being used by the canvas
-            //            currentTool.color = color
-            //            canvas.tool = currentTool
-            //            //update all the tools
-            //            crayon.color = color
-            //            pencil.color = color
-            //            marker.color = color
-            pdfDrawer.changeColor(color: color)
+           let color = Colors(rawValue: button.tag) {
+            // 選択されたカラー
+            self.selectedColor = color.getColor()
+            // 手書きパレット 透明度
+            colorAlphaStackView?.arrangedSubviews.map {
+                if let alpha = Alpha(rawValue: $0.tag) {
+                    print(alpha)
+                    $0.backgroundColor = selectedColor?.withAlphaComponent(alpha.alpha)
+                }
+            }
         }
     }
     
-    // 破線のパターン
-    enum DashPattern {
-        case pattern1
-        case pattern2
-        case pattern3
-        case pattern4
-        case pattern5
-        
-        var style: [CGFloat] {
-            switch self {
-            case .pattern1:
-                return [1.0]
-            case .pattern2:
-                return [30.0, 10.0]
-            case .pattern3:
-                return [40.0, 20.0]
-            case .pattern4:
-                return [50.0, 5.0, 5.0, 5.0]
-            case .pattern5:
-                return [50.0, 5.0, 5.0, 5.0, 5.0, 5.0]
+    // カラーパレット ダーク
+    private func updateDarkPens(sender: Any?) {
+        if let button = sender as? UIButton,
+           let color = ColorsDark(rawValue: button.tag) {
+            // 選択されたカラー
+            self.selectedColor = color.getColor()
+            // 手書きパレット 透明度
+            colorAlphaStackView?.arrangedSubviews.map {
+                if let alpha = Alpha(rawValue: $0.tag) {
+                    print(alpha)
+                    $0.backgroundColor = selectedColor?.withAlphaComponent(alpha.alpha)
+                }
+            }
+        }
+    }
+    
+    // カラーパレット 透明度
+    private func updateAlphaPens(sender: Any?) {
+        if let button = sender as? UIButton,
+           let alpha = Alpha(rawValue: button.tag) {
+            // 選択されたカラー　透明度
+            selectedColorWithAlpha = selectedColor?.withAlphaComponent(alpha.alpha)
+            if let selectedColorWithAlpha = selectedColorWithAlpha {
+                pdfDrawer.changeColor(color: selectedColorWithAlpha)
             }
         }
     }
@@ -830,10 +949,11 @@ class DrawingViewController: UIViewController {
         default:
             break
         }
+        pdfDrawer.changeDashPattern(dashPattern: dashPattern)
     }
     
     // 手書きや図形を追加する
-    func addDrawingAnotation(annotation: PDFAnnotation) {
+    func addDrawingAnotation(annotation: DrawingAnnotation) {
         // 現在開いているページを取得
         if let page = self.pdfView.currentPage {
             // UUID
@@ -883,7 +1003,7 @@ class DrawingViewController: UIViewController {
             let border = PDFBorder()
             border.lineWidth = 10
             border.style = dashPattern == .pattern1 ? .solid : .dashed
-            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
+            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style(width: 10) // TODO: width
             
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
@@ -931,7 +1051,7 @@ class DrawingViewController: UIViewController {
             let border = PDFBorder()
             border.lineWidth = 10
             border.style = dashPattern == .pattern1 ? .solid : .dashed
-            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
+            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style(width: 10) // TODO: width
             
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
@@ -977,9 +1097,9 @@ class DrawingViewController: UIViewController {
             let height = beganLocation.y > endLocation.y ? beganLocation.y - endLocation.y : endLocation.y - beganLocation.y
             
             let border = PDFBorder()
-            border.lineWidth = 5.0
+            border.lineWidth = 10.0
             border.style = dashPattern == .pattern1 ? .solid : .dashed
-            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
+            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style(width: 10) // TODO: width
             
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
@@ -1024,9 +1144,9 @@ class DrawingViewController: UIViewController {
             let height = beganLocation.y > endLocation.y ? beganLocation.y - endLocation.y : endLocation.y - beganLocation.y
             
             let border = PDFBorder()
-            border.lineWidth = 2.0
+            border.lineWidth = 10.0
             border.style = dashPattern == .pattern1 ? .solid : .dashed
-            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
+            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style(width: 10) // TODO: width
             
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
@@ -1187,8 +1307,8 @@ class DrawingViewController: UIViewController {
     
     // MARK: - Undo Redo
     
-    @IBOutlet var undoButton: UIButton!
-    @IBOutlet var redoButton: UIButton!
+    var undoButton: UIBarButtonItem!
+    var redoButton: UIBarButtonItem!
     // Undo Redo
     let undoRedoManager = UndoRedoManager()
     // Undo Redo が可能なAnnotation
@@ -1243,7 +1363,20 @@ class DrawingViewController: UIViewController {
         }
     }
     
-    @IBAction func undoTapped(_ sender: Any) {
+    // Undo Redo ボタン
+    func setupUndoRedoButtons() {
+        redoButton = UIBarButtonItem(barButtonSystemItem: .fastForward, target: self, action: #selector(redoTapped))
+        if let _ = navigationItem.rightBarButtonItems {
+            navigationItem.rightBarButtonItems?.append(redoButton)
+        } else {
+            navigationItem.rightBarButtonItem = redoButton
+        }
+        undoButton = UIBarButtonItem(barButtonSystemItem: .rewind, target: self, action: #selector(undoTapped))
+        navigationItem.rightBarButtonItems?.append(undoButton)
+    }
+
+    @objc
+    func undoTapped() {
         
         undoRedoManager.undo(completion: { didUndoAnnotations in
             // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
@@ -1254,7 +1387,8 @@ class DrawingViewController: UIViewController {
         redoButton.isEnabled = undoRedoManager.canRedo()
     }
     
-    @IBAction func redoTapped(_ sender: Any) {
+    @objc
+    func redoTapped() {
         
         undoRedoManager.redo(completion: { didUndoAnnotations in
             // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
@@ -1616,7 +1750,7 @@ class DrawingViewController: UIViewController {
 
 // 手書きのアノテーションを追加する処理
 extension DrawingViewController: DrawingManageAnnotationDelegate {
-    func addAnnotation(_ currentAnnotation: PDFAnnotation) {
+    func addAnnotation(_ currentAnnotation: DrawingAnnotation) {
         
         addDrawingAnotation(annotation: currentAnnotation)
     }
@@ -1862,3 +1996,26 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
 //        layer.borderColor = borderColor.cgColor
 //    }
 //}
+// 破線のパターン
+enum DashPattern {
+    case pattern1
+    case pattern2
+    case pattern3
+    case pattern4
+    case pattern5
+    
+    func style(width: CGFloat) -> [CGFloat] {
+        switch self {
+        case .pattern1:
+            return [width * 1.0]
+        case .pattern2:
+            return [width * 2.0, width * 2.0]
+        case .pattern3:
+            return [width * 4.0, width * 4.0]
+        case .pattern4:
+            return [width * 6.0, width * 1.5, width * 1.0, width * 1.5]
+        case .pattern5:
+            return [width * 6.0, width * 1.5, width * 1.0, width * 1.5, width * 1.0, width * 1.5]
+        }
+    }
+}

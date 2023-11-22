@@ -1036,24 +1036,105 @@ extension DrawingReportEditViewController: UIGestureRecognizerDelegate {
 }
 
 enum Colors: Int, CaseIterable {
-    case babyBlue
-    case buttercup
-    case lilac
-    case meadow
-    case rose
+    case black
+    case systemRed
+    case systemYellow
+    case systemGreen
+    case systemBlue
+    case blue
+    case systemPink
+    
+//    case babyBlue
+//    case buttercup
+//    case lilac
+//    case meadow
+//    case rose
     
     func getColor() -> UIColor {
         switch self {
-        case .babyBlue:
-            return UIColor(named: "BabyBlue")!
-        case .buttercup:
-            return UIColor(named: "Buttercup")!
-        case .lilac:
-            return UIColor(named: "Lilac")!
-        case .meadow:
-            return UIColor(named: "Meadow")!
-        case .rose:
-            return UIColor(named: "Rose")!
+        case .black:
+            return UIColor.darkGray
+        case .systemRed:
+            return UIColor.systemRed
+        case .systemYellow:
+            return UIColor.systemYellow
+        case .systemGreen:
+            return UIColor.systemGreen
+        case .systemBlue:
+            return UIColor.systemBlue
+        case .blue:
+            return UIColor.blue
+        case .systemPink:
+            return UIColor.systemPink
+
+//        case .babyBlue:
+//            return UIColor(named: "BabyBlue")!
+//        case .buttercup:
+//            return UIColor(named: "Buttercup")!
+//        case .lilac:
+//            return UIColor(named: "Lilac")!
+//        case .meadow:
+//            return UIColor(named: "Meadow")!
+//        case .rose:
+//            return UIColor(named: "Rose")!
+        }
+    }
+}
+
+enum ColorsDark: Int, CaseIterable {
+    case blackDark
+    case systemRedDark
+    case systemYellowDark
+    case systemGreenDark
+    case systemBlueDark
+    case blueDark
+    case systemPinkDark
+    
+    func getColor() -> UIColor {
+        switch self {
+        case .blackDark:
+            return UIColor.darkGray.dark(brightnessRatio: 0.8)
+        case .systemRedDark:
+            return UIColor.systemRed.dark(brightnessRatio: 0.8)
+        case .systemYellowDark:
+            return UIColor.systemYellow.dark(brightnessRatio: 0.8)
+        case .systemGreenDark:
+            return UIColor.systemGreen.dark(brightnessRatio: 0.8)
+        case .systemBlueDark:
+            return UIColor.systemBlue.dark(brightnessRatio: 0.8)
+        case .blueDark:
+            return UIColor.blue.dark(brightnessRatio: 0.8)
+        case .systemPinkDark:
+            return UIColor.systemPink.dark(brightnessRatio: 0.8)
+        }
+    }
+}
+
+enum Alpha: Int, CaseIterable {
+    case alpha01
+    case alpha02
+    case alpha03
+    case alpha04
+    case alpha05
+    case alpha06
+    case alpha07
+
+    var alpha: CGFloat {
+        switch self {
+        case .alpha01:
+            return 0.4
+        case .alpha02:
+            return 0.5
+        case .alpha03:
+            return 0.6
+        case .alpha04:
+            return 0.7
+        case .alpha05:
+            return 0.8
+        case .alpha06:
+            return 0.9
+        case .alpha07:
+            return 1
         }
     }
 }
