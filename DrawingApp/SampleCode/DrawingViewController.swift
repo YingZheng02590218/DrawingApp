@@ -203,10 +203,6 @@ class DrawingViewController: UIViewController {
             
             //            canvas.isHidden = false
             pdfDrawer.isActive = true
-            colorStackView?.isHidden = false
-            colorDarkStackView?.isHidden = false
-            colorAlphaStackView?.isHidden = false
-            toolStackView?.isHidden = false
         } else {
             pdfView.removeGestureRecognizer(pdfDrawingGestureRecognizer)
             // 手書きのアノテーションを追加する処理
@@ -214,6 +210,14 @@ class DrawingViewController: UIViewController {
             
             //            canvas.isHidden = true
             pdfDrawer.isActive = false
+        }
+        
+        if drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle || drawingMode == .text {
+            colorStackView?.isHidden = false
+            colorDarkStackView?.isHidden = false
+            colorAlphaStackView?.isHidden = false
+            toolStackView?.isHidden = false
+        } else {
             colorStackView?.isHidden = true
             colorDarkStackView?.isHidden = true
             colorAlphaStackView?.isHidden = true
@@ -1010,7 +1014,7 @@ class DrawingViewController: UIViewController {
                 .linePoints: [beganLocation.x, beganLocation.y, endLocation.x, endLocation.y],
                 .lineEndingStyles: [PDFAnnotationLineEndingStyle.none,
                                     PDFAnnotationLineEndingStyle.none],
-                .color: UIColor.red,
+                .color: selectedColorWithAlpha ?? UIColor.red,
                 .border: border
             ]
             let lineAnnotation = PDFAnnotation(
@@ -1058,7 +1062,7 @@ class DrawingViewController: UIViewController {
                 .linePoints: [beganLocation.x, beganLocation.y, endLocation.x, endLocation.y],
                 .lineEndingStyles: [PDFAnnotationLineEndingStyle.none,
                                     PDFAnnotationLineEndingStyle.closedArrow],
-                .color: UIColor.red,
+                .color: selectedColorWithAlpha ?? UIColor.red,
                 .border: border
             ]
             let lineAnnotation = PDFAnnotation(
@@ -1103,7 +1107,7 @@ class DrawingViewController: UIViewController {
             
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
-                .color: UIColor.green,
+                .color: selectedColorWithAlpha ?? UIColor.green,
                 .border: border
             ]
             
@@ -1150,7 +1154,7 @@ class DrawingViewController: UIViewController {
             
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
-                .color: UIColor.green,
+                .color: selectedColorWithAlpha ?? UIColor.blue,
                 .border: border
             ]
             
@@ -1207,6 +1211,7 @@ class DrawingViewController: UIViewController {
             freeText.alignment = .left
             // フォントサイズ
             freeText.font = font
+            freeText.fontColor = selectedColorWithAlpha ?? UIColor.systemPink
             // UUID
             freeText.userName = UUID().uuidString
             // 対象のページへ注釈を追加
@@ -1260,6 +1265,7 @@ class DrawingViewController: UIViewController {
                 after.alignment = .left
                 // フォントサイズ
                 after.font = font
+                after.fontColor = selectedColorWithAlpha ?? UIColor.systemPink
                 // UUID
                 after.userName = UUID().uuidString
                 // Annotationを再度作成
