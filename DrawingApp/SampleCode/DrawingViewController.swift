@@ -213,20 +213,26 @@ class DrawingViewController: UIViewController {
             pdfDrawer.isActive = false
         }
         
-        if drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle || drawingMode == .text {
+        if drawingMode == .photoMarker || drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle || drawingMode == .text {
             propertyEditorScrollView?.isHidden = false
-            colorStackView?.isHidden = false
-            colorDarkStackView?.isHidden = false
-            colorAlphaStackView?.isHidden = false
-            lineStyleStackView?.isHidden = false
-//            toolStackView?.isHidden = false
+            
+            if drawingMode == .photoMarker || drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle || drawingMode == .text {
+                colorPaletteView.isHidden = false
+                alphaPaletteView.isHidden = false
+                if drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle {
+                    colorLineStyleView.isHidden = false
+                } else {
+                    colorLineStyleView.isHidden = true
+                }
+            } else {
+                colorPaletteView.isHidden = true
+                alphaPaletteView.isHidden = true
+            }
         } else {
             propertyEditorScrollView?.isHidden = true
-            colorStackView?.isHidden = true
-            colorDarkStackView?.isHidden = true
-            colorAlphaStackView?.isHidden = true
-            lineStyleStackView?.isHidden = true
-//            toolStackView?.isHidden = true
+            colorPaletteView.isHidden = true
+            alphaPaletteView.isHidden = true
+            colorLineStyleView.isHidden = true
         }
     }
     
@@ -825,7 +831,6 @@ class DrawingViewController: UIViewController {
                 colorStackView.widthAnchor.constraint(greaterThanOrEqualToConstant: colorPaletteView.bounds.width / 3),
                 colorStackView.heightAnchor.constraint(equalToConstant: 70)
             ])
-            colorStackView.isHidden = true
             //            // stackViewにnewViewを追加する
             //            propertyEditorStackView.addArrangedSubview(colorPaletteView)
             //            // これだとダメ
@@ -871,7 +876,6 @@ class DrawingViewController: UIViewController {
                 colorDarkStackView.widthAnchor.constraint(greaterThanOrEqualToConstant: colorPaletteView.bounds.width / 3),
                 colorDarkStackView.heightAnchor.constraint(equalToConstant: 70)
             ])
-            colorDarkStackView.isHidden = true
             // stackViewにnewViewを追加する
             propertyEditorStackView.addArrangedSubview(colorPaletteView)
             // これだとダメ
@@ -926,7 +930,6 @@ class DrawingViewController: UIViewController {
                 colorAlphaStackView.widthAnchor.constraint(greaterThanOrEqualToConstant: alphaPaletteView.bounds.width / 3),
                 colorAlphaStackView.heightAnchor.constraint(equalToConstant: 70)
             ])
-            colorAlphaStackView.isHidden = true
             // stackViewにnewViewを追加する
             propertyEditorStackView.addArrangedSubview(alphaPaletteView)
             // これだとダメ
@@ -985,7 +988,6 @@ class DrawingViewController: UIViewController {
                 lineStyleStackView.widthAnchor.constraint(greaterThanOrEqualToConstant: colorLineStyleView.bounds.width / 3),
                 lineStyleStackView.heightAnchor.constraint(equalToConstant: 70)
             ])
-            lineStyleStackView.isHidden = true
             // stackViewにnewViewを追加する
             propertyEditorStackView.addArrangedSubview(colorLineStyleView)
             // これだとダメ
