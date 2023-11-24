@@ -214,12 +214,14 @@ class DrawingViewController: UIViewController {
         }
         
         if drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle || drawingMode == .text {
+            propertyEditorScrollView?.isHidden = false
             colorStackView?.isHidden = false
             colorDarkStackView?.isHidden = false
             colorAlphaStackView?.isHidden = false
             lineStyleStackView?.isHidden = false
 //            toolStackView?.isHidden = false
         } else {
+            propertyEditorScrollView?.isHidden = true
             colorStackView?.isHidden = true
             colorDarkStackView?.isHidden = true
             colorAlphaStackView?.isHidden = true
@@ -676,6 +678,9 @@ class DrawingViewController: UIViewController {
     let pdfDrawingGestureRecognizer = DrawingGestureRecognizer()
     // 手書き　ツール
 //    var toolStackView: UIStackView?
+    
+    // プロパティ変更パネル
+    @IBOutlet var propertyEditorScrollView: UIScrollView!
     // プロパティ変更パネル
     @IBOutlet var propertyEditorStackView: UIStackView!
     // 手書き　カラーパレット
@@ -695,10 +700,14 @@ class DrawingViewController: UIViewController {
     // 手書き　線のスタイル
     var lineStyleStackView: UIStackView?
 
+    // 手書き プロパティ変更パネル 閉じる
+    var propertyEditorCloseButtonView = UIView()
+
     // 選択されたカラー
     var selectedColor: UIColor = .black
     // 選択された透明度
     var selectedAlpha: Alpha = .alpha07
+    
     // 手書きパレット
     func createButtons() {
         
@@ -713,6 +722,8 @@ class DrawingViewController: UIViewController {
         createAlphaButtons()
         // 手書き 書式　線のスタイル
         createLineStylesButtons()
+        // 手書き プロパティ変更パネル 閉じる
+        createPropertyEditorCloseButton()
         
 //        //Setup tools
 //        let crayonButton = createButton(title: "Crayon", action: UIAction(handler: { _ in
@@ -979,6 +990,40 @@ class DrawingViewController: UIViewController {
         }
     }
 
+    // 手書き プロパティ変更パネル 閉じる
+    func createPropertyEditorCloseButton() {
+        
+        let button = UIButton(
+            primaryAction: UIAction(handler: { action in
+                self.cloSepropertyEditor(sender: action.sender)
+            })
+        )
+        button.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+        button.widthAnchor.constraint(equalToConstant: 100).isActive = true
+        button.setTitle("閉じる", for: .normal)
+        button.setTitleColor(.yellow, for: .normal)
+        button.setTitleColor(.systemPink, for: .selected)
+
+        button.backgroundColor = .blue
+        // アイコン画像の色を指定する
+        button.tintColor = .black
+        
+        propertyEditorCloseButtonView.addSubview(button)
+        
+        button.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            button.topAnchor.constraint(equalTo: propertyEditorCloseButtonView.topAnchor, constant: 10),
+            button.centerXAnchor.constraint(equalTo: propertyEditorCloseButtonView.centerXAnchor),
+            button.widthAnchor.constraint(greaterThanOrEqualToConstant: propertyEditorCloseButtonView.bounds.width / 3),
+            button.heightAnchor.constraint(equalToConstant: 70)
+        ])
+        // stackViewにnewViewを追加する
+        propertyEditorStackView.addArrangedSubview(propertyEditorCloseButtonView)
+        // これだとダメ
+        //stackView.addSubview(newView)
+    }
+    
     //helper function for creating the tools
     private func createButton(title: String, action: UIAction) -> UIButton {
         let button = UIButton(type: .system, primaryAction: action)
@@ -1040,6 +1085,13 @@ class DrawingViewController: UIViewController {
 
             dashPattern = pattern
             pdfDrawer.changeDashPattern(dashPattern: dashPattern)
+        }
+    }
+    
+    // 手書き プロパティ変更パネル 閉じる
+    private func cloSepropertyEditor(sender: Any?) {
+        if let button = sender as? UIButton {
+            propertyEditorScrollView?.isHidden = true
         }
     }
     

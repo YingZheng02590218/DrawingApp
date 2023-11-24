@@ -82,6 +82,7 @@
                         <outlet property="imageView" destination="wyC-tR-cRF" id="e5K-om-mAq"/>
                         <outlet property="pdfThumbnailView" destination="R6r-5K-aKJ" id="6Lo-KX-S4F"/>
                         <outlet property="pdfView" destination="J4D-Iu-fd1" id="W4e-uc-3eC"/>
+                        <outlet property="propertyEditorScrollView" destination="10C-Sg-UZp" id="aLg-oL-C1N"/>
                         <outlet property="propertyEditorStackView" destination="rzV-qx-Ag7" id="Anr-Gp-Ph0"/>
                     </connections>
                 </viewController>
