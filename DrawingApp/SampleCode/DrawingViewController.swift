@@ -580,11 +580,14 @@ class DrawingViewController: UIViewController {
             let size = "\(unusedNumber)".size(with: font)
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
-                .color: UIColor.green.withAlphaComponent(0.5),
+                .color: selectedColor.withAlphaComponent(selectedAlpha.alpha),
                 .contents: "\(unusedNumber)",
             ]
             
             let freeText = PhotoAnnotation(bounds: CGRect(x: point.x, y: point.y, width: size.width + 5, height: size.height + 5), forType: .freeText, withProperties: lineAttributes)
+            // フォントサイズ
+            freeText.font = font
+            freeText.fontColor = .white
             // UUID
             freeText.userName = UUID().uuidString
             // 対象のページへ注釈を追加
