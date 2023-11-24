@@ -801,7 +801,7 @@ class DrawingReportEditViewController: UIViewController {
     private func updateDashPattern(sender: Any?) {
         if let button = sender as? UIButton,
            let pattern = DashPattern(rawValue: button.tag) {
-
+            // 線のスタイル
             dashPattern = pattern
             pdfDrawer.changeDashPattern(dashPattern: dashPattern)
         }

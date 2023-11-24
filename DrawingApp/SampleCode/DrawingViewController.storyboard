@@ -35,10 +35,10 @@
                                     <constraint firstAttribute="width" secondItem="wyC-tR-cRF" secondAttribute="height" multiplier="223:295" id="9Wc-JQ-b5g"/>
                                 </constraints>
                             </imageView>
-                            <scrollView hidden="YES" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" placeholderIntrinsicWidth="0.0" placeholderIntrinsicHeight="129" translatesAutoresizingMaskIntoConstraints="NO" id="10C-Sg-UZp">
+                            <scrollView hidden="YES" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" ambiguous="YES" placeholderIntrinsicWidth="0.0" placeholderIntrinsicHeight="0.0" translatesAutoresizingMaskIntoConstraints="NO" id="10C-Sg-UZp">
                                 <rect key="frame" x="266" y="74" width="112" height="729"/>
                                 <subviews>
-                                    <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" distribution="fillProportionally" translatesAutoresizingMaskIntoConstraints="NO" id="rzV-qx-Ag7">
+                                    <stackView opaque="NO" contentMode="scaleToFill" ambiguous="YES" axis="vertical" distribution="fillProportionally" spacing="50" translatesAutoresizingMaskIntoConstraints="NO" id="rzV-qx-Ag7">
                                         <rect key="frame" x="5" y="5" width="102" height="719"/>
                                         <color key="backgroundColor" systemColor="systemOrangeColor"/>
                                     </stackView>
@@ -50,7 +50,6 @@
                                     <constraint firstItem="rzV-qx-Ag7" firstAttribute="bottom" secondItem="6cn-jX-cr7" secondAttribute="bottom" constant="5" id="MqP-Rh-fO4"/>
                                     <constraint firstItem="6cn-jX-cr7" firstAttribute="leading" secondItem="rzV-qx-Ag7" secondAttribute="leading" constant="-5" id="a7w-R3-dsT"/>
                                     <constraint firstItem="6cn-jX-cr7" firstAttribute="top" secondItem="rzV-qx-Ag7" secondAttribute="top" constant="-5" id="fU8-YB-CX3"/>
-                                    <constraint firstItem="rzV-qx-Ag7" firstAttribute="height" secondItem="fg0-vi-R4A" secondAttribute="height" constant="-10" id="wmk-8K-QHY"/>
                                 </constraints>
                                 <viewLayoutGuide key="contentLayoutGuide" id="6cn-jX-cr7"/>
                                 <viewLayoutGuide key="frameLayoutGuide" id="fg0-vi-R4A"/>
