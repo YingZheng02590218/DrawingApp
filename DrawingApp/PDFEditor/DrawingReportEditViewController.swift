@@ -23,6 +23,8 @@ class DrawingReportEditViewController: UIViewController {
         setupPdfView()
         // PDF Annotationがタップされたかを監視
         setupAnnotationRecognizer()
+        // 手書きパレット
+        createButtons()
     }
     
     override func viewWillLayoutSubviews() {
@@ -149,6 +151,45 @@ class DrawingReportEditViewController: UIViewController {
         } else {
             pdfView.maxScaleFactor = 5.0
             pdfView.minScaleFactor = 0.25
+        }
+        
+        if drawingMode == .drawing {
+            pdfView.addGestureRecognizer(pdfDrawingGestureRecognizer)
+            pdfDrawingGestureRecognizer.drawingDelegate = pdfDrawer
+            pdfDrawer.pdfView = pdfView
+            pdfDrawer.color = selectedColor.withAlphaComponent(selectedAlpha.alpha)
+            // 手書きのアノテーションを追加する処理
+            pdfDrawer.drawingManageAnnotationDelegate = self
+            
+            pdfDrawer.isActive = true
+        } else {
+            pdfView.removeGestureRecognizer(pdfDrawingGestureRecognizer)
+            // 手書きのアノテーションを追加する処理
+            pdfDrawer.drawingManageAnnotationDelegate = nil
+            
+            pdfDrawer.isActive = false
+        }
+        
+        if drawingMode == .photoMarker || drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle || drawingMode == .text {
+            propertyEditorScrollView?.isHidden = false
+            
+            if drawingMode == .photoMarker || drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle || drawingMode == .text {
+                colorPaletteView.isHidden = false
+                alphaPaletteView.isHidden = false
+                if drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle {
+                    colorLineStyleView.isHidden = false
+                } else {
+                    colorLineStyleView.isHidden = true
+                }
+            } else {
+                colorPaletteView.isHidden = true
+                alphaPaletteView.isHidden = true
+            }
+        } else {
+            propertyEditorScrollView?.isHidden = true
+            colorPaletteView.isHidden = true
+            alphaPaletteView.isHidden = true
+            colorLineStyleView.isHidden = true
         }
     }
     
@@ -359,11 +400,14 @@ class DrawingReportEditViewController: UIViewController {
             let size = "\(unusedNumber)".size(with: font)
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
-                .color: UIColor.green.withAlphaComponent(0.5),
+                .color: selectedColor.withAlphaComponent(selectedAlpha.alpha),
                 .contents: "\(unusedNumber)",
             ]
             
             let freeText = PhotoAnnotation(bounds: CGRect(x: point.x, y: point.y, width: size.width + 5, height: size.height + 5), forType: .freeText, withProperties: lineAttributes)
+            // フォントサイズ
+            freeText.font = font
+            freeText.fontColor = .white
             // UUID
             freeText.userName = UUID().uuidString
             // 対象のページへ注釈を追加
@@ -402,30 +446,394 @@ class DrawingReportEditViewController: UIViewController {
         }
     }
     
-    // 破線のパターン
-    enum DashPattern {
-        case pattern1
-        case pattern2
-        case pattern3
-        case pattern4
-        case pattern5
+    // MARK: - 手書きパレット
+    
+    private let pdfDrawer = PDFDrawer()
+    let pdfDrawingGestureRecognizer = DrawingGestureRecognizer()
+    
+    // プロパティ変更パネル
+    @IBOutlet var propertyEditorScrollView: UIScrollView!
+    // プロパティ変更パネル
+    @IBOutlet var propertyEditorStackView: UIStackView!
+    // 手書き　カラーパレット
+    var colorPaletteView = UIView()
+    // 手書き　カラー
+    var colorStackView: UIStackView?
+    // 手書き　ダークカラー
+    var colorDarkStackView: UIStackView?
+
+    // 手書き　カラーパレット 透明度
+    var alphaPaletteView = UIView()
+    // 手書き　透明度
+    var colorAlphaStackView: UIStackView?
+
+    // 手書き　書式　線のスタイル
+    var colorLineStyleView = UIView()
+    // 手書き　線のスタイル
+    var lineStyleStackView: UIStackView?
+
+    // 手書き プロパティ変更パネル 閉じる
+    var propertyEditorCloseButtonView = UIView()
+
+    // 選択されたカラー
+    var selectedColor: UIColor = .black
+    // 選択された透明度
+    var selectedAlpha: Alpha = .alpha07
+    
+    // 手書きパレット
+    func createButtons() {
         
-        var style: [CGFloat] {
-            switch self {
-            case .pattern1:
-                return [1.0]
-            case .pattern2:
-                return [30.0, 10.0]
-            case .pattern3:
-                return [40.0, 20.0]
-            case .pattern4:
-                return [50.0, 5.0, 5.0, 5.0]
-            case .pattern5:
-                return [50.0, 5.0, 5.0, 5.0, 5.0, 5.0]
-            }
+        colorPaletteView.bounds = propertyEditorStackView.bounds
+        alphaPaletteView.bounds = propertyEditorStackView.bounds
+        colorLineStyleView.bounds = propertyEditorStackView.bounds
+        // 手書きパレット カラー
+        createColorButtons()
+        // 手書きパレット ダーク
+        createDarkButtons()
+        // 手書きパレット 透明度
+        createAlphaButtons()
+        // 手書き 書式　線のスタイル
+        createLineStylesButtons()
+        // 手書き プロパティ変更パネル 閉じる
+        createPropertyEditorCloseButton()
+    }
+    
+    // 手書きパレット カラー
+    func createColorButtons() {
+        // ラベル
+        let label = UILabel()
+        label.text = "色の選択"
+        label.backgroundColor = UIColor.systemPink.withAlphaComponent(0.3)
+        // LabelをaddSubview
+        colorPaletteView.addSubview(label)
+        // labelが左上に配置されるように制約を追加
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.topAnchor.constraint(equalTo: colorPaletteView.topAnchor, constant: 10.0).isActive = true
+        label.leadingAnchor.constraint(equalTo: colorPaletteView.leadingAnchor, constant: 10.0).isActive = true
+        
+        //Create the color palette
+        var buttons: [UIButton] = []
+        for color in Colors.allCases {
+            let button = UIButton(
+                primaryAction: UIAction(handler: { action in
+                    self.updatePens(sender: action.sender)
+                })
+            )
+            button.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+            button.widthAnchor.constraint(equalToConstant: 50.0).isActive = true
+            button.makeRounded(25, borderWidth: 3, borderColor: .black)
+            button.backgroundColor = color.getColor()
+            button.tag = color.rawValue
+            buttons.append(button)
+        }
+        // 色の選択
+        colorStackView = UIStackView(arrangedSubviews: buttons)
+        colorStackView?.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.3)
+        colorStackView?.bounds = colorPaletteView.bounds
+        if let colorStackView = colorStackView {
+            colorStackView.axis = .horizontal
+            colorStackView.distribution = .equalSpacing
+            colorStackView.alignment = .center
+            
+            colorPaletteView.addSubview(colorStackView)
+            
+            colorStackView.translatesAutoresizingMaskIntoConstraints = false
+            
+            NSLayoutConstraint.activate([
+                colorStackView.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 10),
+                colorStackView.centerXAnchor.constraint(equalTo: colorPaletteView.centerXAnchor),
+                colorStackView.widthAnchor.constraint(greaterThanOrEqualToConstant: colorPaletteView.bounds.width / 3),
+                colorStackView.heightAnchor.constraint(equalToConstant: 70)
+            ])
+            //            // stackViewにnewViewを追加する
+            //            propertyEditorStackView.addArrangedSubview(colorPaletteView)
+            //            // これだとダメ
+            //            //stackView.addSubview(newView)
         }
     }
     
+    // 手書きパレット ダーク
+    func createDarkButtons() {
+        //Create the color palette ダーク
+        var buttonsDark: [UIButton] = []
+        
+        for color in ColorsDark.allCases {
+            let button = UIButton(
+                primaryAction: UIAction(handler: { action in
+                    self.updateDarkPens(sender: action.sender)
+                })
+            )
+            button.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+            button.widthAnchor.constraint(equalToConstant: 50.0).isActive = true
+            button.makeRounded(25, borderWidth: 3, borderColor: .black)
+            button.backgroundColor = color.getColor()
+            button.tag = color.rawValue
+            buttonsDark.append(button)
+        }
+        // 色の選択 ダーク
+        colorDarkStackView = UIStackView(arrangedSubviews: buttonsDark)
+        colorDarkStackView?.backgroundColor = UIColor.blue.withAlphaComponent(0.3)
+        colorDarkStackView?.bounds = colorPaletteView.bounds
+        if let colorStackView = colorStackView,
+           let colorDarkStackView = colorDarkStackView {
+            colorDarkStackView.axis = .horizontal
+            colorDarkStackView.distribution = .equalSpacing
+            colorDarkStackView.alignment = .center
+            
+            colorPaletteView.addSubview(colorDarkStackView)
+            
+            colorDarkStackView.translatesAutoresizingMaskIntoConstraints = false
+            
+            NSLayoutConstraint.activate([
+                colorDarkStackView.topAnchor.constraint(equalTo: colorStackView.bottomAnchor, constant: 0),
+                colorDarkStackView.centerXAnchor.constraint(equalTo: colorPaletteView.centerXAnchor),
+                colorDarkStackView.widthAnchor.constraint(greaterThanOrEqualToConstant: colorPaletteView.bounds.width / 3),
+                colorDarkStackView.heightAnchor.constraint(equalToConstant: 70)
+            ])
+            // stackViewにnewViewを追加する
+            propertyEditorStackView.addArrangedSubview(colorPaletteView)
+            // これだとダメ
+            //stackView.addSubview(newView)
+        }
+    }
+    
+    // 手書きパレット 透明度
+    func createAlphaButtons() {
+        let label = UILabel()
+        label.text = "透明度の選択"
+        label.backgroundColor = UIColor.systemPink.withAlphaComponent(0.3)
+        // LabelをaddSubview
+        alphaPaletteView.addSubview(label)
+        // labelが左上に配置されるように制約を追加
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.topAnchor.constraint(equalTo: alphaPaletteView.topAnchor, constant: 10.0).isActive = true
+        label.leadingAnchor.constraint(equalTo: alphaPaletteView.leadingAnchor, constant: 10.0).isActive = true
+
+        //Create the color palette 透明度
+        var buttonsAlpha: [UIButton] = []
+        
+        for alpha in Alpha.allCases {
+            let button = UIButton(
+                primaryAction: UIAction(handler: { action in
+                    self.updateAlphaPens(sender: action.sender)
+                })
+            )
+            button.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+            button.widthAnchor.constraint(equalToConstant: 50.0).isActive = true
+            button.makeRounded(25, borderWidth: 3, borderColor: .black)
+            button.backgroundColor = selectedColor.withAlphaComponent(alpha.alpha)
+            button.tag = alpha.rawValue
+            buttonsAlpha.append(button)
+        }
+        // 色の選択 透明度
+        colorAlphaStackView = UIStackView(arrangedSubviews: buttonsAlpha)
+        colorAlphaStackView?.backgroundColor = UIColor.orange.withAlphaComponent(0.3)
+        colorAlphaStackView?.bounds = colorPaletteView.bounds
+        if let colorAlphaStackView = colorAlphaStackView {
+            colorAlphaStackView.axis = .horizontal
+            colorAlphaStackView.distribution = .equalSpacing
+            colorAlphaStackView.alignment = .center
+            
+            alphaPaletteView.addSubview(colorAlphaStackView)
+            
+            colorAlphaStackView.translatesAutoresizingMaskIntoConstraints = false
+            
+            NSLayoutConstraint.activate([
+                colorAlphaStackView.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 0),
+                colorAlphaStackView.centerXAnchor.constraint(equalTo: alphaPaletteView.centerXAnchor),
+                colorAlphaStackView.widthAnchor.constraint(greaterThanOrEqualToConstant: alphaPaletteView.bounds.width / 3),
+                colorAlphaStackView.heightAnchor.constraint(equalToConstant: 70)
+            ])
+            // stackViewにnewViewを追加する
+            propertyEditorStackView.addArrangedSubview(alphaPaletteView)
+            // これだとダメ
+            //stackView.addSubview(newView)
+        }
+    }
+    
+    // 手書き 書式　線のスタイル
+    func createLineStylesButtons() {
+        // ラベル
+        let label = UILabel()
+        label.text = "線のスタイル"
+        label.backgroundColor = UIColor.systemPink.withAlphaComponent(0.3)
+        // LabelをaddSubview
+        colorLineStyleView.addSubview(label)
+        // labelが左上に配置されるように制約を追加
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.topAnchor.constraint(equalTo: colorLineStyleView.topAnchor, constant: 10.0).isActive = true
+        label.leadingAnchor.constraint(equalTo: colorLineStyleView.leadingAnchor, constant: 10.0).isActive = true
+        
+        //Create the color palette
+        var buttons: [UIButton] = []
+        
+        for dashPattern in DashPattern.allCases {
+            let button = UIButton(
+                primaryAction: UIAction(handler: { action in
+                    self.updateDashPattern(sender: action.sender)
+                })
+            )
+            button.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+            button.widthAnchor.constraint(equalToConstant: 50.0).isActive = true
+// button.makeRounded(25, borderWidth: 3, borderColor: .black)
+            button.backgroundColor = .clear
+            // アイコン画像の色を指定する
+            button.tintColor = .black
+            button.setImage(dashPattern.getIcon(), for: UIControl.State.normal)
+            button.tag = dashPattern.rawValue
+            buttons.append(button)
+        }
+        // 書式の選択　線のスタイル
+        lineStyleStackView = UIStackView(arrangedSubviews: buttons)
+        lineStyleStackView?.backgroundColor = UIColor.brown.withAlphaComponent(0.3)
+        lineStyleStackView?.bounds = colorPaletteView.bounds
+        if let lineStyleStackView = lineStyleStackView {
+            lineStyleStackView.axis = .horizontal
+            lineStyleStackView.distribution = .equalSpacing
+            lineStyleStackView.alignment = .center
+            
+            colorLineStyleView.addSubview(lineStyleStackView)
+            
+            lineStyleStackView.translatesAutoresizingMaskIntoConstraints = false
+            
+            NSLayoutConstraint.activate([
+                lineStyleStackView.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 10),
+                lineStyleStackView.centerXAnchor.constraint(equalTo: colorLineStyleView.centerXAnchor),
+                lineStyleStackView.widthAnchor.constraint(greaterThanOrEqualToConstant: colorLineStyleView.bounds.width / 3),
+                lineStyleStackView.heightAnchor.constraint(equalToConstant: 70)
+            ])
+            // stackViewにnewViewを追加する
+            propertyEditorStackView.addArrangedSubview(colorLineStyleView)
+            // これだとダメ
+            //stackView.addSubview(newView)
+        }
+    }
+
+    // 手書き プロパティ変更パネル 閉じる
+    func createPropertyEditorCloseButton() {
+        
+        let button = UIButton(
+            primaryAction: UIAction(handler: { action in
+                self.cloSepropertyEditor(sender: action.sender)
+            })
+        )
+        button.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+        button.widthAnchor.constraint(equalToConstant: 100).isActive = true
+        button.setTitle("閉じる", for: .normal)
+        button.setTitleColor(.yellow, for: .normal)
+        button.setTitleColor(.systemPink, for: .selected)
+
+        button.backgroundColor = .blue
+        // アイコン画像の色を指定する
+        button.tintColor = .black
+        
+        propertyEditorCloseButtonView.addSubview(button)
+        
+        button.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            button.topAnchor.constraint(equalTo: propertyEditorCloseButtonView.topAnchor, constant: 10),
+            button.centerXAnchor.constraint(equalTo: propertyEditorCloseButtonView.centerXAnchor),
+            button.widthAnchor.constraint(greaterThanOrEqualToConstant: propertyEditorCloseButtonView.bounds.width / 3),
+            button.heightAnchor.constraint(equalToConstant: 70)
+        ])
+        // stackViewにnewViewを追加する
+        propertyEditorStackView.addArrangedSubview(propertyEditorCloseButtonView)
+        // これだとダメ
+        //stackView.addSubview(newView)
+    }
+    
+    //helper function for creating the tools
+    private func createButton(title: String, action: UIAction) -> UIButton {
+        let button = UIButton(type: .system, primaryAction: action)
+        button.frame = CGRect(x: 0, y: 0, width: 150, height: 50)
+        button.setTitle(title, for: .normal)
+        button.tintColor = .lightGray
+        button.makeRounded(10, borderWidth: 2, borderColor: .black)
+        return button
+    }
+    
+    // カラーパレット
+    private func updatePens(sender: Any?) {
+        if let button = sender as? UIButton,
+           let color = Colors(rawValue: button.tag) {
+            // 選択されたカラー
+            selectedColor = color.getColor()
+            // 手書きパレット 透明度
+            colorAlphaStackView?.arrangedSubviews.map {
+                if let alpha = Alpha(rawValue: $0.tag) {
+                    print(alpha)
+                    $0.backgroundColor = selectedColor.withAlphaComponent(alpha.alpha)
+                }
+            }
+            pdfDrawer.changeColor(color: selectedColor.withAlphaComponent(selectedAlpha.alpha))
+        }
+    }
+    
+    // カラーパレット ダーク
+    private func updateDarkPens(sender: Any?) {
+        if let button = sender as? UIButton,
+           let color = ColorsDark(rawValue: button.tag) {
+            // 選択されたカラー
+            selectedColor = color.getColor()
+            // 手書きパレット 透明度
+            colorAlphaStackView?.arrangedSubviews.map {
+                if let alpha = Alpha(rawValue: $0.tag) {
+                    print(alpha)
+                    $0.backgroundColor = selectedColor.withAlphaComponent(alpha.alpha)
+                }
+            }
+            pdfDrawer.changeColor(color: selectedColor.withAlphaComponent(selectedAlpha.alpha))
+        }
+    }
+    
+    // カラーパレット 透明度
+    private func updateAlphaPens(sender: Any?) {
+        if let button = sender as? UIButton,
+           let alpha = Alpha(rawValue: button.tag) {
+            // 選択された透明度
+            selectedAlpha = alpha
+            pdfDrawer.changeColor(color: selectedColor.withAlphaComponent(selectedAlpha.alpha))
+        }
+    }
+
+    // カラーパレット 破線のパターン
+    private func updateDashPattern(sender: Any?) {
+        if let button = sender as? UIButton,
+           let pattern = DashPattern(rawValue: button.tag) {
+
+            dashPattern = pattern
+            pdfDrawer.changeDashPattern(dashPattern: dashPattern)
+        }
+    }
+    
+    // 手書き プロパティ変更パネル 閉じる
+    private func cloSepropertyEditor(sender: Any?) {
+        if let button = sender as? UIButton {
+            propertyEditorScrollView?.isHidden = true
+        }
+    }
+    
+    // 手書きや図形を追加する
+    func addDrawingAnotation(annotation: DrawingAnnotation) {
+        // 現在開いているページを取得
+        if let page = self.pdfView.currentPage {
+            // UUID
+            annotation.userName = UUID().uuidString
+            // 対象のページへ注釈を追加
+            page.addAnnotation(annotation)
+            
+            // Undo Redo
+            undoRedoManager.addAnnotation(annotation)
+            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+            })
+            // ボタン　活性状態
+            undoButton.isEnabled = undoRedoManager.canUndo()
+            redoButton.isEnabled = undoRedoManager.canRedo()
+        }
+    }
     // MARK: - 図形
     
     // 起点
@@ -456,14 +864,14 @@ class DrawingReportEditViewController: UIViewController {
             let border = PDFBorder()
             border.lineWidth = 10
             border.style = dashPattern == .pattern1 ? .solid : .dashed
-            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
-            
+            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style(width: 10) // TODO: width
+
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
                 .linePoints: [beganLocation.x, beganLocation.y, endLocation.x, endLocation.y],
                 .lineEndingStyles: [PDFAnnotationLineEndingStyle.none,
                                     PDFAnnotationLineEndingStyle.none],
-                .color: UIColor.red,
+                .color: selectedColor.withAlphaComponent(selectedAlpha.alpha),
                 .border: border
             ]
             let lineAnnotation = PDFAnnotation(
@@ -504,14 +912,14 @@ class DrawingReportEditViewController: UIViewController {
             let border = PDFBorder()
             border.lineWidth = 10
             border.style = dashPattern == .pattern1 ? .solid : .dashed
-            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
-            
+            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style(width: 10) // TODO: width
+
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
                 .linePoints: [beganLocation.x, beganLocation.y, endLocation.x, endLocation.y],
                 .lineEndingStyles: [PDFAnnotationLineEndingStyle.none,
                                     PDFAnnotationLineEndingStyle.closedArrow],
-                .color: UIColor.red,
+                .color: selectedColor.withAlphaComponent(selectedAlpha.alpha),
                 .border: border
             ]
             let lineAnnotation = PDFAnnotation(
@@ -552,11 +960,11 @@ class DrawingReportEditViewController: UIViewController {
             let border = PDFBorder()
             border.lineWidth = 5.0
             border.style = dashPattern == .pattern1 ? .solid : .dashed
-            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
-            
+            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style(width: 10) // TODO: width
+
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
-                .color: UIColor.green,
+                .color: selectedColor.withAlphaComponent(selectedAlpha.alpha),
                 .border: border
             ]
             
@@ -599,11 +1007,11 @@ class DrawingReportEditViewController: UIViewController {
             let border = PDFBorder()
             border.lineWidth = 2.0
             border.style = dashPattern == .pattern1 ? .solid : .dashed
-            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style
-            
+            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style(width: 10) // TODO: width
+
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
-                .color: UIColor.green,
+                .color: selectedColor.withAlphaComponent(selectedAlpha.alpha),
                 .border: border
             ]
             
@@ -652,10 +1060,15 @@ class DrawingReportEditViewController: UIViewController {
             ]
             
             let freeText = PDFAnnotation(
-                bounds: CGRect(x: point.x, y: point.y, width: size.width + 5, height: size.height + 5),
+                bounds: CGRect(x: point.x, y: point.y, width: size.width * 1.1, height: size.height),
                 forType: .freeText,
                 withProperties: attributes
             )
+            // 左寄せ
+            freeText.alignment = .left
+            // フォントサイズ
+            freeText.font = font
+            freeText.fontColor = selectedColor.withAlphaComponent(selectedAlpha.alpha)
             // UUID
             freeText.userName = UUID().uuidString
             // 対象のページへ注釈を追加
@@ -697,12 +1110,17 @@ class DrawingReportEditViewController: UIViewController {
                 after.bounds = CGRect(
                     x: after.bounds.origin.x,
                     y: after.bounds.origin.y,
-                    width: size.width + 5,
-                    height: size.height + 5
+                    width: size.width * 1.1,
+                    height: size.height
                 )
                 after.contents = inputText
                 after.setValue(UIColor.yellow.withAlphaComponent(0.5), forAnnotationKey: .color)
                 after.page = before.page
+                // 左寄せ
+                after.alignment = .left
+                // フォントサイズ
+                after.font = font
+                after.fontColor = selectedColor.withAlphaComponent(selectedAlpha.alpha)
                 // UUID
                 after.userName = UUID().uuidString
                 // Annotationを再度作成
@@ -845,6 +1263,13 @@ class DrawingReportEditViewController: UIViewController {
     }
 }
 
+// 手書きのアノテーションを追加する処理
+extension DrawingReportEditViewController: DrawingManageAnnotationDelegate {
+    func addAnnotation(_ currentAnnotation: DrawingAnnotation) {
+        
+        addDrawingAnotation(annotation: currentAnnotation)
+    }
+}
 
 extension DrawingReportEditViewController: UINavigationControllerDelegate {
     
@@ -890,7 +1315,9 @@ extension DrawingReportEditViewController: UIGestureRecognizerDelegate {
                 ) as? TextInputViewController {
                     viewController.modalPresentationStyle = .overCurrentContext
                     viewController.modalTransitionStyle = .crossDissolve
-                    present(viewController, animated: true, completion: nil)
+                    present(viewController, animated: true, completion: {
+                        viewController.fontSize = 15.0
+                    })
                 }
             }
         }
@@ -1135,6 +1562,45 @@ enum Alpha: Int, CaseIterable {
             return 0.9
         case .alpha07:
             return 1
+        }
+    }
+}
+
+// 破線のパターン
+enum DashPattern: Int, CaseIterable {
+    case pattern1
+    case pattern2
+    case pattern3
+    case pattern4
+    case pattern5
+    
+    func style(width: CGFloat) -> [CGFloat] {
+        switch self {
+        case .pattern1:
+            return [width * 1.0]
+        case .pattern2:
+            return [width * 2.0, width * 2.0]
+        case .pattern3:
+            return [width * 4.0, width * 4.0]
+        case .pattern4:
+            return [width * 6.0, width * 1.5, width * 1.0, width * 1.5]
+        case .pattern5:
+            return [width * 6.0, width * 1.5, width * 1.0, width * 1.5, width * 1.0, width * 1.5]
+        }
+    }
+    
+    func getIcon() -> UIImage {
+        switch self {
+        case .pattern1:
+            return UIImage(systemName: "line.diagonal")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
+        case .pattern2:
+            return UIImage(systemName: "line.diagonal")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
+        case .pattern3:
+            return UIImage(systemName: "line.diagonal")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
+        case .pattern4:
+            return UIImage(systemName: "line.diagonal")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
+        case .pattern5:
+            return UIImage(systemName: "line.diagonal")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
         }
     }
 }

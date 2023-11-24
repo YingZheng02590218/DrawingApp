@@ -35,7 +35,7 @@
                                     <constraint firstAttribute="width" secondItem="wyC-tR-cRF" secondAttribute="height" multiplier="223:295" id="9Wc-JQ-b5g"/>
                                 </constraints>
                             </imageView>
-                            <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" placeholderIntrinsicWidth="0.0" placeholderIntrinsicHeight="129" translatesAutoresizingMaskIntoConstraints="NO" id="10C-Sg-UZp">
+                            <scrollView hidden="YES" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" placeholderIntrinsicWidth="0.0" placeholderIntrinsicHeight="129" translatesAutoresizingMaskIntoConstraints="NO" id="10C-Sg-UZp">
                                 <rect key="frame" x="266" y="74" width="112" height="729"/>
                                 <subviews>
                                     <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" distribution="fillProportionally" translatesAutoresizingMaskIntoConstraints="NO" id="rzV-qx-Ag7">

@@ -2146,41 +2146,4 @@ extension DrawingViewController: UIGestureRecognizerDelegate {
 //        layer.borderColor = borderColor.cgColor
 //    }
 //}
-// 破線のパターン
-enum DashPattern: Int, CaseIterable {
-    case pattern1
-    case pattern2
-    case pattern3
-    case pattern4
-    case pattern5
-    
-    func style(width: CGFloat) -> [CGFloat] {
-        switch self {
-        case .pattern1:
-            return [width * 1.0]
-        case .pattern2:
-            return [width * 2.0, width * 2.0]
-        case .pattern3:
-            return [width * 4.0, width * 4.0]
-        case .pattern4:
-            return [width * 6.0, width * 1.5, width * 1.0, width * 1.5]
-        case .pattern5:
-            return [width * 6.0, width * 1.5, width * 1.0, width * 1.5, width * 1.0, width * 1.5]
-        }
-    }
-    
-    func getIcon() -> UIImage {
-        switch self {
-        case .pattern1:
-            return UIImage(systemName: "line.diagonal")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
-        case .pattern2:
-            return UIImage(systemName: "line.diagonal")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
-        case .pattern3:
-            return UIImage(systemName: "line.diagonal")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
-        case .pattern4:
-            return UIImage(systemName: "line.diagonal")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
-        case .pattern5:
-            return UIImage(systemName: "line.diagonal")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
-        }
-    }
-}
+
