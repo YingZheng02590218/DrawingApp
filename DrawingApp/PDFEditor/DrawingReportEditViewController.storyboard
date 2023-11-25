@@ -70,10 +70,10 @@
                                     <constraint firstItem="bNS-wq-s7F" firstAttribute="centerY" secondItem="579-FL-5fg" secondAttribute="centerY" id="rn4-eH-06m"/>
                                 </constraints>
                             </view>
-                            <scrollView hidden="YES" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" misplaced="YES" placeholderIntrinsicWidth="0.0" placeholderIntrinsicHeight="129" translatesAutoresizingMaskIntoConstraints="NO" id="Ixc-HG-RiJ">
+                            <scrollView hidden="YES" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" ambiguous="YES" misplaced="YES" placeholderIntrinsicWidth="0.0" placeholderIntrinsicHeight="0.0" translatesAutoresizingMaskIntoConstraints="NO" id="Ixc-HG-RiJ">
                                 <rect key="frame" x="270" y="119" width="107" height="686"/>
                                 <subviews>
-                                    <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" distribution="fillProportionally" translatesAutoresizingMaskIntoConstraints="NO" id="2a1-H5-BvC">
+                                    <stackView opaque="NO" contentMode="scaleToFill" ambiguous="YES" axis="vertical" distribution="fillProportionally" spacing="50" translatesAutoresizingMaskIntoConstraints="NO" id="2a1-H5-BvC">
                                         <rect key="frame" x="5" y="5" width="102" height="675"/>
                                         <color key="backgroundColor" systemColor="systemOrangeColor"/>
                                     </stackView>
@@ -85,7 +85,6 @@
                                     <constraint firstItem="Q04-m1-cj4" firstAttribute="top" secondItem="2a1-H5-BvC" secondAttribute="top" constant="-5" id="OKu-N5-7Kh"/>
                                     <constraint firstItem="2a1-H5-BvC" firstAttribute="bottom" secondItem="Q04-m1-cj4" secondAttribute="bottom" constant="5" id="V0c-tV-Bcu"/>
                                     <constraint firstItem="2a1-H5-BvC" firstAttribute="trailing" secondItem="Q04-m1-cj4" secondAttribute="trailing" constant="5" id="peM-n0-0of"/>
-                                    <constraint firstItem="2a1-H5-BvC" firstAttribute="height" secondItem="8tK-mu-iwg" secondAttribute="height" constant="-10" id="qOK-Di-bir"/>
                                 </constraints>
                                 <viewLayoutGuide key="contentLayoutGuide" id="Q04-m1-cj4"/>
                                 <viewLayoutGuide key="frameLayoutGuide" id="8tK-mu-iwg"/>

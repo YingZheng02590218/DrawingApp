@@ -172,14 +172,16 @@ class DrawingReportEditViewController: UIViewController {
         
         if drawingMode == .photoMarker || drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle || drawingMode == .text {
             propertyEditorScrollView?.isHidden = false
-            
+            propertyEditorCloseButtonView.isHidden = false
             if drawingMode == .photoMarker || drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle || drawingMode == .text {
                 colorPaletteView.isHidden = false
                 alphaPaletteView.isHidden = false
                 if drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle {
                     colorLineStyleView.isHidden = false
+                    sliderView.isHidden = false
                 } else {
                     colorLineStyleView.isHidden = true
+                    sliderView.isHidden = true
                 }
             } else {
                 colorPaletteView.isHidden = true
@@ -187,9 +189,11 @@ class DrawingReportEditViewController: UIViewController {
             }
         } else {
             propertyEditorScrollView?.isHidden = true
+            propertyEditorCloseButtonView.isHidden = true
             colorPaletteView.isHidden = true
             alphaPaletteView.isHidden = true
             colorLineStyleView.isHidden = true
+            sliderView.isHidden = true
         }
     }
     
@@ -472,6 +476,16 @@ class DrawingReportEditViewController: UIViewController {
     // 手書き　線のスタイル
     var lineStyleStackView: UIStackView?
 
+    // 手書き　書式　線の太さ
+    var sliderView = UIView()
+    // 手書き　書式　線の太さ
+    var sliderStackView: UIStackView?
+
+    var slider: UISlider?
+    var smallButton: UIButton?
+    var bigButton: UIButton?
+    var fontSizeLabel = UILabel()
+    
     // 手書き プロパティ変更パネル 閉じる
     var propertyEditorCloseButtonView = UIView()
 
@@ -479,13 +493,15 @@ class DrawingReportEditViewController: UIViewController {
     var selectedColor: UIColor = .black
     // 選択された透明度
     var selectedAlpha: Alpha = .alpha07
-    
+    // 選択された線の太さ
+    var selectedLineWidth: CGFloat = 15.0 {
+        didSet {
+            fontSizeLabel.text = "\(Int(selectedLineWidth)) px"
+        }
+    }
+
     // 手書きパレット
     func createButtons() {
-        
-        colorPaletteView.bounds = propertyEditorStackView.bounds
-        alphaPaletteView.bounds = propertyEditorStackView.bounds
-        colorLineStyleView.bounds = propertyEditorStackView.bounds
         // 手書きパレット カラー
         createColorButtons()
         // 手書きパレット ダーク
@@ -494,6 +510,8 @@ class DrawingReportEditViewController: UIViewController {
         createAlphaButtons()
         // 手書き 書式　線のスタイル
         createLineStylesButtons()
+        // 図形　線の太さ
+        createLineWidthSlider()
         // 手書き プロパティ変更パネル 閉じる
         createPropertyEditorCloseButton()
     }
@@ -506,6 +524,7 @@ class DrawingReportEditViewController: UIViewController {
         label.backgroundColor = UIColor.systemPink.withAlphaComponent(0.3)
         // LabelをaddSubview
         colorPaletteView.addSubview(label)
+        colorPaletteView.backgroundColor = UIColor.lightGray.withAlphaComponent(0.3)
         // labelが左上に配置されるように制約を追加
         label.translatesAutoresizingMaskIntoConstraints = false
         label.topAnchor.constraint(equalTo: colorPaletteView.topAnchor, constant: 10.0).isActive = true
@@ -529,20 +548,20 @@ class DrawingReportEditViewController: UIViewController {
         // 色の選択
         colorStackView = UIStackView(arrangedSubviews: buttons)
         colorStackView?.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.3)
-        colorStackView?.bounds = colorPaletteView.bounds
         if let colorStackView = colorStackView {
             colorStackView.axis = .horizontal
             colorStackView.distribution = .equalSpacing
             colorStackView.alignment = .center
             
             colorPaletteView.addSubview(colorStackView)
-            
+            colorPaletteView.heightAnchor.constraint(equalToConstant: label.bounds.height + 170).isActive = true
+
             colorStackView.translatesAutoresizingMaskIntoConstraints = false
             
             NSLayoutConstraint.activate([
-                colorStackView.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 10),
+                colorStackView.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 0),
                 colorStackView.centerXAnchor.constraint(equalTo: colorPaletteView.centerXAnchor),
-                colorStackView.widthAnchor.constraint(greaterThanOrEqualToConstant: colorPaletteView.bounds.width / 3),
+                colorStackView.widthAnchor.constraint(greaterThanOrEqualToConstant: colorPaletteView.bounds.width),
                 colorStackView.heightAnchor.constraint(equalToConstant: 70)
             ])
             //            // stackViewにnewViewを追加する
@@ -573,7 +592,6 @@ class DrawingReportEditViewController: UIViewController {
         // 色の選択 ダーク
         colorDarkStackView = UIStackView(arrangedSubviews: buttonsDark)
         colorDarkStackView?.backgroundColor = UIColor.blue.withAlphaComponent(0.3)
-        colorDarkStackView?.bounds = colorPaletteView.bounds
         if let colorStackView = colorStackView,
            let colorDarkStackView = colorDarkStackView {
             colorDarkStackView.axis = .horizontal
@@ -587,7 +605,7 @@ class DrawingReportEditViewController: UIViewController {
             NSLayoutConstraint.activate([
                 colorDarkStackView.topAnchor.constraint(equalTo: colorStackView.bottomAnchor, constant: 0),
                 colorDarkStackView.centerXAnchor.constraint(equalTo: colorPaletteView.centerXAnchor),
-                colorDarkStackView.widthAnchor.constraint(greaterThanOrEqualToConstant: colorPaletteView.bounds.width / 3),
+                colorDarkStackView.widthAnchor.constraint(greaterThanOrEqualToConstant: colorPaletteView.bounds.width),
                 colorDarkStackView.heightAnchor.constraint(equalToConstant: 70)
             ])
             // stackViewにnewViewを追加する
@@ -604,6 +622,7 @@ class DrawingReportEditViewController: UIViewController {
         label.backgroundColor = UIColor.systemPink.withAlphaComponent(0.3)
         // LabelをaddSubview
         alphaPaletteView.addSubview(label)
+        alphaPaletteView.backgroundColor = UIColor.lightGray.withAlphaComponent(0.3)
         // labelが左上に配置されるように制約を追加
         label.translatesAutoresizingMaskIntoConstraints = false
         label.topAnchor.constraint(equalTo: alphaPaletteView.topAnchor, constant: 10.0).isActive = true
@@ -628,20 +647,20 @@ class DrawingReportEditViewController: UIViewController {
         // 色の選択 透明度
         colorAlphaStackView = UIStackView(arrangedSubviews: buttonsAlpha)
         colorAlphaStackView?.backgroundColor = UIColor.orange.withAlphaComponent(0.3)
-        colorAlphaStackView?.bounds = colorPaletteView.bounds
         if let colorAlphaStackView = colorAlphaStackView {
             colorAlphaStackView.axis = .horizontal
             colorAlphaStackView.distribution = .equalSpacing
             colorAlphaStackView.alignment = .center
             
             alphaPaletteView.addSubview(colorAlphaStackView)
-            
+            alphaPaletteView.heightAnchor.constraint(equalToConstant: label.bounds.height + 100).isActive = true
+
             colorAlphaStackView.translatesAutoresizingMaskIntoConstraints = false
             
             NSLayoutConstraint.activate([
                 colorAlphaStackView.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 0),
                 colorAlphaStackView.centerXAnchor.constraint(equalTo: alphaPaletteView.centerXAnchor),
-                colorAlphaStackView.widthAnchor.constraint(greaterThanOrEqualToConstant: alphaPaletteView.bounds.width / 3),
+                colorAlphaStackView.widthAnchor.constraint(greaterThanOrEqualToConstant: alphaPaletteView.bounds.width),
                 colorAlphaStackView.heightAnchor.constraint(equalToConstant: 70)
             ])
             // stackViewにnewViewを追加する
@@ -659,6 +678,7 @@ class DrawingReportEditViewController: UIViewController {
         label.backgroundColor = UIColor.systemPink.withAlphaComponent(0.3)
         // LabelをaddSubview
         colorLineStyleView.addSubview(label)
+        colorLineStyleView.backgroundColor = UIColor.lightGray.withAlphaComponent(0.3)
         // labelが左上に配置されるように制約を追加
         label.translatesAutoresizingMaskIntoConstraints = false
         label.topAnchor.constraint(equalTo: colorLineStyleView.topAnchor, constant: 10.0).isActive = true
@@ -675,7 +695,7 @@ class DrawingReportEditViewController: UIViewController {
             )
             button.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
             button.widthAnchor.constraint(equalToConstant: 50.0).isActive = true
-// button.makeRounded(25, borderWidth: 3, borderColor: .black)
+            // button.makeRounded(25, borderWidth: 3, borderColor: .black)
             button.backgroundColor = .clear
             // アイコン画像の色を指定する
             button.tintColor = .black
@@ -686,24 +706,128 @@ class DrawingReportEditViewController: UIViewController {
         // 書式の選択　線のスタイル
         lineStyleStackView = UIStackView(arrangedSubviews: buttons)
         lineStyleStackView?.backgroundColor = UIColor.brown.withAlphaComponent(0.3)
-        lineStyleStackView?.bounds = colorPaletteView.bounds
         if let lineStyleStackView = lineStyleStackView {
             lineStyleStackView.axis = .horizontal
             lineStyleStackView.distribution = .equalSpacing
             lineStyleStackView.alignment = .center
             
             colorLineStyleView.addSubview(lineStyleStackView)
-            
+            colorLineStyleView.heightAnchor.constraint(equalToConstant: label.bounds.height + 100).isActive = true
+
             lineStyleStackView.translatesAutoresizingMaskIntoConstraints = false
             
             NSLayoutConstraint.activate([
-                lineStyleStackView.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 10),
+                lineStyleStackView.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 0),
+                lineStyleStackView.bottomAnchor.constraint(equalTo: colorLineStyleView.bottomAnchor, constant: 0),
                 lineStyleStackView.centerXAnchor.constraint(equalTo: colorLineStyleView.centerXAnchor),
-                lineStyleStackView.widthAnchor.constraint(greaterThanOrEqualToConstant: colorLineStyleView.bounds.width / 3),
+                lineStyleStackView.widthAnchor.constraint(equalTo: colorLineStyleView.widthAnchor),
                 lineStyleStackView.heightAnchor.constraint(equalToConstant: 70)
             ])
             // stackViewにnewViewを追加する
             propertyEditorStackView.addArrangedSubview(colorLineStyleView)
+            // これだとダメ
+            //stackView.addSubview(newView)
+        }
+    }
+    
+    // 図形　線の太さ
+    func createLineWidthSlider() {
+        let label = UILabel()
+        label.text = "線の太さ"
+        label.backgroundColor = UIColor.systemPink.withAlphaComponent(0.3)
+        // LabelをaddSubview
+        sliderView.addSubview(label)
+        sliderView.backgroundColor = UIColor.lightGray.withAlphaComponent(0.3)
+        // labelが左上に配置されるように制約を追加
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.topAnchor.constraint(equalTo: sliderView.topAnchor, constant: 10.0).isActive = true
+        label.leadingAnchor.constraint(equalTo: sliderView.leadingAnchor, constant: 10.0).isActive = true
+        
+        //Create the color palette 透明度
+        var buttons: [UIView] = []
+        
+        // ボタン
+        smallButton = UIButton(
+            primaryAction: UIAction(handler: { action in
+                self.smallButtonTapped(action.sender)
+            })
+        )
+        if let smallButton = smallButton {
+            smallButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+            smallButton.widthAnchor.constraint(equalToConstant: 50.0).isActive = true
+            let image = UIImage(systemName: "arrowtriangle.backward")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
+            smallButton.setImage(image, for: UIControl.State.normal)
+            smallButton.backgroundColor = UIColor.systemPink.withAlphaComponent(0.3)
+            buttons.append(smallButton)
+        }
+        print(propertyEditorScrollView.bounds.width)
+        // スライダー
+        slider = UISlider(
+            frame: CGRect(x: 50, y: 0, width: propertyEditorScrollView.bounds.width * 2, height: 50.0),
+            primaryAction: UIAction(handler: { action in
+                self.sliderChanged(action.sender as! UISlider)
+            })
+        )
+        if let slider = slider {
+            slider.widthAnchor.constraint(equalToConstant: propertyEditorScrollView.bounds.width * 2).isActive = true
+            slider.backgroundColor = UIColor.gray.withAlphaComponent(0.3)
+            // スライダーの最小値を設定
+            slider.minimumValue = 1.0
+            // スライダーの最大値を設定
+            slider.maximumValue = 99.0
+            // 線の太さ
+            slider.value = Float(selectedLineWidth)
+            buttons.append(slider)
+        }
+        
+        // ボタン
+        bigButton = UIButton(
+            primaryAction: UIAction(handler: { action in
+                self.bigButtonTapped(action.sender)
+            })
+        )
+        if let bigButton = bigButton {
+            bigButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+            bigButton.widthAnchor.constraint(equalToConstant: 50.0).isActive = true
+            let image = UIImage(systemName: "arrowtriangle.forward")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
+            bigButton.setImage(image, for: UIControl.State.normal)
+            bigButton.backgroundColor = UIColor.systemPink.withAlphaComponent(0.3)
+            buttons.append(bigButton)
+        }
+        
+        // UILabelの設定
+        fontSizeLabel.textAlignment = NSTextAlignment.right // 横揃えの設定
+        fontSizeLabel.text = "px" // テキストの設定
+        fontSizeLabel.textColor = UIColor.black // テキストカラーの設定
+        fontSizeLabel.backgroundColor = UIColor.gray.withAlphaComponent(0.3)
+        // 初期値
+        selectedLineWidth = 15.0
+        buttons.append(fontSizeLabel)
+        
+        // 線の太さ
+        sliderStackView = UIStackView(arrangedSubviews: buttons)
+        sliderStackView?.backgroundColor = UIColor.green.withAlphaComponent(0.3)
+        //        sliderStackView?.frame = sliderView.bounds
+        
+        if let stackView = sliderStackView {
+            stackView.axis = .horizontal
+            stackView.distribution = .equalSpacing
+            stackView.alignment = .center
+            stackView.spacing = 0
+            sliderView.addSubview(stackView)
+            sliderView.heightAnchor.constraint(equalToConstant: label.bounds.height + 100).isActive = true
+            
+            stackView.translatesAutoresizingMaskIntoConstraints = false
+            
+            NSLayoutConstraint.activate([
+                stackView.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 0),
+                stackView.bottomAnchor.constraint(equalTo: sliderView.bottomAnchor, constant: 0),
+                stackView.centerXAnchor.constraint(equalTo: sliderView.centerXAnchor),
+                stackView.widthAnchor.constraint(equalTo: sliderView.widthAnchor),
+                stackView.heightAnchor.constraint(equalToConstant: 70)
+            ])
+            // stackViewにnewViewを追加する
+            propertyEditorStackView.addArrangedSubview(sliderView)
             // これだとダメ
             //stackView.addSubview(newView)
         }
@@ -718,7 +842,7 @@ class DrawingReportEditViewController: UIViewController {
             })
         )
         button.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
-        button.widthAnchor.constraint(equalToConstant: 100).isActive = true
+        button.widthAnchor.constraint(equalToConstant: 200).isActive = true
         button.setTitle("閉じる", for: .normal)
         button.setTitleColor(.yellow, for: .normal)
         button.setTitleColor(.systemPink, for: .selected)
@@ -728,13 +852,14 @@ class DrawingReportEditViewController: UIViewController {
         button.tintColor = .black
         
         propertyEditorCloseButtonView.addSubview(button)
-        
+        propertyEditorCloseButtonView.heightAnchor.constraint(equalToConstant: 100).isActive = true
+
         button.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            button.topAnchor.constraint(equalTo: propertyEditorCloseButtonView.topAnchor, constant: 10),
             button.centerXAnchor.constraint(equalTo: propertyEditorCloseButtonView.centerXAnchor),
-            button.widthAnchor.constraint(greaterThanOrEqualToConstant: propertyEditorCloseButtonView.bounds.width / 3),
+            button.centerYAnchor.constraint(equalTo: propertyEditorCloseButtonView.centerYAnchor),
+            button.widthAnchor.constraint(greaterThanOrEqualToConstant: propertyEditorCloseButtonView.bounds.width),
             button.heightAnchor.constraint(equalToConstant: 70)
         ])
         // stackViewにnewViewを追加する
@@ -807,6 +932,28 @@ class DrawingReportEditViewController: UIViewController {
         }
     }
     
+    // 線の太さ
+    private func sliderChanged(_ sender: UISlider) {
+        selectedLineWidth = CGFloat(sender.value)
+        pdfDrawer.changeLineWidth(lineWidth: selectedLineWidth)
+    }
+    
+    private func smallButtonTapped(_ sender: Any) {
+        if let slider = slider {
+            slider.value -= 1.0
+            selectedLineWidth = CGFloat(slider.value)
+            pdfDrawer.changeLineWidth(lineWidth: selectedLineWidth)
+        }
+    }
+    
+    private func bigButtonTapped(_ sender: Any) {
+        if let slider = slider {
+            slider.value += 1.0
+            selectedLineWidth = CGFloat(slider.value)
+            pdfDrawer.changeLineWidth(lineWidth: selectedLineWidth)
+        }
+    }
+
     // 手書き プロパティ変更パネル 閉じる
     private func cloSepropertyEditor(sender: Any?) {
         if let button = sender as? UIButton {
@@ -834,6 +981,7 @@ class DrawingReportEditViewController: UIViewController {
             redoButton.isEnabled = undoRedoManager.canRedo()
         }
     }
+    
     // MARK: - 図形
     
     // 起点
@@ -862,9 +1010,9 @@ class DrawingReportEditViewController: UIViewController {
             let height = beganLocation.y > endLocation.y ? beganLocation.y - endLocation.y : endLocation.y - beganLocation.y
             
             let border = PDFBorder()
-            border.lineWidth = 10
+            border.lineWidth = selectedLineWidth
             border.style = dashPattern == .pattern1 ? .solid : .dashed
-            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style(width: 10) // TODO: width
+            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style(width: selectedLineWidth)
 
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
@@ -910,9 +1058,9 @@ class DrawingReportEditViewController: UIViewController {
             let height = beganLocation.y > endLocation.y ? beganLocation.y - endLocation.y : endLocation.y - beganLocation.y
             
             let border = PDFBorder()
-            border.lineWidth = 10
+            border.lineWidth = selectedLineWidth
             border.style = dashPattern == .pattern1 ? .solid : .dashed
-            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style(width: 10) // TODO: width
+            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style(width: selectedLineWidth)
 
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
@@ -958,9 +1106,9 @@ class DrawingReportEditViewController: UIViewController {
             let height = beganLocation.y > endLocation.y ? beganLocation.y - endLocation.y : endLocation.y - beganLocation.y
             
             let border = PDFBorder()
-            border.lineWidth = 5.0
+            border.lineWidth = selectedLineWidth
             border.style = dashPattern == .pattern1 ? .solid : .dashed
-            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style(width: 10) // TODO: width
+            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style(width: selectedLineWidth)
 
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
@@ -1005,9 +1153,9 @@ class DrawingReportEditViewController: UIViewController {
             let height = beganLocation.y > endLocation.y ? beganLocation.y - endLocation.y : endLocation.y - beganLocation.y
             
             let border = PDFBorder()
-            border.lineWidth = 2.0
+            border.lineWidth = selectedLineWidth
             border.style = dashPattern == .pattern1 ? .solid : .dashed
-            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style(width: 10) // TODO: width
+            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style(width: selectedLineWidth)
 
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
