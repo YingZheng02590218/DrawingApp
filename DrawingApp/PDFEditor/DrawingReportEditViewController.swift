@@ -15,6 +15,8 @@ class DrawingReportEditViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        // Xボタン 戻るボタン
+        setupButtons()
         // Undo Redo ボタン
         setupUndoRedoButtons()
         // セグメントコントロール
@@ -56,6 +58,27 @@ class DrawingReportEditViewController: UIViewController {
                 self.pageNumber = nil
             }
         }
+    }
+    
+    // MARK: - Xボタン
+    
+    // Xボタン 戻るボタン
+    func setupButtons() {
+        
+        // Xボタン　戻るボタン
+        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(closeScreen))
+    }
+    
+    // MARK: - 戻るボタン
+    
+    // Xボタン　戻るボタン
+    @objc
+    func closeScreen() {
+        // 戻るボタンの動作処理
+        // マーカーを追加しPDFを上書き保存する
+        save(completion: {
+            self.navigationController?.popViewController(animated: true)
+        })
     }
     
     // MARK: - 編集するPDFページ
@@ -1386,14 +1409,11 @@ class DrawingReportEditViewController: UIViewController {
     
     // マーカーを追加しPDFを上書き保存する
     func save(completion: (() -> Void)) {
-        if let fileURL = fileURL {
-            // 一時ファイルをiCloud Container に保存しているPDFファイルへ上書き保存する
-            let isFinished = pdfView.document?.write(to: fileURL)
-            if let isFinished = isFinished,
-               isFinished {
+        if let fileURL = pdfView.document?.documentURL,
+            // PDFファイルへ上書き保存する
+            let isFinished = pdfView.document?.write(to: fileURL) {
+             
                 completion()
-            }
-            
         }
     }
 
