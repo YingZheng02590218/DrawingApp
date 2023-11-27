@@ -225,6 +225,11 @@ class DrawingViewController: UIViewController {
                     colorLineStyleView.isHidden = true
                     sliderView.isHidden = true
                 }
+                if drawingMode == .photoMarker {
+                    photoMarkerSliderView.isHidden = false
+                } else {
+                    photoMarkerSliderView.isHidden = true
+                }
             } else {
                 colorPaletteView.isHidden = true
                 alphaPaletteView.isHidden = true
@@ -236,6 +241,7 @@ class DrawingViewController: UIViewController {
             alphaPaletteView.isHidden = true
             colorLineStyleView.isHidden = true
             sliderView.isHidden = true
+            photoMarkerSliderView.isHidden = true
         }
     }
     
@@ -527,6 +533,8 @@ class DrawingViewController: UIViewController {
     
     // PDF 全てのpageに存在する写真マーカーAnnotationを保持する
     var annotationsInAllPages: [PDFAnnotation] = []
+    // PDF 現在のpageに存在する写真マーカーAnnotationを保持する
+    var annotationsOnPage: [PDFAnnotation] = []
     // 写真マーカー　連番
     var numbersList = Array(1...32767) // Int16    32767
     // TODO: SF Symbols は50までしか存在しない
@@ -549,7 +557,8 @@ class DrawingViewController: UIViewController {
         for i in 0..<document.pageCount {
             if let page = document.page(at: i) {
                 // freeText
-                let annotations = page.annotations.filter({ "/\($0.type!)" == PDFAnnotationSubtype.freeText.rawValue })
+                var annotations = page.annotations.filter({ "/\($0.type!)" == PDFAnnotationSubtype.freeText.rawValue })
+                annotations = annotations.filter({ Int($0.contents ?? "a") != nil })
                 for annotation in annotations {
                     
                     annotationsInAllPages.append(annotation)
@@ -560,6 +569,23 @@ class DrawingViewController: UIViewController {
         completion()
     }
     
+    // PDF 現在のpageに存在する写真マーカーAnnotationを保持する
+    func getAnnotationsOnPage(completion: @escaping () -> Void) {
+        // 初期化
+        annotationsOnPage = []
+        if let page = pdfView.currentPage {
+            // freeText
+            var annotations = page.annotations.filter({ "/\($0.type!)" == PDFAnnotationSubtype.freeText.rawValue })
+            annotations = annotations.filter({ Int($0.contents ?? "a") != nil })
+            for annotation in annotations {
+                
+                annotationsOnPage.append(annotation)
+            }
+        }
+        print(annotationsOnPage.count)
+        completion()
+    }
+
     // 使用していない連番を取得する
     func getUnusedNumber() -> Int? {
         for number in numbersList {
@@ -585,7 +611,7 @@ class DrawingViewController: UIViewController {
             //            page.addAnnotation(imageStamp)
             
             // freeText
-            let font = UIFont.systemFont(ofSize: 15)
+            let font = UIFont.systemFont(ofSize: selectedPhotoMarkerSize)
             let size = "\(unusedNumber)".size(with: font)
             // Create dictionary of annotation properties
             let lineAttributes: [PDFAnnotationKey: Any] = [
@@ -593,7 +619,9 @@ class DrawingViewController: UIViewController {
                 .contents: "\(unusedNumber)",
             ]
             
-            let freeText = PhotoAnnotation(bounds: CGRect(x: point.x, y: point.y, width: size.width + 5, height: size.height + 5), forType: .freeText, withProperties: lineAttributes)
+            let freeText = PhotoAnnotation(bounds: CGRect(x: point.x, y: point.y, width: size.width * 1.1 + 5, height: size.height + 5), forType: .freeText, withProperties: lineAttributes)
+            // 中央寄せ
+            freeText.alignment = .center
             // フォントサイズ
             freeText.font = font
             freeText.fontColor = .white
@@ -610,6 +638,59 @@ class DrawingViewController: UIViewController {
             // ボタン　活性状態
             undoButton.isEnabled = undoRedoManager.canUndo()
             redoButton.isEnabled = undoRedoManager.canRedo()
+        }
+    }
+    
+    // 写真マーカーを更新する
+    func updatePhotoMarkerAnotation() {
+        // PDF 現在のpageに存在する写真マーカーAnnotationを保持する
+        getAnnotationsOnPage() { [self] in
+            for annotation in self.annotationsOnPage {
+                // 変更前
+                before = annotation
+                                
+                if let before = before,
+                let contents = before.contents {
+                    // freeText
+                    let font = UIFont.systemFont(ofSize: selectedPhotoMarkerSize)
+                    let size = contents.size(with: font)
+                    // Create dictionary of annotation properties
+                    let lineAttributes: [PDFAnnotationKey: Any] = [
+                        .color: before.color,
+                        .contents: contents,
+                    ]
+                    // 変更後
+                    let after = PhotoAnnotation(bounds: CGRect(x: before.bounds.origin.x, y: before.bounds.origin.y, width: size.width * 1.1 + 5, height: size.height + 5), forType: .freeText, withProperties: lineAttributes)
+
+                    after.page = before.page
+                    // 中央寄せ
+                    after.alignment = .center
+                    // フォントサイズ
+                    after.font = font
+                    after.fontColor = .white
+                    // UUID
+                    after.userName = UUID().uuidString
+                    if let afterPage = after.page {
+                        // Annotationを再度作成
+                        afterPage.addAnnotation(after)
+                    }
+                    if let beforePage = before.page {
+                        // 古いものを削除する
+                        beforePage.removeAnnotation(before)
+                    }
+                    // 初期化
+                    self.before = nil
+                    // Undo Redo 更新
+                    undoRedoManager.updateAnnotation(before: before, after: after)
+                    undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                        // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                        reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                    })
+                    // ボタン　活性状態
+                    undoButton.isEnabled = undoRedoManager.canUndo()
+                    redoButton.isEnabled = undoRedoManager.canRedo()
+                }
+            }
         }
     }
     
@@ -691,6 +772,8 @@ class DrawingViewController: UIViewController {
     // 手書き　ツール
 //    var toolStackView: UIStackView?
     
+    // MARK: - プロパティ変更パネル
+
     // プロパティ変更パネル
     @IBOutlet var propertyEditorScrollView: UIScrollView!
     // プロパティ変更パネル
@@ -704,23 +787,23 @@ class DrawingViewController: UIViewController {
 
     // 手書き　カラーパレット 透明度
     var alphaPaletteView = UIView()
-    // 手書き　透明度
     var colorAlphaStackView: UIStackView?
 
     // 手書き　書式　線のスタイル
     var colorLineStyleView = UIView()
-    // 手書き　線のスタイル
     var lineStyleStackView: UIStackView?
 
     // 手書き　書式　線の太さ
     var sliderView = UIView()
-    // 手書き　書式　線の太さ
     var sliderStackView: UIStackView?
-
     var slider: UISlider?
-    var smallButton: UIButton?
-    var bigButton: UIButton?
     var fontSizeLabel = UILabel()
+    
+    // 手書き　書式　写真マーカーサイズ
+    var photoMarkerSliderView = UIView()
+    var photoMarkerSliderStackView: UIStackView?
+    var photoMarkerSlider: UISlider?
+    var photoMarkerFontSizeLabel = UILabel()
     
     // 手書き プロパティ変更パネル 閉じる
     var propertyEditorCloseButtonView = UIView()
@@ -733,6 +816,12 @@ class DrawingViewController: UIViewController {
     var selectedLineWidth: CGFloat = 15.0 {
         didSet {
             fontSizeLabel.text = "\(Int(selectedLineWidth)) px"
+        }
+    }
+    // 選択された写真マーカーサイズ
+    var selectedPhotoMarkerSize: CGFloat = 15.0 {
+        didSet {
+            photoMarkerFontSizeLabel.text = "\(Int(selectedPhotoMarkerSize)) px"
         }
     }
     
@@ -748,6 +837,8 @@ class DrawingViewController: UIViewController {
         createLineStylesButtons()
         // 図形　線の太さ
         createLineWidthSlider()
+        // 図形　写真マーカーサイズ
+        createTextSizeSlider()
         // 手書き プロパティ変更パネル 閉じる
         createPropertyEditorCloseButton()
         
@@ -1034,19 +1125,17 @@ class DrawingViewController: UIViewController {
         var buttons: [UIView] = []
         
         // ボタン
-        smallButton = UIButton(
+        let smallButton = UIButton(
             primaryAction: UIAction(handler: { action in
-                self.smallButtonTapped(action.sender)
+                self.thinButtonTapped(action.sender)
             })
         )
-        if let smallButton = smallButton {
-            smallButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
-            smallButton.widthAnchor.constraint(equalToConstant: 50.0).isActive = true
-            let image = UIImage(systemName: "arrowtriangle.backward")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
-            smallButton.setImage(image, for: UIControl.State.normal)
-            smallButton.backgroundColor = UIColor.systemPink.withAlphaComponent(0.3)
-            buttons.append(smallButton)
-        }
+        smallButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+        smallButton.widthAnchor.constraint(equalToConstant: 50.0).isActive = true
+        let image = UIImage(systemName: "arrowtriangle.backward")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
+        smallButton.setImage(image, for: UIControl.State.normal)
+        smallButton.backgroundColor = UIColor.systemPink.withAlphaComponent(0.3)
+        buttons.append(smallButton)
         print(propertyEditorScrollView.bounds.width)
         // スライダー
         slider = UISlider(
@@ -1068,19 +1157,17 @@ class DrawingViewController: UIViewController {
         }
         
         // ボタン
-        bigButton = UIButton(
+        let bigButton = UIButton(
             primaryAction: UIAction(handler: { action in
-                self.bigButtonTapped(action.sender)
+                self.thickButtonTapped(action.sender)
             })
         )
-        if let bigButton = bigButton {
-            bigButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
-            bigButton.widthAnchor.constraint(equalToConstant: 50.0).isActive = true
-            let image = UIImage(systemName: "arrowtriangle.forward")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
-            bigButton.setImage(image, for: UIControl.State.normal)
-            bigButton.backgroundColor = UIColor.systemPink.withAlphaComponent(0.3)
-            buttons.append(bigButton)
-        }
+        bigButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+        bigButton.widthAnchor.constraint(equalToConstant: 50.0).isActive = true
+        let imageForward = UIImage(systemName: "arrowtriangle.forward")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
+        bigButton.setImage(imageForward, for: UIControl.State.normal)
+        bigButton.backgroundColor = UIColor.systemPink.withAlphaComponent(0.3)
+        buttons.append(bigButton)
         
         // UILabelの設定
         fontSizeLabel.textAlignment = NSTextAlignment.right // 横揃えの設定
@@ -1120,6 +1207,105 @@ class DrawingViewController: UIViewController {
         }
     }
 
+    // 図形　写真マーカーサイズ
+    func createTextSizeSlider() {
+        let label = UILabel()
+        label.text = "写真マーカーサイズ"
+        label.backgroundColor = UIColor.systemPink.withAlphaComponent(0.3)
+        // LabelをaddSubview
+        photoMarkerSliderView.addSubview(label)
+        photoMarkerSliderView.backgroundColor = UIColor.lightGray.withAlphaComponent(0.3)
+        // labelが左上に配置されるように制約を追加
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.topAnchor.constraint(equalTo: photoMarkerSliderView.topAnchor, constant: 10.0).isActive = true
+        label.leadingAnchor.constraint(equalTo: photoMarkerSliderView.leadingAnchor, constant: 10.0).isActive = true
+        
+        //Create the color palette 透明度
+        var buttons: [UIView] = []
+        
+        // ボタン
+        let smallButton = UIButton(
+            primaryAction: UIAction(handler: { action in
+                self.smallButtonTapped(action.sender)
+            })
+        )
+        smallButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+        smallButton.widthAnchor.constraint(equalToConstant: 50.0).isActive = true
+        let image = UIImage(systemName: "arrowtriangle.backward")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
+        smallButton.setImage(image, for: UIControl.State.normal)
+        smallButton.backgroundColor = UIColor.systemPink.withAlphaComponent(0.3)
+        buttons.append(smallButton)
+        print(propertyEditorScrollView.bounds.width)
+        // スライダー
+        photoMarkerSlider = UISlider(
+            frame: CGRect(x: 50, y: 0, width: propertyEditorScrollView.bounds.width * 2, height: 50.0),
+            primaryAction: UIAction(handler: { action in
+                self.photoMarkerSizeSliderChanged(action.sender as! UISlider)
+            })
+        )
+        if let slider = photoMarkerSlider {
+            slider.widthAnchor.constraint(equalToConstant: propertyEditorScrollView.bounds.width * 2).isActive = true
+            slider.backgroundColor = UIColor.gray.withAlphaComponent(0.3)
+            // スライダーの最小値を設定
+            slider.minimumValue = 10.0
+            // スライダーの最大値を設定
+            slider.maximumValue = 100.0
+            // 線の太さ
+            slider.value = Float(selectedLineWidth)
+            buttons.append(slider)
+        }
+        
+        // ボタン
+        let bigButton = UIButton(
+            primaryAction: UIAction(handler: { action in
+                self.bigButtonTapped(action.sender)
+            })
+        )
+        bigButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+        bigButton.widthAnchor.constraint(equalToConstant: 50.0).isActive = true
+        let imageForward = UIImage(systemName: "arrowtriangle.forward")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
+        bigButton.setImage(imageForward, for: UIControl.State.normal)
+        bigButton.backgroundColor = UIColor.systemPink.withAlphaComponent(0.3)
+        buttons.append(bigButton)
+        
+        // UILabelの設定
+        photoMarkerFontSizeLabel.textAlignment = NSTextAlignment.right // 横揃えの設定
+        photoMarkerFontSizeLabel.text = "px" // テキストの設定
+        photoMarkerFontSizeLabel.textColor = UIColor.black // テキストカラーの設定
+        photoMarkerFontSizeLabel.backgroundColor = UIColor.gray.withAlphaComponent(0.3)
+        // 初期値
+        selectedPhotoMarkerSize = 15.0
+        buttons.append(photoMarkerFontSizeLabel)
+        
+        // 線の太さ
+        photoMarkerSliderStackView = UIStackView(arrangedSubviews: buttons)
+        photoMarkerSliderStackView?.backgroundColor = UIColor.green.withAlphaComponent(0.3)
+        //        sliderStackView?.frame = photoMarkerSliderView.bounds
+        
+        if let stackView = photoMarkerSliderStackView {
+            stackView.axis = .horizontal
+            stackView.distribution = .equalSpacing
+            stackView.alignment = .center
+            stackView.spacing = 0
+            photoMarkerSliderView.addSubview(stackView)
+            photoMarkerSliderView.heightAnchor.constraint(equalToConstant: label.bounds.height + 100).isActive = true
+            
+            stackView.translatesAutoresizingMaskIntoConstraints = false
+            
+            NSLayoutConstraint.activate([
+                stackView.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 0),
+                stackView.bottomAnchor.constraint(equalTo: photoMarkerSliderView.bottomAnchor, constant: 0),
+                stackView.centerXAnchor.constraint(equalTo: photoMarkerSliderView.centerXAnchor),
+                stackView.widthAnchor.constraint(equalTo: photoMarkerSliderView.widthAnchor),
+                stackView.heightAnchor.constraint(equalToConstant: 70)
+            ])
+            // stackViewにnewViewを追加する
+            propertyEditorStackView.addArrangedSubview(photoMarkerSliderView)
+            // これだとダメ
+            //stackView.addSubview(newView)
+        }
+    }
+    
     // 手書き プロパティ変更パネル 閉じる
     func createPropertyEditorCloseButton() {
         
@@ -1225,7 +1411,7 @@ class DrawingViewController: UIViewController {
         pdfDrawer.changeLineWidth(lineWidth: selectedLineWidth)
     }
     
-    private func smallButtonTapped(_ sender: Any) {
+    private func thinButtonTapped(_ sender: Any) {
         if let slider = slider {
             slider.value -= 1.0
             selectedLineWidth = CGFloat(slider.value)
@@ -1233,11 +1419,36 @@ class DrawingViewController: UIViewController {
         }
     }
     
-    private func bigButtonTapped(_ sender: Any) {
+    private func thickButtonTapped(_ sender: Any) {
         if let slider = slider {
             slider.value += 1.0
             selectedLineWidth = CGFloat(slider.value)
             pdfDrawer.changeLineWidth(lineWidth: selectedLineWidth)
+        }
+    }
+    
+    // 写真マーカーサイズ
+    private func photoMarkerSizeSliderChanged(_ sender: UISlider) {
+        selectedPhotoMarkerSize = CGFloat(sender.value)
+        // 写真マーカーを更新する
+        updatePhotoMarkerAnotation()
+    }
+    
+    private func smallButtonTapped(_ sender: Any) {
+        if let slider = photoMarkerSlider {
+            slider.value -= 1.0
+            selectedPhotoMarkerSize = CGFloat(slider.value)
+            // 写真マーカーを更新する
+            updatePhotoMarkerAnotation()
+        }
+    }
+    
+    private func bigButtonTapped(_ sender: Any) {
+        if let slider = photoMarkerSlider {
+            slider.value += 1.0
+            selectedPhotoMarkerSize = CGFloat(slider.value)
+            // 写真マーカーを更新する
+            updatePhotoMarkerAnotation()
         }
     }
 
