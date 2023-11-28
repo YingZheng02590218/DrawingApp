@@ -341,6 +341,7 @@ class DrawingReportEditViewController: UIViewController {
     // 選択しているAnnotation
     var currentlySelectedAnnotation: PDFAnnotation?
     var currentlySelectedImageAnnotation: ImageAnnotation?
+    var currentlySelectedDrawingAnnotation: DrawingAnnotation?
 
     // マーカーを更新する 移動
     func updateMarkerAnotation() {
@@ -421,6 +422,49 @@ class DrawingReportEditViewController: UIViewController {
 
                 // 初期化
                 self.beforeImageAnnotation = nil
+                // Undo Redo 更新
+                undoRedoManager.updateAnnotation(before: before, after: after)
+                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                    self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                })
+                // ボタン　活性状態
+                undoButton.isEnabled = undoRedoManager.canUndo()
+                redoButton.isEnabled = undoRedoManager.canRedo()
+            }
+            // 手書き
+            if let before = beforeDrawingAnnotation {
+                // 選択しているAnnotation 移動中のAnnotation
+                guard let currentlySelectedAnnotation = currentlySelectedDrawingAnnotation else { return }
+                // 変更後
+                let after = currentlySelectedAnnotation
+                after.bounds = currentlySelectedAnnotation.bounds
+                after.page = currentlySelectedAnnotation.page
+
+                after.bounds = CGRect(
+                    x: after.bounds.origin.x,
+                    y: after.bounds.origin.y,
+                    width: before.bounds.size.width,
+                    height: before.bounds.size.height
+                )
+                after.contents = before.contents
+                after.color = UIColor.orange.withAlphaComponent(0.5)
+                after.page = before.page
+                after.path = before.path
+                
+                // UUID
+                after.userName = UUID().uuidString
+                if let annotationPage = before.page {
+                    // 古いものを削除する
+                    page.removeAnnotation(before)
+                    // iOS17対応　PDFAnnotationのpageが消えてしまう現象
+                    before.page = annotationPage
+                }
+                // Annotationを再度作成
+                page.addAnnotation(after)
+
+                // 初期化
+                self.beforeDrawingAnnotation = nil
                 // Undo Redo 更新
                 undoRedoManager.updateAnnotation(before: before, after: after)
                 undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
@@ -1282,6 +1326,8 @@ class DrawingReportEditViewController: UIViewController {
     var before: PDFAnnotation?
     // 変更前
     var beforeImageAnnotation: ImageAnnotation?
+    // 変更前
+    var beforeDrawingAnnotation: DrawingAnnotation?
 
     // マーカーを追加する 直線
     func addLineMarkerAnotation() {
@@ -1920,6 +1966,13 @@ extension DrawingReportEditViewController: UIGestureRecognizerDelegate {
                         copy.page = annotation.page
                         copy.image = currentlySelectedImageAnnotation?.image
                     }
+                    else if let copy = annotation.copy() as? DrawingAnnotation {
+                        currentlySelectedDrawingAnnotation = annotation as? DrawingAnnotation
+                        beforeDrawingAnnotation = copy
+                        copy.bounds = annotation.bounds
+                        copy.page = annotation.page
+                        copy.path = currentlySelectedDrawingAnnotation!.path
+                    }
                     else if let copy = annotation.copy() as? PDFAnnotation {
                         currentlySelectedAnnotation = annotation
                         before = copy
@@ -1928,6 +1981,11 @@ extension DrawingReportEditViewController: UIGestureRecognizerDelegate {
                     }
                 case .changed:
                     if let annotation = currentlySelectedImageAnnotation {
+                        let initialBounds = annotation.bounds
+                        // Set the center of the annotation to the spot of our finger
+                        annotation.bounds = CGRect(x: locationOnPage.x - (initialBounds.width / 2), y: locationOnPage.y - (initialBounds.height / 2), width: initialBounds.width, height: initialBounds.height)
+                    }
+                    if let annotation = currentlySelectedDrawingAnnotation {
                         let initialBounds = annotation.bounds
                         // Set the center of the annotation to the spot of our finger
                         annotation.bounds = CGRect(x: locationOnPage.x - (initialBounds.width / 2), y: locationOnPage.y - (initialBounds.height / 2), width: initialBounds.width, height: initialBounds.height)
@@ -1942,6 +2000,7 @@ extension DrawingReportEditViewController: UIGestureRecognizerDelegate {
                     updateMarkerAnotation()
                     
                     currentlySelectedImageAnnotation = nil
+                    currentlySelectedDrawingAnnotation = nil
                     currentlySelectedAnnotation = nil
                 default:
                     break

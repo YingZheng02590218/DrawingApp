@@ -63,6 +63,17 @@ class UndoRedoManager {
         registerOperation(.add(newAnnotation))
         undoManager.endUndoGrouping()
     }
+    
+    func addAnnotation(_ newAnnotation: DrawingAnnotation) {
+        print(#function)
+        
+        teamMembers.append(newAnnotation)
+        
+        undoManager.beginUndoGrouping()
+        registerOperation(.add(newAnnotation))
+        undoManager.endUndoGrouping()
+    }
+    
     func updateAnnotation(before: PDFAnnotation, after: PDFAnnotation) {
         print(#function)
         
@@ -76,6 +87,18 @@ class UndoRedoManager {
     }
     
     func updateAnnotation(before: ImageAnnotation, after: ImageAnnotation) {
+        print(#function)
+        
+        teamMembers.removeAll(where: { ($0 as AnyObject).userName == before.userName })
+        
+        teamMembers.append(after)
+        
+        undoManager.beginUndoGrouping()
+        registerOperation(.update(before, after))
+        undoManager.endUndoGrouping()
+    }
+    
+    func updateAnnotation(before: DrawingAnnotation, after: DrawingAnnotation) {
         print(#function)
         
         teamMembers.removeAll(where: { ($0 as AnyObject).userName == before.userName })
@@ -107,6 +130,15 @@ class UndoRedoManager {
         undoManager.endUndoGrouping()
     }
     
+    func deleteAnnotation(_ annotation: DrawingAnnotation) {
+        print(#function)
+        
+        teamMembers.removeAll(where: { ($0 as AnyObject).userName == annotation.userName })
+        
+        undoManager.beginUndoGrouping()
+        registerOperation(.delete(annotation))
+        undoManager.endUndoGrouping()
+    }
     
     func undo(completion: ([Any]) -> Void) {
         if undoManager.canUndo {
