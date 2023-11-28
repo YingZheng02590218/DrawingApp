@@ -34,7 +34,7 @@ enum Operation {
 // 追加・更新・削除の機能を作り込んでいきます。 操作を登録するためのregisterOperation(_:)を実装しました。
 class UndoRedoManager {
     private let undoManager: UndoManager
-    private var teamMembers: [PDFAnnotation]
+    private var teamMembers: [Any]
     
     init() {
         undoManager = .init()
@@ -54,10 +54,31 @@ class UndoRedoManager {
         undoManager.endUndoGrouping()
     }
     
+    func addAnnotation(_ newAnnotation: ImageAnnotation) {
+        print(#function)
+        
+        teamMembers.append(newAnnotation)
+        
+        undoManager.beginUndoGrouping()
+        registerOperation(.add(newAnnotation))
+        undoManager.endUndoGrouping()
+    }
     func updateAnnotation(before: PDFAnnotation, after: PDFAnnotation) {
         print(#function)
         
-        teamMembers.removeAll(where: { $0.userName == before.userName })
+        teamMembers.removeAll(where: { ($0 as AnyObject).userName == before.userName })
+        
+        teamMembers.append(after)
+        
+        undoManager.beginUndoGrouping()
+        registerOperation(.update(before, after))
+        undoManager.endUndoGrouping()
+    }
+    
+    func updateAnnotation(before: ImageAnnotation, after: ImageAnnotation) {
+        print(#function)
+        
+        teamMembers.removeAll(where: { ($0 as AnyObject).userName == before.userName })
         
         teamMembers.append(after)
         
@@ -69,14 +90,25 @@ class UndoRedoManager {
     func deleteAnnotation(_ annotation: PDFAnnotation) {
         print(#function)
         
-        teamMembers.removeAll(where: { $0.userName == annotation.userName })
+        teamMembers.removeAll(where: { ($0 as AnyObject).userName == annotation.userName })
         
         undoManager.beginUndoGrouping()
         registerOperation(.delete(annotation))
         undoManager.endUndoGrouping()
     }
     
-    func undo(completion: ([PDFAnnotation]) -> Void) {
+    func deleteAnnotation(_ annotation: ImageAnnotation) {
+        print(#function)
+        
+        teamMembers.removeAll(where: { ($0 as AnyObject).userName == annotation.userName })
+        
+        undoManager.beginUndoGrouping()
+        registerOperation(.delete(annotation))
+        undoManager.endUndoGrouping()
+    }
+    
+    
+    func undo(completion: ([Any]) -> Void) {
         if undoManager.canUndo {
             print(#function)
             
@@ -87,7 +119,7 @@ class UndoRedoManager {
         }
     }
     
-    func redo(completion: ([PDFAnnotation]) -> Void) {
+    func redo(completion: ([Any]) -> Void) {
         if undoManager.canRedo {
             print(#function)
             
@@ -98,7 +130,7 @@ class UndoRedoManager {
         }
     }
     
-    func showTeamMembers(completion: ([PDFAnnotation]) -> Void) {
+    func showTeamMembers(completion: ([Any]) -> Void) {
         completion(teamMembers)
     }
     

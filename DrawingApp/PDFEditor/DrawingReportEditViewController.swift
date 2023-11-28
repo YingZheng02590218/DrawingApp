@@ -134,7 +134,7 @@ class DrawingReportEditViewController: UIViewController {
     // MARK: - 編集モード
     
     // セグメントコントロール
-    let segmentedControl = UISegmentedControl(items: ["ビューモード", "移動", "グループ選択", "写真マーカー", "手書き", "直線", "矢印", "四角", "円", "テキスト", "消しゴム"])
+    let segmentedControl = UISegmentedControl(items: ["ビューモード", "移動", "グループ選択", "写真マーカー", "手書き", "直線", "矢印", "四角", "円", "テキスト", "損傷マーカー", "消しゴム"])
     // モード
     var drawingMode: DrawingMode = .viewingMode
 
@@ -193,10 +193,10 @@ class DrawingReportEditViewController: UIViewController {
             pdfDrawer.isActive = false
         }
         
-        if drawingMode == .photoMarker || drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle || drawingMode == .text {
+        if drawingMode == .photoMarker || drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle || drawingMode == .text || drawingMode == .damageMarker {
             propertyEditorScrollView?.isHidden = false
             propertyEditorCloseButtonView.isHidden = false
-            if drawingMode == .photoMarker || drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle || drawingMode == .text {
+            if drawingMode == .photoMarker || drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle || drawingMode == .text || drawingMode == .damageMarker {
                 colorPaletteView.isHidden = false
                 alphaPaletteView.isHidden = false
                 if drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle {
@@ -206,7 +206,7 @@ class DrawingReportEditViewController: UIViewController {
                     colorLineStyleView.isHidden = true
                     sliderView.isHidden = true
                 }
-                if drawingMode == .photoMarker {
+                if drawingMode == .photoMarker || drawingMode == .damageMarker {
                     photoMarkerSliderView.isHidden = false
                 } else {
                     photoMarkerSliderView.isHidden = true
@@ -340,19 +340,21 @@ class DrawingReportEditViewController: UIViewController {
     // MARK: - 移動
     // 選択しているAnnotation
     var currentlySelectedAnnotation: PDFAnnotation?
-    
+    var currentlySelectedImageAnnotation: ImageAnnotation?
+
     // マーカーを更新する 移動
     func updateMarkerAnotation() {
         // 現在開いているページを取得
         if let page = pdfView.currentPage {
-            // 選択しているAnnotation 移動中のAnnotation
-            guard let currentlySelectedAnnotation = currentlySelectedAnnotation else { return }
-            // 変更後
-            let after = currentlySelectedAnnotation
-            after.bounds = currentlySelectedAnnotation.bounds
-            after.page = currentlySelectedAnnotation.page
             
             if let before = before {
+                // 選択しているAnnotation 移動中のAnnotation
+                guard let currentlySelectedAnnotation = currentlySelectedAnnotation else { return }
+                // 変更後
+                let after = currentlySelectedAnnotation
+                after.bounds = currentlySelectedAnnotation.bounds
+                after.page = currentlySelectedAnnotation.page
+                
                 after.bounds = CGRect(
                     x: after.bounds.origin.x,
                     y: after.bounds.origin.y,
@@ -365,16 +367,60 @@ class DrawingReportEditViewController: UIViewController {
                 
                 // UUID
                 after.userName = UUID().uuidString
-                // Annotationを再度作成
-                page.addAnnotation(after)
                 if let annotationPage = before.page {
                     // 古いものを削除する
                     page.removeAnnotation(before)
                     // iOS17対応　PDFAnnotationのpageが消えてしまう現象
                     before.page = annotationPage
                 }
+                // Annotationを再度作成
+                page.addAnnotation(after)
                 // 初期化
                 self.before = nil
+                // Undo Redo 更新
+                undoRedoManager.updateAnnotation(before: before, after: after)
+                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                    self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                })
+                // ボタン　活性状態
+                undoButton.isEnabled = undoRedoManager.canUndo()
+                redoButton.isEnabled = undoRedoManager.canRedo()
+            }
+            // 損傷マーカー
+            if let before = beforeImageAnnotation {
+                // 選択しているAnnotation 移動中のAnnotation
+                guard let currentlySelectedAnnotation = currentlySelectedImageAnnotation else { return }
+                // 変更後
+                let after = currentlySelectedAnnotation
+                after.bounds = currentlySelectedAnnotation.bounds
+                after.page = currentlySelectedAnnotation.page
+                after.image = before.image
+                
+                after.bounds = CGRect(
+                    x: after.bounds.origin.x,
+                    y: after.bounds.origin.y,
+                    width: after.bounds.size.width,
+                    height: after.bounds.size.height
+                )
+                after.contents = before.contents
+                after.color = UIColor.orange.withAlphaComponent(0.5)
+                after.page = before.page
+                after.image = before.image
+                
+                // UUID
+                after.userName = UUID().uuidString
+                if let annotationPage = before.page {
+                    // 古いものを削除する
+                    page.removeAnnotation(before)
+                    // iOS17対応　PDFAnnotationのpageが消えてしまう現象
+                    before.page = annotationPage
+                }
+                // Annotationを再度作成
+                page.addAnnotation(after)
+
+                // 初期化
+                self.beforeImageAnnotation = nil
                 // Undo Redo 更新
                 undoRedoManager.updateAnnotation(before: before, after: after)
                 undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
@@ -945,7 +991,7 @@ class DrawingReportEditViewController: UIViewController {
     // 図形　写真マーカーサイズ
     func createTextSizeSlider() {
         let label = UILabel()
-        label.text = "写真マーカーサイズ"
+        label.text = "マーカーサイズ"
         label.backgroundColor = UIColor.systemPink.withAlphaComponent(0.3)
         // LabelをaddSubview
         photoMarkerSliderView.addSubview(label)
@@ -1165,16 +1211,21 @@ class DrawingReportEditViewController: UIViewController {
     // 写真マーカーサイズ
     private func photoMarkerSizeSliderChanged(_ sender: UISlider) {
         selectedPhotoMarkerSize = CGFloat(sender.value)
-        // 写真マーカーを更新する
-        updatePhotoMarkerAnotation()
+        
+        if drawingMode == .photoMarker { // 写真マーカー
+            // 写真マーカーを更新する
+            updatePhotoMarkerAnotation()
+        }
     }
     
     private func smallButtonTapped(_ sender: Any) {
         if let slider = photoMarkerSlider {
             slider.value -= 1.0
             selectedPhotoMarkerSize = CGFloat(slider.value)
-            // 写真マーカーを更新する
-            updatePhotoMarkerAnotation()
+            if drawingMode == .photoMarker { // 写真マーカー
+                // 写真マーカーを更新する
+                updatePhotoMarkerAnotation()
+            }
         }
     }
     
@@ -1182,8 +1233,10 @@ class DrawingReportEditViewController: UIViewController {
         if let slider = photoMarkerSlider {
             slider.value += 1.0
             selectedPhotoMarkerSize = CGFloat(slider.value)
-            // 写真マーカーを更新する
-            updatePhotoMarkerAnotation()
+            if drawingMode == .photoMarker { // 写真マーカー
+                // 写真マーカーを更新する
+                updatePhotoMarkerAnotation()
+            }
         }
     }
 
@@ -1227,7 +1280,9 @@ class DrawingReportEditViewController: UIViewController {
     var dashPattern: DashPattern = .pattern1
     // 変更前
     var before: PDFAnnotation?
-    
+    // 変更前
+    var beforeImageAnnotation: ImageAnnotation?
+
     // マーカーを追加する 直線
     func addLineMarkerAnotation() {
         // 現在開いているページを取得
@@ -1526,6 +1581,39 @@ class DrawingReportEditViewController: UIViewController {
         }
     }
     
+    // MARK: - 損傷マーカー
+    
+    // マーカーを追加する 損傷マーカー
+    func addDamageMarkerAnotation() {
+        // 現在開いているページを取得
+        if let page = self.pdfView.currentPage,
+           let point = point {
+            // TODO: 画像
+            let image = UIImage(named: "how-to-draw-pheasant_step-6")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
+            // オリジナル画像のサイズからアスペクト比を計算
+            let aspectScale = image.size.height / image.size.width
+            // widthからアスペクト比を元にリサイズ後のサイズを取得
+            let resizedSize = CGSize(width: selectedPhotoMarkerSize, height: selectedPhotoMarkerSize * Double(aspectScale))
+            // 中央部に座標を指定
+            let imageStamp = ImageAnnotation(with: image, forBounds: CGRect(x: point.x, y: point.y, width: resizedSize.width, height: resizedSize.height), withProperties: [:])
+            // UUID
+            imageStamp.userName = UUID().uuidString
+            // ページ
+            imageStamp.page = page
+            // 対象のページへ注釈を追加
+            page.addAnnotation(imageStamp)
+            // Undo Redo
+            undoRedoManager.addAnnotation(imageStamp)
+            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+            })
+            // ボタン　活性状態
+            undoButton.isEnabled = undoRedoManager.canUndo()
+            redoButton.isEnabled = undoRedoManager.canRedo()
+        }
+    }
+    
     // MARK: - Undo Redo
     
     var undoButton: UIBarButtonItem!
@@ -1533,10 +1621,10 @@ class DrawingReportEditViewController: UIViewController {
     // Undo Redo
     let undoRedoManager = UndoRedoManager()
     // Undo Redo が可能なAnnotation
-    private var editingAnnotations: [PDFAnnotation]?
+    private var editingAnnotations: [Any]?
     
     // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-    func reloadPDFAnnotations(didUndoAnnotations: [PDFAnnotation]?) {
+    func reloadPDFAnnotations(didUndoAnnotations: [Any]?) {
         print(#function)
         // Undo Redo が可能なAnnotation　を削除する
         DispatchQueue.main.async {
@@ -1546,7 +1634,8 @@ class DrawingReportEditViewController: UIViewController {
                     // pageを探す
                     for i in 0..<document.pageCount {
                         if let page = document.page(at: i) {
-                            if let editingAnnotationPage = editingAnnotation.page {
+                            if let editingAnnotation = editingAnnotation as? PDFAnnotation,
+                                let editingAnnotationPage = editingAnnotation.page {
                                 // page が同一か？
                                 if document.index(for: page) == document.index(for: editingAnnotationPage) {
                                     // 対象のページの注釈を削除
@@ -1570,7 +1659,8 @@ class DrawingReportEditViewController: UIViewController {
                     // pageを探す
                     for i in 0..<document.pageCount {
                         if let page = document.page(at: i) {
-                            if let editingAnnotationPage = editingAnnotation.page {
+                            if let editingAnnotation = editingAnnotation as? PDFAnnotation,
+                               let editingAnnotationPage = editingAnnotation.page {
                                 // page が同一か？
                                 if document.index(for: page) == document.index(for: editingAnnotationPage) {
                                     // 対象のページの注釈を追加
@@ -1703,6 +1793,16 @@ extension DrawingReportEditViewController: UIGestureRecognizerDelegate {
                     })
                 }
             }
+        } else if drawingMode == .damageMarker {
+            // 現在開いているページを取得
+            if let page = self.pdfView.currentPage {
+                // UIViewからPDFの座標へ変換する
+                let point = self.pdfView.convert(sender.location(in: self.pdfView), to: page) // 座標系がUIViewとは異なるので気をつけましょう。
+                // PDFのタップされた位置の座標
+                self.point = point
+                // マーカーを追加する 損傷マーカー
+                addDamageMarkerAnotation()
+            }
         }
     }
     
@@ -1806,32 +1906,42 @@ extension DrawingReportEditViewController: UIGestureRecognizerDelegate {
                 switch sender.state {
                 case .began:
                     guard let annotation = page.annotation(at: locationOnPage) else { return }
-                    currentlySelectedAnnotation = annotation
                     // 変更前
-                    if let copy = annotation.copy() as? PDFAnnotation {
-                        before = copy
-                        copy.bounds = annotation.bounds
-                        copy.page = annotation.page
-                    }
                     if let copy = annotation.copy() as? PhotoAnnotation {
+                        currentlySelectedAnnotation = annotation
                         before = copy
                         copy.bounds = annotation.bounds
                         copy.page = annotation.page
                     }
-                    if let copy = annotation.copy() as? ImageAnnotation {
+                    else if let copy = annotation.copy() as? ImageAnnotation {
+                        currentlySelectedImageAnnotation = annotation as? ImageAnnotation
+                        beforeImageAnnotation = copy
+                        copy.bounds = annotation.bounds
+                        copy.page = annotation.page
+                        copy.image = currentlySelectedImageAnnotation?.image
+                    }
+                    else if let copy = annotation.copy() as? PDFAnnotation {
+                        currentlySelectedAnnotation = annotation
                         before = copy
                         copy.bounds = annotation.bounds
                         copy.page = annotation.page
                     }
                 case .changed:
-                    guard let annotation = currentlySelectedAnnotation else {return }
-                    let initialBounds = annotation.bounds
-                    // Set the center of the annotation to the spot of our finger
-                    annotation.bounds = CGRect(x: locationOnPage.x - (initialBounds.width / 2), y: locationOnPage.y - (initialBounds.height / 2), width: initialBounds.width, height: initialBounds.height)
+                    if let annotation = currentlySelectedImageAnnotation {
+                        let initialBounds = annotation.bounds
+                        // Set the center of the annotation to the spot of our finger
+                        annotation.bounds = CGRect(x: locationOnPage.x - (initialBounds.width / 2), y: locationOnPage.y - (initialBounds.height / 2), width: initialBounds.width, height: initialBounds.height)
+                    }
+                    if let annotation = currentlySelectedAnnotation {
+                        let initialBounds = annotation.bounds
+                        // Set the center of the annotation to the spot of our finger
+                        annotation.bounds = CGRect(x: locationOnPage.x - (initialBounds.width / 2), y: locationOnPage.y - (initialBounds.height / 2), width: initialBounds.width, height: initialBounds.height)
+                    }
                 case .ended, .cancelled, .failed:
                     // マーカーを更新する 移動
                     updateMarkerAnotation()
                     
+                    currentlySelectedImageAnnotation = nil
                     currentlySelectedAnnotation = nil
                 default:
                     break
@@ -2023,6 +2133,7 @@ enum DrawingMode {
     case rectangle
     case circle
     case text
+    case damageMarker
     case eraser
     // 引数ありコンストラクタ
     init(index: Int) {
@@ -2048,6 +2159,8 @@ enum DrawingMode {
         case 9:
             self = .text
         case 10:
+            self = .damageMarker
+        case 11:
             self = .eraser
         default:
             self = .move

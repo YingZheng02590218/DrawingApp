@@ -1820,10 +1820,10 @@ class DrawingViewController: UIViewController {
     // Undo Redo
     let undoRedoManager = UndoRedoManager()
     // Undo Redo が可能なAnnotation
-    private var editingAnnotations: [PDFAnnotation]?
+    private var editingAnnotations: [Any]?
     
     // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-    func reloadPDFAnnotations(didUndoAnnotations: [PDFAnnotation]?) {
+    func reloadPDFAnnotations(didUndoAnnotations: [Any]?) {
         print(#function)
         // Undo Redo が可能なAnnotation　を削除する
         DispatchQueue.main.async {
@@ -1833,7 +1833,8 @@ class DrawingViewController: UIViewController {
                     // pageを探す
                     for i in 0..<document.pageCount {
                         if let page = document.page(at: i) {
-                            if let editingAnnotationPage = editingAnnotation.page {
+                            if let editingAnnotation = editingAnnotation as? PDFAnnotation,
+                                let editingAnnotationPage = editingAnnotation.page {
                                 // page が同一か？
                                 // print(document.index(for: page), document.index(for: editingAnnotationPage))
                                 if document.index(for: page) == document.index(for: editingAnnotationPage) {
@@ -1861,7 +1862,8 @@ class DrawingViewController: UIViewController {
                     // pageを探す
                     for i in 0..<document.pageCount {
                         if let page = document.page(at: i) {
-                            if let editingAnnotationPage = editingAnnotation.page {
+                            if let editingAnnotation = editingAnnotation as? PDFAnnotation,
+                               let editingAnnotationPage = editingAnnotation.page {
                                 // page が同一か？
                                 // print(document.index(for: page), document.index(for: editingAnnotationPage))
                                 if document.index(for: page) == document.index(for: editingAnnotationPage) {
