@@ -253,19 +253,22 @@ class DrawingReportEditViewController: UIViewController {
             if annotation.isKind(of: PhotoAnnotation.self) && PDFAnnotationSubtype(rawValue: "/\(annotation.type!)") == PDFAnnotationSubtype.freeText.self && ((annotation.contents?.isEmpty) != nil) {
             } else {
                 // 写真マーカー　以外
+            }
+            if let annotationPage = annotation.page {
                 // 対象のページの注釈を削除
                 page.removeAnnotation(annotation)
-                
-                // Undo Redo 削除
-                undoRedoManager.deleteAnnotation(annotation)
-                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
-                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-                    self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-                })
-                // ボタン　活性状態
-                undoButton.isEnabled = undoRedoManager.canUndo()
-                redoButton.isEnabled = undoRedoManager.canRedo()
+                // iOS17対応　PDFAnnotationのpageが消えてしまう現象
+                annotation.page = annotationPage
             }
+            // Undo Redo 削除
+            undoRedoManager.deleteAnnotation(annotation)
+            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+            })
+            // ボタン　活性状態
+            undoButton.isEnabled = undoRedoManager.canUndo()
+            redoButton.isEnabled = undoRedoManager.canRedo()
         }
     }
     
@@ -278,6 +281,10 @@ class DrawingReportEditViewController: UIViewController {
             return
         }
         // タップされたPDFAnnotationに対する処理
+        if drawingMode == .photoMarker { // 写真マーカー
+            // Annotationを削除する
+            removeAnotation(annotation: annotation)
+        }
         if drawingMode == .arrow { // 矢印
             // 現在開いているページを取得
             if let page = self.pdfView.currentPage,
@@ -305,9 +312,12 @@ class DrawingReportEditViewController: UIViewController {
                 
                 // Annotationを再度作成
                 page.addAnnotation(lineAnnotation)
-                // 古いものを削除する
-                page.removeAnnotation(annotation)
-                
+                if let annotationPage = annotation.page {
+                    // 古いものを削除する
+                    page.removeAnnotation(annotation)
+                    // iOS17対応　PDFAnnotationのpageが消えてしまう現象
+                    annotation.page = annotationPage
+                }
                 // Undo Redo 更新
                 undoRedoManager.updateAnnotation(before: annotation, after: lineAnnotation)
                 undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
@@ -357,8 +367,12 @@ class DrawingReportEditViewController: UIViewController {
                 after.userName = UUID().uuidString
                 // Annotationを再度作成
                 page.addAnnotation(after)
-                // 古いものを削除する
-                page.removeAnnotation(before)
+                if let annotationPage = before.page {
+                    // 古いものを削除する
+                    page.removeAnnotation(before)
+                    // iOS17対応　PDFAnnotationのpageが消えてしまう現象
+                    before.page = annotationPage
+                }
                 // 初期化
                 self.before = nil
                 // Undo Redo 更新
@@ -465,6 +479,8 @@ class DrawingReportEditViewController: UIViewController {
             freeText.fontColor = .white
             // UUID
             freeText.userName = UUID().uuidString
+            // ページ
+            freeText.page = page
             // 対象のページへ注釈を追加
             page.addAnnotation(freeText)
             // Undo Redo
@@ -508,6 +524,8 @@ class DrawingReportEditViewController: UIViewController {
                     after.fontColor = .white
                     // UUID
                     after.userName = UUID().uuidString
+                    // ページ
+                    after.page = before.page
                     if let afterPage = after.page {
                         // Annotationを再度作成
                         afterPage.addAnnotation(after)
@@ -515,6 +533,8 @@ class DrawingReportEditViewController: UIViewController {
                     if let beforePage = before.page {
                         // 古いものを削除する
                         beforePage.removeAnnotation(before)
+                        // iOS17対応　PDFAnnotationのpageが消えてしまう現象
+                        before.page = beforePage
                     }
                     // 初期化
                     self.before = nil
@@ -528,28 +548,6 @@ class DrawingReportEditViewController: UIViewController {
                     undoButton.isEnabled = undoRedoManager.canUndo()
                     redoButton.isEnabled = undoRedoManager.canRedo()
                 }
-            }
-        }
-    }
-
-    // 写真マーカーを削除する
-    func removeMarkerAnotation(annotation: PDFAnnotation) {
-        // 現在開いているページを取得
-        if let page = pdfView.currentPage {
-            // 写真マーカー
-            if annotation.isKind(of: PhotoAnnotation.self) && PDFAnnotationSubtype(rawValue: "/\(annotation.type!)") == PDFAnnotationSubtype.freeText.self && ((annotation.contents?.isEmpty) != nil)  {
-                // 対象のページの注釈を削除
-                page.removeAnnotation(annotation)
-                
-                // Undo Redo 削除
-                undoRedoManager.deleteAnnotation(annotation)
-                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
-                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-                    self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-                })
-                // ボタン　活性状態
-                undoButton.isEnabled = undoRedoManager.canUndo()
-                redoButton.isEnabled = undoRedoManager.canRedo()
             }
         }
     }
@@ -1491,14 +1489,13 @@ class DrawingReportEditViewController: UIViewController {
                 let size = "\(inputText)".size(with: font)
                 // 文字列の長さが変化したらboundsも更新しなければならない
                 after.bounds = CGRect(
-                    x: after.bounds.origin.x,
-                    y: after.bounds.origin.y,
+                    x: before.bounds.origin.x,
+                    y: before.bounds.origin.y,
                     width: size.width * 1.1,
                     height: size.height
                 )
                 after.contents = inputText
                 after.setValue(UIColor.yellow.withAlphaComponent(0.5), forAnnotationKey: .color)
-                after.page = before.page
                 // 左寄せ
                 after.alignment = .left
                 // フォントサイズ
@@ -1508,8 +1505,12 @@ class DrawingReportEditViewController: UIViewController {
                 after.userName = UUID().uuidString
                 // Annotationを再度作成
                 page.addAnnotation(after)
-                // 古いものを削除する
-                //                    page.removeAnnotation(before)
+                if let annotationPage = before.page {
+                    // 古いものを削除する
+                    page.removeAnnotation(before)
+                    // iOS17対応　PDFAnnotationのpageが消えてしまう現象
+                    before.page = annotationPage
+                }
                 // 初期化
                 self.before = nil
                 // Undo Redo 更新
@@ -1540,17 +1541,19 @@ class DrawingReportEditViewController: UIViewController {
         // Undo Redo が可能なAnnotation　を削除する
         DispatchQueue.main.async {
             if let editingAnnotations = self.editingAnnotations {
+                guard let document = self.pdfView.document else { return }
                 for editingAnnotation in editingAnnotations {
                     // pageを探す
-                    guard let document = self.pdfView.document else { return }
                     for i in 0..<document.pageCount {
-                        if let page = document.page(at: i),
-                           let editingAnnotationPage = editingAnnotation.page {
-                            // page が同一か？
-                            if document.index(for: page) == document.index(for: editingAnnotationPage) {
-                                print("対象のページの注釈を削除", editingAnnotation.contents)
-                                // 対象のページの注釈を削除
-                                page.removeAnnotation(editingAnnotation)
+                        if let page = document.page(at: i) {
+                            if let editingAnnotationPage = editingAnnotation.page {
+                                // page が同一か？
+                                if document.index(for: page) == document.index(for: editingAnnotationPage) {
+                                    // 対象のページの注釈を削除
+                                    editingAnnotationPage.removeAnnotation(editingAnnotation)
+                                    // iOS17対応　PDFAnnotationのpageが消えてしまう現象
+                                    editingAnnotation.page = editingAnnotationPage
+                                }
                             }
                         }
                     }
@@ -1561,18 +1564,18 @@ class DrawingReportEditViewController: UIViewController {
         DispatchQueue.main.async {
             self.editingAnnotations = nil
             self.editingAnnotations = didUndoAnnotations
-            if let editingAnnotations = self.editingAnnotations {
+            if let editingAnnotations = didUndoAnnotations {
+                guard let document = self.pdfView.document else { return }
                 for editingAnnotation in editingAnnotations {
                     // pageを探す
-                    guard let document = self.pdfView.document else { return }
                     for i in 0..<document.pageCount {
-                        if let page = document.page(at: i),
-                           let editingAnnotationPage = editingAnnotation.page {
-                            // page が同一か？
-                            if document.index(for: page) == document.index(for: editingAnnotationPage) {
-                                print("対象のページの注釈を追加", editingAnnotation.contents)
-                                // 対象のページの注釈を追加
-                                page.addAnnotation(editingAnnotation)
+                        if let page = document.page(at: i) {
+                            if let editingAnnotationPage = editingAnnotation.page {
+                                // page が同一か？
+                                if document.index(for: page) == document.index(for: editingAnnotationPage) {
+                                    // 対象のページの注釈を追加
+                                    page.addAnnotation(editingAnnotation)
+                                }
                             }
                         }
                     }
