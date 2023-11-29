@@ -1031,6 +1031,61 @@ class DrawingReportEditViewController: UIViewController {
             //stackView.addSubview(newView)
         }
     }
+    
+    // 損傷マーカー
+    func createDamageMarkButtons() {
+        // ラベル
+        let label = UILabel()
+        label.text = "色の選択"
+        label.backgroundColor = UIColor.systemPink.withAlphaComponent(0.3)
+        // LabelをaddSubview
+        colorPaletteView.addSubview(label)
+        colorPaletteView.backgroundColor = UIColor.lightGray.withAlphaComponent(0.3)
+        // labelが左上に配置されるように制約を追加
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.topAnchor.constraint(equalTo: colorPaletteView.topAnchor, constant: 10.0).isActive = true
+        label.leadingAnchor.constraint(equalTo: colorPaletteView.leadingAnchor, constant: 10.0).isActive = true
+        
+        //Create the color palette
+        var buttons: [UIButton] = []
+        for color in Colors.allCases {
+            let button = UIButton(
+                primaryAction: UIAction(handler: { action in
+                    self.updatePens(sender: action.sender)
+                })
+            )
+            button.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+            button.widthAnchor.constraint(equalToConstant: 50.0).isActive = true
+            button.makeRounded(25, borderWidth: 3, borderColor: .black)
+            button.backgroundColor = color.getColor()
+            button.tag = color.rawValue
+            buttons.append(button)
+        }
+        // 色の選択
+        colorStackView = UIStackView(arrangedSubviews: buttons)
+        colorStackView?.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.3)
+        if let colorStackView = colorStackView {
+            colorStackView.axis = .horizontal
+            colorStackView.distribution = .equalSpacing
+            colorStackView.alignment = .center
+            
+            colorPaletteView.addSubview(colorStackView)
+            colorPaletteView.heightAnchor.constraint(equalToConstant: label.bounds.height + 170).isActive = true
+
+            colorStackView.translatesAutoresizingMaskIntoConstraints = false
+            
+            NSLayoutConstraint.activate([
+                colorStackView.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 0),
+                colorStackView.centerXAnchor.constraint(equalTo: colorPaletteView.centerXAnchor),
+                colorStackView.widthAnchor.constraint(greaterThanOrEqualToConstant: colorPaletteView.bounds.width),
+                colorStackView.heightAnchor.constraint(equalToConstant: 70)
+            ])
+            //            // stackViewにnewViewを追加する
+            //            propertyEditorStackView.addArrangedSubview(colorPaletteView)
+            //            // これだとダメ
+            //            //stackView.addSubview(newView)
+        }
+    }
 
     // 図形　写真マーカーサイズ
     func createTextSizeSlider() {
