@@ -197,8 +197,6 @@ class DrawingReportEditViewController: UIViewController {
             propertyEditorScrollView?.isHidden = false
             propertyEditorCloseButtonView.isHidden = false
             if drawingMode == .photoMarker || drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle || drawingMode == .text || drawingMode == .damageMarker {
-                colorPaletteView.isHidden = false
-                alphaPaletteView.isHidden = false
                 if drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle {
                     colorLineStyleView.isHidden = false
                     sliderView.isHidden = false
@@ -211,6 +209,15 @@ class DrawingReportEditViewController: UIViewController {
                 } else {
                     photoMarkerSliderView.isHidden = true
                 }
+                
+                if drawingMode == .damageMarker {
+                    colorPaletteView.isHidden = true
+                    alphaPaletteView.isHidden = true
+                } else {
+                    colorPaletteView.isHidden = false
+                    alphaPaletteView.isHidden = false
+                }
+
             } else {
                 colorPaletteView.isHidden = true
                 alphaPaletteView.isHidden = true
@@ -228,6 +235,9 @@ class DrawingReportEditViewController: UIViewController {
     
     // MARK: - アノテーション
     
+    // 長押しメニュー
+    @IBOutlet var longPressView: UIView!
+    
     // PDF Annotationがタップされたかを監視
     func setupAnnotationRecognizer() {
         // ②PDF Annotationがタップされたかを監視、タップに対する処理を行う
@@ -239,6 +249,12 @@ class DrawingReportEditViewController: UIViewController {
         singleTapGesture.numberOfTapsRequired = 1
         singleTapGesture.delegate = self
         self.pdfView.addGestureRecognizer(singleTapGesture)
+        // 長押し
+        let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(longPress(_:)))
+        longPressGesture.delegate = self
+        // longPressGesture.numberOfTapsRequired = 1　これがあると反応しなくなる
+        longPressGesture.minimumPressDuration = 0.3
+        longPressView.addGestureRecognizer(longPressGesture)
         // 移動
         let panAnnotationGesture = UIPanGestureRecognizer(target: self, action: #selector(didPanAnnotation(sender:)))
         panAnnotationGesture.delegate = self
@@ -478,6 +494,144 @@ class DrawingReportEditViewController: UIViewController {
         }
     }
     
+    // マーカーを更新する 長押しメニュー　編集
+    func updateMarkerColorAnotation() {
+        // 現在開いているページを取得
+        if let page = pdfView.currentPage {
+            
+            if let before = before {
+                // 選択しているAnnotation 移動中のAnnotation
+                guard let currentlySelectedAnnotation = currentlySelectedAnnotation else { return }
+                // 変更後
+                let after = currentlySelectedAnnotation
+                after.bounds = currentlySelectedAnnotation.bounds
+                after.page = currentlySelectedAnnotation.page
+                
+                after.bounds = CGRect(
+                    x: after.bounds.origin.x,
+                    y: after.bounds.origin.y,
+                    width: after.bounds.size.width,
+                    height: after.bounds.size.height
+                )
+                after.contents = before.contents
+                after.color = selectedColor.withAlphaComponent(selectedAlpha.alpha)
+                after.page = before.page
+                
+                // UUID
+                after.userName = UUID().uuidString
+                if let annotationPage = before.page {
+                    // 古いものを削除する
+                    page.removeAnnotation(before)
+                    // iOS17対応　PDFAnnotationのpageが消えてしまう現象
+                    before.page = annotationPage
+                }
+                // Annotationを再度作成
+                page.addAnnotation(after)
+                // 初期化
+//                self.before = nil
+                // Undo Redo 更新
+                undoRedoManager.updateAnnotation(before: before, after: after)
+                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                    self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                })
+                // ボタン　活性状態
+                undoButton.isEnabled = undoRedoManager.canUndo()
+                redoButton.isEnabled = undoRedoManager.canRedo()
+            }
+            // 損傷マーカー
+            if let before = beforeImageAnnotation {
+                // 選択しているAnnotation 移動中のAnnotation
+                guard let currentlySelectedAnnotation = currentlySelectedImageAnnotation else { return }
+                // 変更後
+                let after = currentlySelectedAnnotation
+                after.bounds = currentlySelectedAnnotation.bounds
+                after.page = currentlySelectedAnnotation.page
+                after.image = before.image
+                // オリジナル画像のサイズからアスペクト比を計算
+                let aspectScale = after.image.size.height / after.image.size.width
+                // widthからアスペクト比を元にリサイズ後のサイズを取得
+                let resizedSize = CGSize(width: selectedPhotoMarkerSize, height: selectedPhotoMarkerSize * Double(aspectScale))
+
+                after.bounds = CGRect(
+                    x: after.bounds.origin.x,
+                    y: after.bounds.origin.y,
+                    width: resizedSize.width,
+                    height: resizedSize.height
+                )
+                after.contents = before.contents
+                after.color = selectedColor.withAlphaComponent(selectedAlpha.alpha)
+                after.page = before.page
+                
+                // UUID
+                after.userName = UUID().uuidString
+                if let annotationPage = before.page {
+                    // 古いものを削除する
+                    page.removeAnnotation(before)
+                    // iOS17対応　PDFAnnotationのpageが消えてしまう現象
+                    before.page = annotationPage
+                }
+                // Annotationを再度作成
+                page.addAnnotation(after)
+
+                // 初期化
+//                self.beforeImageAnnotation = nil
+                // Undo Redo 更新
+                undoRedoManager.updateAnnotation(before: before, after: after)
+                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                    self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                })
+                // ボタン　活性状態
+                undoButton.isEnabled = undoRedoManager.canUndo()
+                redoButton.isEnabled = undoRedoManager.canRedo()
+            }
+            // 手書き
+            if let before = beforeDrawingAnnotation {
+                // 選択しているAnnotation 移動中のAnnotation
+                guard let currentlySelectedAnnotation = currentlySelectedDrawingAnnotation else { return }
+                // 変更後
+                let after = currentlySelectedAnnotation
+                after.bounds = currentlySelectedAnnotation.bounds
+                after.page = currentlySelectedAnnotation.page
+
+                after.bounds = CGRect(
+                    x: after.bounds.origin.x,
+                    y: after.bounds.origin.y,
+                    width: before.bounds.size.width,
+                    height: before.bounds.size.height
+                )
+                after.contents = before.contents
+                after.color = selectedColor.withAlphaComponent(selectedAlpha.alpha)
+                after.page = before.page
+                after.path = before.path
+                
+                // UUID
+                after.userName = UUID().uuidString
+                if let annotationPage = before.page {
+                    // 古いものを削除する
+                    page.removeAnnotation(before)
+                    // iOS17対応　PDFAnnotationのpageが消えてしまう現象
+                    before.page = annotationPage
+                }
+                // Annotationを再度作成
+                page.addAnnotation(after)
+
+                // 初期化
+//                self.beforeDrawingAnnotation = nil
+                // Undo Redo 更新
+                undoRedoManager.updateAnnotation(before: before, after: after)
+                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                    self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                })
+                // ボタン　活性状態
+                undoButton.isEnabled = undoRedoManager.canUndo()
+                redoButton.isEnabled = undoRedoManager.canRedo()
+            }
+        }
+    }
+
     // MARK: - 写真マーカー
     
     // PDF 全てのpageに存在する写真マーカーAnnotationを保持する
@@ -1245,6 +1399,8 @@ class DrawingReportEditViewController: UIViewController {
                 }
             }
             pdfDrawer.changeColor(color: selectedColor.withAlphaComponent(selectedAlpha.alpha))
+            // マーカーを更新する 長押しメニュー　編集
+            updateMarkerColorAnotation()
         }
     }
     
@@ -1262,6 +1418,8 @@ class DrawingReportEditViewController: UIViewController {
                 }
             }
             pdfDrawer.changeColor(color: selectedColor.withAlphaComponent(selectedAlpha.alpha))
+            // マーカーを更新する 長押しメニュー　編集
+            updateMarkerColorAnotation()
         }
     }
     
@@ -1272,6 +1430,8 @@ class DrawingReportEditViewController: UIViewController {
             // 選択された透明度
             selectedAlpha = alpha
             pdfDrawer.changeColor(color: selectedColor.withAlphaComponent(selectedAlpha.alpha))
+            // マーカーを更新する 長押しメニュー　編集
+            updateMarkerColorAnotation()
         }
     }
 
@@ -1314,6 +1474,9 @@ class DrawingReportEditViewController: UIViewController {
         if drawingMode == .photoMarker { // 写真マーカー
             // 写真マーカーを更新する
             updatePhotoMarkerAnotation()
+        } else if drawingMode == .move {
+            // マーカーを更新する 長押しメニュー　編集
+            updateMarkerColorAnotation()
         }
     }
     
@@ -1324,6 +1487,9 @@ class DrawingReportEditViewController: UIViewController {
             if drawingMode == .photoMarker { // 写真マーカー
                 // 写真マーカーを更新する
                 updatePhotoMarkerAnotation()
+            } else if drawingMode == .move {
+                // マーカーを更新する 長押しメニュー　編集
+                updateMarkerColorAnotation()
             }
         }
     }
@@ -1335,6 +1501,9 @@ class DrawingReportEditViewController: UIViewController {
             if drawingMode == .photoMarker { // 写真マーカー
                 // 写真マーカーを更新する
                 updatePhotoMarkerAnotation()
+            } else if drawingMode == .move {
+                // マーカーを更新する 長押しメニュー　編集
+                updateMarkerColorAnotation()
             }
         }
     }
@@ -1343,6 +1512,16 @@ class DrawingReportEditViewController: UIViewController {
     private func cloSepropertyEditor(sender: Any?) {
         if let button = sender as? UIButton {
             propertyEditorScrollView?.isHidden = true
+            
+            // 編集を終了する
+            // 初期化
+            self.beforeImageAnnotation = nil
+            self.beforeDrawingAnnotation = nil
+            self.before = nil
+            
+            self.currentlySelectedImageAnnotation = nil
+            self.currentlySelectedDrawingAnnotation = nil
+            self.currentlySelectedAnnotation = nil
         }
     }
     
@@ -1907,6 +2086,133 @@ extension DrawingReportEditViewController: UIGestureRecognizerDelegate {
         }
     }
     
+    @objc 
+    func longPress(_ sender: UILongPressGestureRecognizer) {
+        // 現在開いているページを取得
+        if let page = self.pdfView.currentPage {
+            // UIViewからPDFの座標へ変換する
+            let locationOnPage = pdfView.convert(sender.location(in: pdfView), to: page)
+            
+            switch sender.state {
+            case .began:
+                guard let annotation = page.annotation(at: locationOnPage) else { return }
+                // 変更前
+                if let copy = annotation.copy() as? PhotoAnnotation {
+                    currentlySelectedAnnotation = annotation
+                    before = copy
+                    copy.bounds = annotation.bounds
+                    copy.page = annotation.page
+                    // 長押しメニュー
+                    showLongPressDialog(sender.location(in: pdfView), drawingMode: .photoMarker)
+                }
+                else if let copy = annotation.copy() as? ImageAnnotation {
+                    currentlySelectedImageAnnotation = annotation as? ImageAnnotation
+                    beforeImageAnnotation = copy
+                    copy.bounds = annotation.bounds
+                    copy.page = annotation.page
+                    copy.image = currentlySelectedImageAnnotation?.image
+                    // 長押しメニュー
+                    showLongPressDialog(sender.location(in: pdfView), drawingMode: .damageMarker)
+                }
+                else if let copy = annotation.copy() as? DrawingAnnotation {
+                    currentlySelectedDrawingAnnotation = annotation as? DrawingAnnotation
+                    beforeDrawingAnnotation = copy
+                    copy.bounds = annotation.bounds
+                    copy.page = annotation.page
+                    copy.path = currentlySelectedDrawingAnnotation!.path
+                    // 長押しメニュー
+                    showLongPressDialog(sender.location(in: pdfView), drawingMode: .drawing)
+                }
+                else if let copy = annotation.copy() as? PDFAnnotation {
+                    currentlySelectedAnnotation = annotation
+                    before = copy
+                    copy.bounds = annotation.bounds
+                    copy.page = annotation.page
+                    // 長押しメニュー
+                    showLongPressDialog(sender.location(in: pdfView), drawingMode: .move)
+                }
+            case .changed:
+                break
+            case .ended, .cancelled, .failed:
+                break
+            default:
+                break
+            }
+        }
+    }
+    
+    // 長押しメニュー
+    func showLongPressDialog(_ origin: CGPoint, drawingMode: DrawingMode) {
+        DispatchQueue.main.async {
+            let alert = UIAlertController(
+                title: "確認",
+                message: "選択されたアイテムの状態を変更しますか？",
+                preferredStyle: .actionSheet
+            )
+            
+            let colorAction = UIAlertAction(
+                title: "編集",
+                style: .default
+            ) { _ in
+                self.propertyEditorScrollView?.isHidden = false
+                self.propertyEditorCloseButtonView.isHidden = false
+
+                if drawingMode == .damageMarker {
+                    // 編集　損傷マーカー
+                    self.colorPaletteView.isHidden = true
+                    self.alphaPaletteView.isHidden = true
+                } else {
+                    self.colorPaletteView.isHidden = false
+                    self.alphaPaletteView.isHidden = false
+                }
+                
+                if drawingMode == .damageMarker {
+                    // 編集　損傷マーカー
+                    self.photoMarkerSliderView.isHidden = false
+                } else {
+                    self.photoMarkerSliderView.isHidden = true
+                }
+                alert.dismiss(animated: true)
+            }
+            alert.addAction(colorAction)
+
+            let closeAction = UIAlertAction(
+                title: "閉じる",
+                style: .default
+            ) { _ in
+                // 編集を終了する
+                // 初期化
+                self.beforeImageAnnotation = nil
+                self.beforeDrawingAnnotation = nil
+                self.before = nil
+                
+                self.currentlySelectedImageAnnotation = nil
+                self.currentlySelectedDrawingAnnotation = nil
+                self.currentlySelectedAnnotation = nil
+                
+                alert.dismiss(animated: true)
+            }
+            alert.addAction(closeAction)
+            
+            if UIDevice.current.userInterfaceIdiom == .pad {
+                alert.popoverPresentationController?.sourceView = self.pdfView
+                alert.popoverPresentationController?.sourceRect = CGRect(
+                    x: origin.x,
+                    y: origin.y,
+                    width: 0,
+                    height: 0
+                )
+
+                // iPadの場合、アクションシートの背後の画面をタップできる
+            } else {
+                // ③表示するViewと表示位置を指定する
+                alert.popoverPresentationController?.sourceView = self.pdfView
+                alert.popoverPresentationController?.sourceRect = self.view.frame
+            }
+            self.present(alert, animated: true)
+        }
+    }
+
     @objc
     func didPanAnnotation(sender: UIPanGestureRecognizer) {
         // 現在開いているページを取得
