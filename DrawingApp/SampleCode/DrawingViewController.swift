@@ -1756,8 +1756,6 @@ class DrawingViewController: UIViewController {
                 )
                 after.contents = inputText
                 after.setValue(UIColor.yellow.withAlphaComponent(0.5), forAnnotationKey: .color)
-                print(before.userName, after.userName, UUID().uuidString)
-                print(before.page, after.page, before.page == after.page)
                 // 左寄せ
                 after.alignment = .left
                 // フォントサイズ
@@ -1773,7 +1771,6 @@ class DrawingViewController: UIViewController {
                     // iOS17対応　PDFAnnotationのpageが消えてしまう現象
                     before.page = annotationPage
                 }
-
                 // 初期化
                 self.before = nil
                 // Undo Redo 更新

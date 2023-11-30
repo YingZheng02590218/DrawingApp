@@ -2124,12 +2124,22 @@ extension DrawingReportEditViewController: UIGestureRecognizerDelegate {
                     showLongPressDialog(sender.location(in: pdfView), drawingMode: .drawing)
                 }
                 else if let copy = annotation.copy() as? PDFAnnotation {
-                    currentlySelectedAnnotation = annotation
-                    before = copy
-                    copy.bounds = annotation.bounds
-                    copy.page = annotation.page
-                    // 長押しメニュー
-                    showLongPressDialog(sender.location(in: pdfView), drawingMode: .move)
+                    if PDFAnnotationSubtype(rawValue: "/\(annotation.type!)") == PDFAnnotationSubtype.freeText.self {
+                        // 編集中のAnnotation
+                        isEditingAnnotation = annotation
+                        before = copy
+                        copy.bounds = annotation.bounds
+                        copy.page = annotation.page
+                        // 長押しメニュー
+                        showLongPressDialog(sender.location(in: pdfView), drawingMode: .text)
+                    } else {
+                        currentlySelectedAnnotation = annotation
+                        before = copy
+                        copy.bounds = annotation.bounds
+                        copy.page = annotation.page
+                        // 長押しメニュー
+                        showLongPressDialog(sender.location(in: pdfView), drawingMode: .move)
+                    }
                 }
             case .changed:
                 break
@@ -2172,7 +2182,34 @@ extension DrawingReportEditViewController: UIGestureRecognizerDelegate {
                 } else {
                     self.photoMarkerSliderView.isHidden = true
                 }
-                alert.dismiss(animated: true)
+
+                alert.dismiss(animated: true) {
+                    if drawingMode == .text {
+                        if let isEditingAnnotation = self.isEditingAnnotation {
+                            // ポップアップを表示させる
+                            if let viewController = UIStoryboard(
+                                name: "TextInputViewController",
+                                bundle: nil
+                            ).instantiateViewController(
+                                withIdentifier: "TextInputViewController"
+                            ) as? TextInputViewController {
+                                viewController.modalPresentationStyle = .overCurrentContext
+                                viewController.modalTransitionStyle = .crossDissolve
+                                viewController.annotationIsEditing = true
+                                viewController.text = isEditingAnnotation.contents
+                                self.present(viewController, animated: true, completion: {
+                                    print(isEditingAnnotation.font)
+                                    print(isEditingAnnotation.font?.pointSize)
+                                    if let pointSize = isEditingAnnotation.font?.pointSize {
+                                        viewController.fontSize = pointSize
+                                        // フォントサイズ
+                                        viewController.slider.value = Float(pointSize)
+                                    }
+                                })
+                            }
+                        }
+                    }
+                }
             }
             alert.addAction(colorAction)
 
@@ -2189,6 +2226,7 @@ extension DrawingReportEditViewController: UIGestureRecognizerDelegate {
                 self.currentlySelectedImageAnnotation = nil
                 self.currentlySelectedDrawingAnnotation = nil
                 self.currentlySelectedAnnotation = nil
+                self.isEditingAnnotation = nil
                 
                 alert.dismiss(animated: true)
             }
