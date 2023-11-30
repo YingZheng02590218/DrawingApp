@@ -2223,41 +2223,43 @@ extension DrawingReportEditViewController: UIGestureRecognizerDelegate {
             }
             alert.addAction(colorAction)
 
-            let textAction = UIAlertAction(
-                title: "文字列の変更",
-                style: .default
-            ) { _ in
-
-                alert.dismiss(animated: true) {
-                    if drawingMode == .text {
-                        if let isEditingAnnotation = self.isEditingAnnotation {
-                            // ポップアップを表示させる
-                            if let viewController = UIStoryboard(
-                                name: "TextInputViewController",
-                                bundle: nil
-                            ).instantiateViewController(
-                                withIdentifier: "TextInputViewController"
-                            ) as? TextInputViewController {
-                                viewController.modalPresentationStyle = .overCurrentContext
-                                viewController.modalTransitionStyle = .crossDissolve
-                                viewController.annotationIsEditing = true
-                                viewController.text = isEditingAnnotation.contents
-                                self.present(viewController, animated: true, completion: {
-                                    print(isEditingAnnotation.font)
-                                    print(isEditingAnnotation.font?.pointSize)
-                                    if let pointSize = isEditingAnnotation.font?.pointSize {
-                                        viewController.fontSize = pointSize
-                                        // フォントサイズ
-                                        viewController.slider.value = Float(pointSize)
-                                    }
-                                })
+            if drawingMode == .text {
+                let textAction = UIAlertAction(
+                    title: "文字列の変更",
+                    style: .default
+                ) { _ in
+                    
+                    alert.dismiss(animated: true) {
+                        if drawingMode == .text {
+                            if let isEditingAnnotation = self.isEditingAnnotation {
+                                // ポップアップを表示させる
+                                if let viewController = UIStoryboard(
+                                    name: "TextInputViewController",
+                                    bundle: nil
+                                ).instantiateViewController(
+                                    withIdentifier: "TextInputViewController"
+                                ) as? TextInputViewController {
+                                    viewController.modalPresentationStyle = .overCurrentContext
+                                    viewController.modalTransitionStyle = .crossDissolve
+                                    viewController.annotationIsEditing = true
+                                    viewController.text = isEditingAnnotation.contents
+                                    self.present(viewController, animated: true, completion: {
+                                        print(isEditingAnnotation.font)
+                                        print(isEditingAnnotation.font?.pointSize)
+                                        if let pointSize = isEditingAnnotation.font?.pointSize {
+                                            viewController.fontSize = pointSize
+                                            // フォントサイズ
+                                            viewController.slider.value = Float(pointSize)
+                                        }
+                                    })
+                                }
                             }
                         }
                     }
                 }
+                alert.addAction(textAction)
             }
-            alert.addAction(textAction)
-
+            
             let closeAction = UIAlertAction(
                 title: "閉じる",
                 style: .default
