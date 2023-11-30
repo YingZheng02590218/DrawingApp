@@ -499,9 +499,9 @@ class DrawingReportEditViewController: UIViewController {
         // 現在開いているページを取得
         if let page = pdfView.currentPage {
             
-            if let before = before {
+            if let before = before,
+               let currentlySelectedAnnotation = currentlySelectedAnnotation {
                 // 選択しているAnnotation 移動中のAnnotation
-                guard let currentlySelectedAnnotation = currentlySelectedAnnotation else { return }
                 // 変更後
                 let after = currentlySelectedAnnotation
                 after.bounds = currentlySelectedAnnotation.bounds
@@ -539,10 +539,47 @@ class DrawingReportEditViewController: UIViewController {
                 undoButton.isEnabled = undoRedoManager.canUndo()
                 redoButton.isEnabled = undoRedoManager.canRedo()
             }
+            // テキスト
+            if let before = before,
+               let isEditingAnnotation = isEditingAnnotation {
+                // 変更後
+                let after = isEditingAnnotation
+                after.bounds = isEditingAnnotation.bounds
+                after.page = isEditingAnnotation.page
+
+                after.contents = before.contents
+                after.setValue(UIColor.yellow.withAlphaComponent(0.5), forAnnotationKey: .color)
+                // 左寄せ
+                after.alignment = before.alignment
+                // フォントサイズ
+                after.font = before.font
+                after.fontColor = selectedColor.withAlphaComponent(selectedAlpha.alpha)
+                // UUID
+                after.userName = UUID().uuidString
+                if let annotationPage = before.page {
+                    // 古いものを削除する
+                    page.removeAnnotation(before)
+                    // iOS17対応　PDFAnnotationのpageが消えてしまう現象
+                    before.page = annotationPage
+                }
+                // Annotationを再度作成
+                page.addAnnotation(after)
+                // 初期化
+//                    self.before = nil
+                // Undo Redo 更新
+                undoRedoManager.updateAnnotation(before: before, after: after)
+                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                    self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                })
+                // ボタン　活性状態
+                undoButton.isEnabled = undoRedoManager.canUndo()
+                redoButton.isEnabled = undoRedoManager.canRedo()
+            }
             // 損傷マーカー
-            if let before = beforeImageAnnotation {
+            if let before = beforeImageAnnotation,
+               let currentlySelectedAnnotation = currentlySelectedImageAnnotation {
                 // 選択しているAnnotation 移動中のAnnotation
-                guard let currentlySelectedAnnotation = currentlySelectedImageAnnotation else { return }
                 // 変更後
                 let after = currentlySelectedAnnotation
                 after.bounds = currentlySelectedAnnotation.bounds
@@ -1835,7 +1872,7 @@ class DrawingReportEditViewController: UIViewController {
                 after.alignment = .left
                 // フォントサイズ
                 after.font = font
-                after.fontColor = selectedColor.withAlphaComponent(selectedAlpha.alpha)
+                after.fontColor = before.fontColor
                 // UUID
                 after.userName = UUID().uuidString
                 // Annotationを再度作成
@@ -2086,7 +2123,7 @@ extension DrawingReportEditViewController: UIGestureRecognizerDelegate {
         }
     }
     
-    @objc 
+    @objc
     func longPress(_ sender: UILongPressGestureRecognizer) {
         // 現在開いているページを取得
         if let page = self.pdfView.currentPage {
@@ -2182,6 +2219,14 @@ extension DrawingReportEditViewController: UIGestureRecognizerDelegate {
                 } else {
                     self.photoMarkerSliderView.isHidden = true
                 }
+                alert.dismiss(animated: true)
+            }
+            alert.addAction(colorAction)
+
+            let textAction = UIAlertAction(
+                title: "文字列の変更",
+                style: .default
+            ) { _ in
 
                 alert.dismiss(animated: true) {
                     if drawingMode == .text {
@@ -2211,7 +2256,7 @@ extension DrawingReportEditViewController: UIGestureRecognizerDelegate {
                     }
                 }
             }
-            alert.addAction(colorAction)
+            alert.addAction(textAction)
 
             let closeAction = UIAlertAction(
                 title: "閉じる",
