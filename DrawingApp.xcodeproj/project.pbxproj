@@ -64,6 +64,7 @@
 		F963ED7A2AC2D82900B41C99 /* PdfMaker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F963ED792AC2D82900B41C99 /* PdfMaker.swift */; };
 		F9DB92622B0B6797002BFE75 /* PhotoMarkerChooseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9DB92612B0B6797002BFE75 /* PhotoMarkerChooseViewController.swift */; };
 		F9DB92642B0B67B0002BFE75 /* PhotoMarkerChooseViewController.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F9DB92632B0B67B0002BFE75 /* PhotoMarkerChooseViewController.storyboard */; };
+		F9DFBDB82B16DF95002E441F /* JsonFileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9DFBDB72B16DF95002E441F /* JsonFileManager.swift */; };
 		F9E92D712B0DB69D00EE4DCA /* UIColor+extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9E92D702B0DB69D00EE4DCA /* UIColor+extension.swift */; };
 /* End PBXBuildFile section */
 
@@ -139,6 +140,7 @@
 		F963ED7B2AC2E05E00B41C99 /* DrawingApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DrawingApp.entitlements; sourceTree = "<group>"; };
 		F9DB92612B0B6797002BFE75 /* PhotoMarkerChooseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoMarkerChooseViewController.swift; sourceTree = "<group>"; };
 		F9DB92632B0B67B0002BFE75 /* PhotoMarkerChooseViewController.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = PhotoMarkerChooseViewController.storyboard; sourceTree = "<group>"; };
+		F9DFBDB72B16DF95002E441F /* JsonFileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JsonFileManager.swift; sourceTree = "<group>"; };
 		F9E92D702B0DB69D00EE4DCA /* UIColor+extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+extension.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -292,6 +294,7 @@
 				F963ED772AC2D65700B41C99 /* BackupManager.swift */,
 				F96332D72B04B7B4003B424D /* LocalFileManager.swift */,
 				F93BBDE22AFDC1DF00B8F0AE /* UndoRedoManager.swift */,
+				F9DFBDB72B16DF95002E441F /* JsonFileManager.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -485,6 +488,7 @@
 				F96332CC2B0469BF003B424D /* WrappingMainViewController.swift in Sources */,
 				F90141B22B030CCB00F2270B /* String+extension.swift in Sources */,
 				F96332C42B03686C003B424D /* MainViewController.swift in Sources */,
+				F9DFBDB82B16DF95002E441F /* JsonFileManager.swift in Sources */,
 				F96332D42B04A2CB003B424D /* DrawingReportListViewController.swift in Sources */,
 				F96332C92B0369A2003B424D /* SidemenuTableViewCell.swift in Sources */,
 			);
