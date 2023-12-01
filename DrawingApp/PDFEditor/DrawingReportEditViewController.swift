@@ -364,9 +364,9 @@ class DrawingReportEditViewController: UIViewController {
         // 現在開いているページを取得
         if let page = pdfView.currentPage {
             
-            if let before = before {
+            if let before = before,
+               let currentlySelectedAnnotation = currentlySelectedAnnotation {
                 // 選択しているAnnotation 移動中のAnnotation
-                guard let currentlySelectedAnnotation = currentlySelectedAnnotation else { return }
                 // 変更後
                 let after = currentlySelectedAnnotation
                 after.bounds = currentlySelectedAnnotation.bounds
@@ -405,9 +405,9 @@ class DrawingReportEditViewController: UIViewController {
                 redoButton.isEnabled = undoRedoManager.canRedo()
             }
             // 損傷マーカー
-            if let before = beforeImageAnnotation {
+            if let before = beforeImageAnnotation,
+               let currentlySelectedAnnotation = currentlySelectedImageAnnotation {
                 // 選択しているAnnotation 移動中のAnnotation
-                guard let currentlySelectedAnnotation = currentlySelectedImageAnnotation else { return }
                 // 変更後
                 let after = currentlySelectedAnnotation
                 after.bounds = currentlySelectedAnnotation.bounds
@@ -449,9 +449,9 @@ class DrawingReportEditViewController: UIViewController {
                 redoButton.isEnabled = undoRedoManager.canRedo()
             }
             // 手書き
-            if let before = beforeDrawingAnnotation {
+            if let before = beforeDrawingAnnotation,
+               let currentlySelectedAnnotation = currentlySelectedDrawingAnnotation {
                 // 選択しているAnnotation 移動中のAnnotation
-                guard let currentlySelectedAnnotation = currentlySelectedDrawingAnnotation else { return }
                 // 変更後
                 let after = currentlySelectedAnnotation
                 after.bounds = currentlySelectedAnnotation.bounds
@@ -467,6 +467,7 @@ class DrawingReportEditViewController: UIViewController {
                 after.color = UIColor.orange.withAlphaComponent(0.5)
                 after.page = before.page
                 after.path = before.path
+                after.path = after.path.fit(into: after.bounds)//.moveCenter(to: currentlySelectedAnnotation.bounds.origin)
                 
                 // UUID
                 after.userName = UUID().uuidString
@@ -642,7 +643,8 @@ class DrawingReportEditViewController: UIViewController {
                 after.color = selectedColor.withAlphaComponent(selectedAlpha.alpha)
                 after.page = before.page
                 after.path = before.path
-                
+                after.path = after.path.fit(into: after.bounds)//.moveCenter(to: after.bounds.origin)
+
                 // UUID
                 after.userName = UUID().uuidString
                 if let annotationPage = before.page {
@@ -1952,7 +1954,7 @@ class DrawingReportEditViewController: UIViewController {
                     for i in 0..<document.pageCount {
                         if let page = document.page(at: i) {
                             if let editingAnnotation = editingAnnotation as? PDFAnnotation,
-                                let editingAnnotationPage = editingAnnotation.page {
+                               let editingAnnotationPage = editingAnnotation.page {
                                 // page が同一か？
                                 if document.index(for: page) == document.index(for: editingAnnotationPage) {
                                     // 対象のページの注釈を削除
@@ -1978,10 +1980,23 @@ class DrawingReportEditViewController: UIViewController {
                         if let page = document.page(at: i) {
                             if let editingAnnotation = editingAnnotation as? PDFAnnotation,
                                let editingAnnotationPage = editingAnnotation.page {
-                                // page が同一か？
-                                if document.index(for: page) == document.index(for: editingAnnotationPage) {
-                                    // 対象のページの注釈を追加
-                                    page.addAnnotation(editingAnnotation)
+                                if let annotation = editingAnnotation as? DrawingAnnotation {
+                                    print(annotation.bounds)
+                                    print(annotation.path.bounds)
+                                    annotation.path = annotation.path.fit(into: annotation.bounds)
+                                    print(annotation.bounds)
+                                    print(annotation.path.bounds)
+                                    // page が同一か？
+                                    if document.index(for: page) == document.index(for: editingAnnotationPage) {
+                                        // 対象のページの注釈を追加
+                                        page.addAnnotation(annotation)
+                                    }
+                                } else {
+                                    // page が同一か？
+                                    if document.index(for: page) == document.index(for: editingAnnotationPage) {
+                                        // 対象のページの注釈を追加
+                                        page.addAnnotation(editingAnnotation)
+                                    }
                                 }
                             }
                         }
@@ -2157,6 +2172,7 @@ extension DrawingReportEditViewController: UIGestureRecognizerDelegate {
                     copy.bounds = annotation.bounds
                     copy.page = annotation.page
                     copy.path = currentlySelectedDrawingAnnotation!.path
+                    copy.path = copy.path.fit(into: copy.bounds)//.moveCenter(to: copy.bounds.origin)
                     // 長押しメニュー
                     showLongPressDialog(sender.location(in: pdfView), drawingMode: .drawing)
                 }
@@ -2418,6 +2434,7 @@ extension DrawingReportEditViewController: UIGestureRecognizerDelegate {
                         copy.bounds = annotation.bounds
                         copy.page = annotation.page
                         copy.path = currentlySelectedDrawingAnnotation!.path
+                        copy.path = copy.path.fit(into: copy.bounds)//.moveCenter(to: copy.bounds.origin)
                     }
                     else if let copy = annotation.copy() as? PDFAnnotation {
                         currentlySelectedAnnotation = annotation
@@ -2435,6 +2452,7 @@ extension DrawingReportEditViewController: UIGestureRecognizerDelegate {
                         let initialBounds = annotation.bounds
                         // Set the center of the annotation to the spot of our finger
                         annotation.bounds = CGRect(x: locationOnPage.x - (initialBounds.width / 2), y: locationOnPage.y - (initialBounds.height / 2), width: initialBounds.width, height: initialBounds.height)
+                        annotation.path = annotation.path.fit(into: annotation.bounds).moveCenter(to: locationOnPage)
                     }
                     if let annotation = currentlySelectedAnnotation {
                         let initialBounds = annotation.bounds
