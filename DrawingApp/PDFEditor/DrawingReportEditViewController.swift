@@ -985,7 +985,7 @@ class DrawingReportEditViewController: UIViewController {
     var propertyEditorCloseButtonView = UIView()
 
     // 選択されたカラー
-    var selectedColor: UIColor = .black
+    var selectedColor: UIColor = .darkGray.dark(brightnessRatio: 1.0)
     // 選択された透明度
     var selectedAlpha: Alpha = .alpha07
     // 選択された線の太さ
@@ -2597,39 +2597,22 @@ enum Colors: Int, CaseIterable {
     case blue
     case systemPink
     
-//    case babyBlue
-//    case buttercup
-//    case lilac
-//    case meadow
-//    case rose
-    
     func getColor() -> UIColor {
         switch self {
         case .black:
-            return UIColor.darkGray
+            return UIColor.darkGray.dark(brightnessRatio: 1.0)
         case .systemRed:
-            return UIColor.systemRed
+            return UIColor.systemRed.dark(brightnessRatio: 1.0)
         case .systemYellow:
-            return UIColor.systemYellow
+            return UIColor.systemYellow.dark(brightnessRatio: 1.0)
         case .systemGreen:
-            return UIColor.systemGreen
+            return UIColor.systemGreen.dark(brightnessRatio: 1.0)
         case .systemBlue:
-            return UIColor.systemBlue
+            return UIColor.systemBlue.dark(brightnessRatio: 1.0)
         case .blue:
-            return UIColor.blue
+            return UIColor.blue.dark(brightnessRatio: 1.0)
         case .systemPink:
-            return UIColor.systemPink
-
-//        case .babyBlue:
-//            return UIColor(named: "BabyBlue")!
-//        case .buttercup:
-//            return UIColor(named: "Buttercup")!
-//        case .lilac:
-//            return UIColor(named: "Lilac")!
-//        case .meadow:
-//            return UIColor(named: "Meadow")!
-//        case .rose:
-//            return UIColor(named: "Rose")!
+            return UIColor.systemPink.dark(brightnessRatio: 1.0)
         }
     }
 }
