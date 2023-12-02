@@ -111,7 +111,7 @@ class DrawingReportEditViewController: UIViewController {
                     // pageを探す
                     for i in 0..<document.pageCount {
                         if let page = document.page(at: i) {
-                            
+                            // PhotoAnnotation 作成
                             let annotation = self.createMarkerAnnotation(marker: marker)
                             
                             //                                if let annotation = editingAnnotation as? DrawingAnnotation {
@@ -357,15 +357,21 @@ class DrawingReportEditViewController: UIViewController {
                 // iOS17対応　PDFAnnotationのpageが消えてしまう現象
                 annotation.page = annotationPage
             }
-            // Undo Redo 削除
-            undoRedoManager.deleteAnnotation(annotation)
-            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
-                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-            })
-            // ボタン　活性状態
-            undoButton.isEnabled = undoRedoManager.canUndo()
-            redoButton.isEnabled = undoRedoManager.canRedo()
+            
+            if let oldId = annotation.userName {
+                // JSONファイル　状態管理
+                project?.markers?.removeAll(where: { $0.data.id == oldId } )
+
+                // Undo Redo 削除
+                undoRedoManager.deleteAnnotation(annotation)
+                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                    reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                })
+                // ボタン　活性状態
+                undoButton.isEnabled = undoRedoManager.canUndo()
+                redoButton.isEnabled = undoRedoManager.canRedo()
+            }
         }
     }
     
@@ -446,40 +452,47 @@ class DrawingReportEditViewController: UIViewController {
         if let page = pdfView.currentPage {
             
             if let before = before,
+               let contents = before.contents,
+               let contents = Int(contents), // TODO: 写真マーカーのみ使用
+               let oldId = before.userName,
+               let page = before.page,
+               // 選択しているAnnotation 移動中のAnnotation
                let currentlySelectedAnnotation = currentlySelectedAnnotation {
-                // 選択しているAnnotation 移動中のAnnotation
                 // 変更後
-                let after = currentlySelectedAnnotation
-                after.bounds = currentlySelectedAnnotation.bounds
-                after.page = currentlySelectedAnnotation.page
-                
-                after.bounds = CGRect(
-                    x: after.bounds.origin.x,
-                    y: after.bounds.origin.y,
-                    width: after.bounds.size.width,
-                    height: after.bounds.size.height
+                let marker = Marker(image: "",
+                                    data: Marker.MarkerInfo(text: contents,
+                                                            size: selectedPhotoMarkerSize,
+                                                            color: ColorRGBA(color: before.color),
+                                                            x: currentlySelectedAnnotation.bounds.origin.x,
+                                                            y: currentlySelectedAnnotation.bounds.origin.y,
+                                                            id: UUID().uuidString,
+                                                            pageLabel: page.label)
                 )
-                after.contents = before.contents
-                after.color = UIColor.orange.withAlphaComponent(0.5)
-                after.page = before.page
+                // PhotoAnnotation 作成
+                let after = currentlySelectedAnnotation//self.createMarkerAnnotation(marker: marker)
                 
-                // UUID
-                after.userName = UUID().uuidString
-                if let annotationPage = before.page {
-                    // 古いものを削除する
-                    page.removeAnnotation(before)
-                    // iOS17対応　PDFAnnotationのpageが消えてしまう現象
-                    before.page = annotationPage
+                after.page = before.page
+                if let afterPage = after.page {
+                    // Annotationを再度作成
+                    afterPage.addAnnotation(after)
                 }
-                // Annotationを再度作成
-                page.addAnnotation(after)
+                if let beforePage = before.page {
+                    // 古いものを削除する
+                    beforePage.removeAnnotation(before)
+                    // iOS17対応　PDFAnnotationのpageが消えてしまう現象
+                    before.page = beforePage
+                }
                 // 初期化
                 self.before = nil
+                // JSONファイル　状態管理
+                project?.markers?.removeAll(where: { $0.data.id == oldId } )
+                project?.markers?.append(marker)
+                
                 // Undo Redo 更新
                 undoRedoManager.updateAnnotation(before: before, after: after)
                 undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                     // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-                    self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                    reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
                 })
                 // ボタン　活性状態
                 undoButton.isEnabled = undoRedoManager.canUndo()
@@ -576,46 +589,54 @@ class DrawingReportEditViewController: UIViewController {
         }
     }
     
+    // MARK: - 長押しメニュー
     // マーカーを更新する 長押しメニュー　編集
     func updateMarkerColorAnotation() {
         // 現在開いているページを取得
         if let page = pdfView.currentPage {
             
             if let before = before,
+               let contents = before.contents,
+               let contents = Int(contents), // TODO: 写真マーカーのみ使用
+               let oldId = before.userName,
+               let page = before.page,
+               // 選択しているAnnotation 移動中のAnnotation
                let currentlySelectedAnnotation = currentlySelectedAnnotation {
-                // 選択しているAnnotation 移動中のAnnotation
                 // 変更後
-                let after = currentlySelectedAnnotation
-                after.bounds = currentlySelectedAnnotation.bounds
-                after.page = currentlySelectedAnnotation.page
-                
-                after.bounds = CGRect(
-                    x: after.bounds.origin.x,
-                    y: after.bounds.origin.y,
-                    width: after.bounds.size.width,
-                    height: after.bounds.size.height
+                let marker = Marker(image: "",
+                                    data: Marker.MarkerInfo(text: contents,
+                                                            size: selectedPhotoMarkerSize,
+                                                            color: ColorRGBA(color: selectedColor.withAlphaComponent(selectedAlpha.alpha)),
+                                                            x: currentlySelectedAnnotation.bounds.origin.x,
+                                                            y: currentlySelectedAnnotation.bounds.origin.y,
+                                                            id: UUID().uuidString,
+                                                            pageLabel: page.label)
                 )
-                after.contents = before.contents
+                // PhotoAnnotation 作成
+                let after = currentlySelectedAnnotation//self.createMarkerAnnotation(marker: marker)
                 after.color = selectedColor.withAlphaComponent(selectedAlpha.alpha)
+
                 after.page = before.page
-                
-                // UUID
-                after.userName = UUID().uuidString
-                if let annotationPage = before.page {
-                    // 古いものを削除する
-                    page.removeAnnotation(before)
-                    // iOS17対応　PDFAnnotationのpageが消えてしまう現象
-                    before.page = annotationPage
+                if let afterPage = after.page {
+                    // Annotationを再度作成
+                    afterPage.addAnnotation(after)
                 }
-                // Annotationを再度作成
-                page.addAnnotation(after)
+                if let beforePage = before.page {
+                    // 古いものを削除する
+                    beforePage.removeAnnotation(before)
+                    // iOS17対応　PDFAnnotationのpageが消えてしまう現象
+                    before.page = beforePage
+                }
                 // 初期化
 //                self.before = nil
+                // JSONファイル　状態管理
+                project?.markers?.removeAll(where: { $0.data.id == oldId } )
+                project?.markers?.append(marker)
                 // Undo Redo 更新
                 undoRedoManager.updateAnnotation(before: before, after: after)
                 undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                     // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-                    self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                    reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
                 })
                 // ボタン　活性状態
                 undoButton.isEnabled = undoRedoManager.canUndo()
@@ -849,42 +870,35 @@ class DrawingReportEditViewController: UIViewController {
         if let page = self.pdfView.currentPage,
            let point = point,
            let unusedNumber = unusedNumber {
-            // freeText
-            let font = UIFont.systemFont(ofSize: selectedPhotoMarkerSize)
-            let size = "\(unusedNumber)".size(with: font)
-            // Create dictionary of annotation properties
-            let lineAttributes: [PDFAnnotationKey: Any] = [
-                .color: selectedColor.withAlphaComponent(selectedAlpha.alpha),
-                .contents: "\(unusedNumber)",
-            ]
             
-            let freeText = PhotoAnnotation(bounds: CGRect(x: point.x, y: point.y, width: size.width * 1.1 + 5, height: size.height + 5), forType: .freeText, withProperties: lineAttributes)
-            // 中央寄せ
-            freeText.alignment = .center
-            // フォントサイズ
-            freeText.font = font
-            freeText.fontColor = .white
-            // UUID
-            freeText.userName = UUID().uuidString
-            // ページ
-            freeText.page = page
+            let marker = Marker(image: "",
+                                data: Marker.MarkerInfo(text: unusedNumber,
+                                                        size: selectedPhotoMarkerSize,
+                                                        color: ColorRGBA(color: selectedColor.withAlphaComponent(selectedAlpha.alpha)),
+                                                        x: point.x,
+                                                        y: point.y,
+                                                        id: UUID().uuidString,
+                                                        pageLabel: page.label)
+            )
+            // PhotoAnnotation 作成
+            let annotation = self.createMarkerAnnotation(marker: marker)
+            //            // ページ
+            //            freeText.page = page
             // 対象のページへ注釈を追加
-            page.addAnnotation(freeText)
+            page.addAnnotation(annotation)
             
-            if let id = freeText.userName {
-                // JSONファイル　状態管理
-                project?.markers?.append(Marker(image: "", data: Marker.MarkerInfo(text: unusedNumber, size: selectedPhotoMarkerSize, color: ColorRGBA(color: selectedColor.withAlphaComponent(selectedAlpha.alpha)), x: point.x, y: point.y, id: id, pageLabel: page.label)))
-                
-                // Undo Redo
-                undoRedoManager.addAnnotation(freeText)
-                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
-                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-                    self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-                })
-                // ボタン　活性状態
-                undoButton.isEnabled = undoRedoManager.canUndo()
-                redoButton.isEnabled = undoRedoManager.canRedo()
-            }
+            // JSONファイル　状態管理
+            project?.markers?.append(marker)
+            
+            // Undo Redo
+            undoRedoManager.addAnnotation(annotation)
+            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+            })
+            // ボタン　活性状態
+            undoButton.isEnabled = undoRedoManager.canUndo()
+            redoButton.isEnabled = undoRedoManager.canRedo()
         }
     }
     
@@ -895,29 +909,25 @@ class DrawingReportEditViewController: UIViewController {
             for annotation in self.annotationsOnPage {
                 // 変更前
                 before = annotation
-                                
+                
                 if let before = before,
-                let contents = before.contents {
-                    // freeText
-                    let font = UIFont.systemFont(ofSize: selectedPhotoMarkerSize)
-                    let size = contents.size(with: font)
-                    // Create dictionary of annotation properties
-                    let lineAttributes: [PDFAnnotationKey: Any] = [
-                        .color: before.color,
-                        .contents: contents,
-                    ]
+                   let contents = before.contents,
+                   let contents = Int(contents),
+                   let oldId = before.userName,
+                   let page = before.page {
                     // 変更後
-                    let after = PhotoAnnotation(bounds: CGRect(x: before.bounds.origin.x, y: before.bounds.origin.y, width: size.width * 1.1 + 5, height: size.height + 5), forType: .freeText, withProperties: lineAttributes)
-
-                    after.page = before.page
-                    // 中央寄せ
-                    after.alignment = .center
-                    // フォントサイズ
-                    after.font = font
-                    after.fontColor = .white
-                    // UUID
-                    after.userName = UUID().uuidString
-                    // ページ
+                    let marker = Marker(image: "",
+                                        data: Marker.MarkerInfo(text: contents,
+                                                                size: selectedPhotoMarkerSize,
+                                                                color: ColorRGBA(color: before.color),
+                                                                x: before.bounds.origin.x,
+                                                                y: before.bounds.origin.y,
+                                                                id: UUID().uuidString,
+                                                                pageLabel: page.label)
+                    )
+                    // PhotoAnnotation 作成
+                    let after = self.createMarkerAnnotation(marker: marker)
+                    
                     after.page = before.page
                     if let afterPage = after.page {
                         // Annotationを再度作成
@@ -931,6 +941,10 @@ class DrawingReportEditViewController: UIViewController {
                     }
                     // 初期化
                     self.before = nil
+                    // JSONファイル　状態管理
+                    project?.markers?.removeAll(where: { $0.data.id == oldId } )
+                    project?.markers?.append(marker)
+                    
                     // Undo Redo 更新
                     undoRedoManager.updateAnnotation(before: before, after: after)
                     undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
