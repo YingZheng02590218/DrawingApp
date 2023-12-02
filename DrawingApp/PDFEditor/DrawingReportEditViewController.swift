@@ -274,7 +274,9 @@ class DrawingReportEditViewController: UIViewController {
         if drawingMode == .photoMarker || drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle || drawingMode == .text || drawingMode == .damageMarker {
             propertyEditorScrollView?.isHidden = false
             propertyEditorCloseButtonView.isHidden = false
+            
             if drawingMode == .photoMarker || drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle || drawingMode == .text || drawingMode == .damageMarker {
+                
                 if drawingMode == .drawing || drawingMode == .line || drawingMode == .arrow || drawingMode == .rectangle || drawingMode == .circle {
                     colorLineStyleView.isHidden = false
                     sliderView.isHidden = false
@@ -287,15 +289,15 @@ class DrawingReportEditViewController: UIViewController {
                 } else {
                     photoMarkerSliderView.isHidden = true
                 }
-                
                 if drawingMode == .damageMarker {
                     colorPaletteView.isHidden = true
                     alphaPaletteView.isHidden = true
+                    damageMarkerStyleView.isHidden = false
                 } else {
                     colorPaletteView.isHidden = false
                     alphaPaletteView.isHidden = false
+                    damageMarkerStyleView.isHidden = true
                 }
-
             } else {
                 colorPaletteView.isHidden = true
                 alphaPaletteView.isHidden = true
@@ -306,6 +308,7 @@ class DrawingReportEditViewController: UIViewController {
             colorPaletteView.isHidden = true
             alphaPaletteView.isHidden = true
             colorLineStyleView.isHidden = true
+            damageMarkerStyleView.isHidden = true
             sliderView.isHidden = true
             photoMarkerSliderView.isHidden = true
         }
@@ -313,8 +316,8 @@ class DrawingReportEditViewController: UIViewController {
     
     // MARK: - アノテーション
     
-    // 長押しメニュー
-    @IBOutlet var longPressView: UIView!
+    // 長押し検知用のView
+    @IBOutlet weak var longPressView: UIView!
     
     // PDF Annotationがタップされたかを監視
     func setupAnnotationRecognizer() {
@@ -748,7 +751,7 @@ class DrawingReportEditViewController: UIViewController {
             }
         }
     }
-
+    
     // MARK: - 写真マーカー
     
     // PDF 全てのpageに存在する写真マーカーAnnotationを保持する
@@ -968,10 +971,13 @@ class DrawingReportEditViewController: UIViewController {
     var colorLineStyleView = UIView()
     var lineStyleStackView: UIStackView?
 
+    // 損傷マーカー
+    var damageMarkerStyleView = UIView()
+    var damageMarkerStyleStackView: UIStackView?
+
     // 手書き　書式　線の太さ
     var sliderView = UIView()
     var sliderStackView: UIStackView?
-
     var slider: UISlider?
     var fontSizeLabel = UILabel()
     
@@ -994,6 +1000,8 @@ class DrawingReportEditViewController: UIViewController {
             fontSizeLabel.text = "\(Int(selectedLineWidth)) px"
         }
     }
+    // 選択された損傷マーカー
+    var selectedDamage: DamagePattern = .uki
     // 選択された写真マーカーサイズ
     var selectedPhotoMarkerSize: CGFloat = 15.0 {
         didSet {
@@ -1013,6 +1021,8 @@ class DrawingReportEditViewController: UIViewController {
         createLineStylesButtons()
         // 図形　線の太さ
         createLineWidthSlider()
+        // 損傷マーカー
+        createDamageStylesButtons()
         // 図形　写真マーカーサイズ
         createTextSizeSlider()
         // 手書き プロパティ変更パネル 閉じる
@@ -1333,57 +1343,62 @@ class DrawingReportEditViewController: UIViewController {
     }
     
     // 損傷マーカー
-    func createDamageMarkButtons() {
+    func createDamageStylesButtons() {
         // ラベル
         let label = UILabel()
-        label.text = "色の選択"
+        label.text = "損傷マーカー"
         label.backgroundColor = UIColor.systemPink.withAlphaComponent(0.3)
         // LabelをaddSubview
-        colorPaletteView.addSubview(label)
-        colorPaletteView.backgroundColor = UIColor.lightGray.withAlphaComponent(0.3)
+        damageMarkerStyleView.addSubview(label)
+        damageMarkerStyleView.backgroundColor = UIColor.lightGray.withAlphaComponent(0.3)
         // labelが左上に配置されるように制約を追加
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.topAnchor.constraint(equalTo: colorPaletteView.topAnchor, constant: 10.0).isActive = true
-        label.leadingAnchor.constraint(equalTo: colorPaletteView.leadingAnchor, constant: 10.0).isActive = true
+        label.topAnchor.constraint(equalTo: damageMarkerStyleView.topAnchor, constant: 10.0).isActive = true
+        label.leadingAnchor.constraint(equalTo: damageMarkerStyleView.leadingAnchor, constant: 10.0).isActive = true
         
         //Create the color palette
         var buttons: [UIButton] = []
-        for color in Colors.allCases {
+        
+        for dashPattern in DamagePattern.allCases {
             let button = UIButton(
                 primaryAction: UIAction(handler: { action in
-                    self.updatePens(sender: action.sender)
+                    self.updateDamagePattern(sender: action.sender)
                 })
             )
             button.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
             button.widthAnchor.constraint(equalToConstant: 50.0).isActive = true
-            button.makeRounded(25, borderWidth: 3, borderColor: .black)
-            button.backgroundColor = color.getColor()
-            button.tag = color.rawValue
+            // button.makeRounded(25, borderWidth: 3, borderColor: .black)
+            button.backgroundColor = .clear
+            // アイコン画像の色を指定する
+            button.tintColor = .black
+            button.setImage(dashPattern.getIcon(), for: UIControl.State.normal)
+            button.tag = dashPattern.rawValue
             buttons.append(button)
         }
-        // 色の選択
-        colorStackView = UIStackView(arrangedSubviews: buttons)
-        colorStackView?.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.3)
-        if let colorStackView = colorStackView {
-            colorStackView.axis = .horizontal
-            colorStackView.distribution = .equalSpacing
-            colorStackView.alignment = .center
+        // 書式の選択　線のスタイル
+        damageMarkerStyleStackView = UIStackView(arrangedSubviews: buttons)
+        damageMarkerStyleStackView?.backgroundColor = UIColor.brown.withAlphaComponent(0.3)
+        if let damageMarkerStyleStackView = damageMarkerStyleStackView {
+            damageMarkerStyleStackView.axis = .horizontal
+            damageMarkerStyleStackView.distribution = .equalSpacing
+            damageMarkerStyleStackView.alignment = .center
             
-            colorPaletteView.addSubview(colorStackView)
-            colorPaletteView.heightAnchor.constraint(equalToConstant: label.bounds.height + 170).isActive = true
+            damageMarkerStyleView.addSubview(damageMarkerStyleStackView)
+            damageMarkerStyleView.heightAnchor.constraint(equalToConstant: label.bounds.height + 100).isActive = true
 
-            colorStackView.translatesAutoresizingMaskIntoConstraints = false
+            damageMarkerStyleStackView.translatesAutoresizingMaskIntoConstraints = false
             
             NSLayoutConstraint.activate([
-                colorStackView.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 0),
-                colorStackView.centerXAnchor.constraint(equalTo: colorPaletteView.centerXAnchor),
-                colorStackView.widthAnchor.constraint(greaterThanOrEqualToConstant: colorPaletteView.bounds.width),
-                colorStackView.heightAnchor.constraint(equalToConstant: 70)
+                damageMarkerStyleStackView.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 0),
+                damageMarkerStyleStackView.bottomAnchor.constraint(equalTo: damageMarkerStyleView.bottomAnchor, constant: 0),
+                damageMarkerStyleStackView.centerXAnchor.constraint(equalTo: damageMarkerStyleView.centerXAnchor),
+                damageMarkerStyleStackView.widthAnchor.constraint(equalTo: damageMarkerStyleView.widthAnchor),
+                damageMarkerStyleStackView.heightAnchor.constraint(equalToConstant: 70)
             ])
-            //            // stackViewにnewViewを追加する
-            //            propertyEditorStackView.addArrangedSubview(colorPaletteView)
-            //            // これだとダメ
-            //            //stackView.addSubview(newView)
+            // stackViewにnewViewを追加する
+            propertyEditorStackView.addArrangedSubview(damageMarkerStyleView)
+            // これだとダメ
+            //stackView.addSubview(newView)
         }
     }
 
@@ -1591,6 +1606,15 @@ class DrawingReportEditViewController: UIViewController {
         }
     }
     
+    // 損傷マーカー
+    private func updateDamagePattern(sender: Any?) {
+        if let button = sender as? UIButton,
+           let pattern = DamagePattern(rawValue: button.tag) {
+            // 線のスタイル
+            selectedDamage = pattern
+        }
+    }
+    
     // 線の太さ
     private func sliderChanged(_ sender: UISlider) {
         selectedLineWidth = CGFloat(sender.value)
@@ -1658,7 +1682,7 @@ class DrawingReportEditViewController: UIViewController {
     private func cloSepropertyEditor(sender: Any?) {
         if let button = sender as? UIButton {
             propertyEditorScrollView?.isHidden = true
-            
+                        
             // 編集を終了する
             // 初期化
             self.beforeImageAnnotation = nil
@@ -2014,14 +2038,14 @@ class DrawingReportEditViewController: UIViewController {
         // 現在開いているページを取得
         if let page = self.pdfView.currentPage,
            let point = point {
-            // TODO: 画像
-            let image = UIImage(named: "how-to-draw-pheasant_step-6")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
+            // 画像
+            let image = selectedDamage.getIcon()
             // オリジナル画像のサイズからアスペクト比を計算
             let aspectScale = image.size.height / image.size.width
             // widthからアスペクト比を元にリサイズ後のサイズを取得
             let resizedSize = CGSize(width: selectedPhotoMarkerSize, height: selectedPhotoMarkerSize * Double(aspectScale))
             // 中央部に座標を指定
-            let imageStamp = ImageAnnotation(with: image, forBounds: CGRect(x: point.x, y: point.y, width: resizedSize.width, height: resizedSize.height), withProperties: [:])
+            let imageStamp = ImageAnnotation(with: image, forBounds: CGRect(x: point.x - (resizedSize.width / 2), y: point.y - (resizedSize.height / 2), width: resizedSize.width, height: resizedSize.height), withProperties: [:])
             // UUID
             imageStamp.userName = UUID().uuidString
             // ページ
@@ -2329,7 +2353,7 @@ extension DrawingReportEditViewController: UIGestureRecognizerDelegate {
             ) { _ in
                 self.propertyEditorScrollView?.isHidden = false
                 self.propertyEditorCloseButtonView.isHidden = false
-
+                
                 if drawingMode == .damageMarker {
                     // 編集　損傷マーカー
                     self.colorPaletteView.isHidden = true
@@ -2354,7 +2378,6 @@ extension DrawingReportEditViewController: UIGestureRecognizerDelegate {
                     title: "文字列の変更",
                     style: .default
                 ) { _ in
-                    
                     alert.dismiss(animated: true) {
                         if drawingMode == .text {
                             if let isEditingAnnotation = self.isEditingAnnotation {
@@ -2385,7 +2408,7 @@ extension DrawingReportEditViewController: UIGestureRecognizerDelegate {
                 }
                 alert.addAction(textAction)
             }
-            
+
             let closeAction = UIAlertAction(
                 title: "閉じる",
                 style: .default
@@ -2710,6 +2733,35 @@ enum DashPattern: Int, CaseIterable {
             return UIImage(systemName: "line.diagonal")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
         case .pattern5:
             return UIImage(systemName: "line.diagonal")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
+        }
+    }
+}
+
+enum DamagePattern: Int, CaseIterable {
+    case uki
+    case sonota
+    case hibiware
+    case tekkinrosyutu
+    case hakuri
+    case yuurihakuseki
+    case rousui
+    
+    func getIcon() -> UIImage {
+        switch self {
+        case .uki:
+            return UIImage(named: "うき")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
+        case .sonota:
+            return UIImage(named: "その他")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
+        case .hibiware:
+            return UIImage(named: "ひび割れ")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
+        case .tekkinrosyutu:
+            return UIImage(named: "鉄筋露出")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
+        case .hakuri:
+            return UIImage(named: "剥離")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
+        case .yuurihakuseki:
+            return UIImage(named: "遊離石灰")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
+        case .rousui:
+            return UIImage(named: "漏水")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
         }
     }
 }
