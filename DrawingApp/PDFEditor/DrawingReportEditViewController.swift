@@ -27,6 +27,8 @@ class DrawingReportEditViewController: UIViewController {
         setupAnnotationRecognizer()
         // 手書きパレット
         createButtons()
+        // JSONファイル　状態管理
+        setupPdfStateFromJsonFile()
     }
     
     override func viewWillLayoutSubviews() {
@@ -60,6 +62,82 @@ class DrawingReportEditViewController: UIViewController {
         }
     }
     
+    // MARK: - JSONファイル
+
+    // プロジェクト
+    var project: Project?
+    
+    // JSONファイル　状態管理
+    func setupPdfStateFromJsonFile() {
+        // JSONファイル　状態管理
+        project = JsonFileManager.shared.readSavedJson()
+        if let prject = project {
+            
+        } else {
+            // プロジェクトに写真マーカーを設定
+            project = Project(
+                version: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "2.0.0",
+                markers: []
+            )
+        }
+        print(project.debugDescription)
+        
+        // PDF 全てのpageに存在するAnnotationを削除する
+        deleteAllAnnotations()
+        // PDF 全てのpageに存在するAnnotationをJSONファイルから生成する
+        createAllAnnotations()
+    }
+    
+    // PDF 全てのpageに存在するAnnotationを削除する
+    func deleteAllAnnotations() {
+        guard let document = pdfView.document else { return }
+        for i in 0..<document.pageCount {
+            if let page = document.page(at: i) {
+                //
+                let annotations = page.annotations
+                for annotation in annotations {
+                    page.removeAnnotation(annotation)
+                }
+            }
+        }
+    }
+ 
+    // PDF 全てのpageに存在するAnnotationをJSONファイルから生成する
+    func createAllAnnotations() {
+        DispatchQueue.main.async {
+            guard let document = self.pdfView.document else { return }
+            if let markers = self.project?.markers {
+                for marker in markers {
+                    // pageを探す
+                    for i in 0..<document.pageCount {
+                        if let page = document.page(at: i) {
+                            
+                            let annotation = self.createMarkerAnnotation(marker: marker)
+                            
+                            //                                if let annotation = editingAnnotation as? DrawingAnnotation {
+                            //                                    print(annotation.bounds)
+                            //                                    print(annotation.path.bounds)
+                            //                                    annotation.path = annotation.path.fit(into: annotation.bounds)
+                            //                                    print(annotation.bounds)
+                            //                                    print(annotation.path.bounds)
+                            //                                    // page が同一か？
+                            //                                    if page.label == marker.data.pageLabel {
+                            //                                        // 対象のページの注釈を追加
+                            //                                        page.addAnnotation(annotation)
+                            //                                    }
+                            //                                } else {
+                            // page が同一か？
+                            if page.label == marker.data.pageLabel {
+                                // 対象のページの注釈を追加
+                                page.addAnnotation(annotation)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // MARK: - Xボタン
     
     // Xボタン 戻るボタン
@@ -739,6 +817,29 @@ class DrawingReportEditViewController: UIViewController {
         return nil
     }
     
+    // PhotoAnnotation 作成
+    func createMarkerAnnotation(marker: Marker) -> PhotoAnnotation {
+        // freeText
+        let font = UIFont.systemFont(ofSize: marker.data.size)
+        let size = "\(marker.data.text)".size(with: font)
+        // Create dictionary of annotation properties
+        let lineAttributes: [PDFAnnotationKey: Any] = [
+            .color: marker.data.color.toUIColor(),
+            .contents: "\(marker.data.text)",
+        ]
+        
+        let freeText = PhotoAnnotation(bounds: CGRect(x: marker.data.x, y: marker.data.y, width: size.width * 1.1 + 5, height: size.height + 5), forType: .freeText, withProperties: lineAttributes)
+        // 中央寄せ
+        freeText.alignment = .center
+        // フォントサイズ
+        freeText.font = font
+        freeText.fontColor = .white
+        // UUID
+        freeText.userName = marker.data.id
+
+        return freeText
+    }
+    
     // マーカーを追加する 写真
     func addMarkerAnotation() {
         // 現在開いているページを取得
@@ -766,15 +867,21 @@ class DrawingReportEditViewController: UIViewController {
             freeText.page = page
             // 対象のページへ注釈を追加
             page.addAnnotation(freeText)
-            // Undo Redo
-            undoRedoManager.addAnnotation(freeText)
-            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
-                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-            })
-            // ボタン　活性状態
-            undoButton.isEnabled = undoRedoManager.canUndo()
-            redoButton.isEnabled = undoRedoManager.canRedo()
+            
+            if let id = freeText.userName {
+                // JSONファイル　状態管理
+                project?.markers?.append(Marker(image: "", data: Marker.MarkerInfo(text: unusedNumber, size: selectedPhotoMarkerSize, color: ColorRGBA(color: selectedColor.withAlphaComponent(selectedAlpha.alpha)), x: point.x, y: point.y, id: id, pageLabel: page.label)))
+                
+                // Undo Redo
+                undoRedoManager.addAnnotation(freeText)
+                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                    self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                })
+                // ボタン　活性状態
+                undoButton.isEnabled = undoRedoManager.canUndo()
+                redoButton.isEnabled = undoRedoManager.canRedo()
+            }
         }
     }
     
@@ -2046,6 +2153,9 @@ class DrawingReportEditViewController: UIViewController {
     
     // マーカーを追加しPDFを上書き保存する
     func save(completion: (() -> Void)) {
+        // JSONファイル　状態管理
+        JsonFileManager.shared.saveProjectToJson(project: project)
+        
         if let fileURL = pdfView.document?.documentURL,
             // PDFファイルへ上書き保存する
             let isFinished = pdfView.document?.write(to: fileURL) {
