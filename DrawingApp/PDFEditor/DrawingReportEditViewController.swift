@@ -81,7 +81,9 @@ class DrawingReportEditViewController: UIViewController {
             )
         }
         print(project.debugDescription)
-        
+        // Undo Redo 初期値
+        undoRedoManager.setup(makers: project?.markers)
+
         // PDF 全てのpageに存在するAnnotationを削除する
         deleteAllAnnotations()
         // PDF 全てのpageに存在するAnnotationをJSONファイルから生成する
@@ -359,18 +361,20 @@ class DrawingReportEditViewController: UIViewController {
             }
             
             if let oldId = annotation.userName {
-                // JSONファイル　状態管理
-                project?.markers?.removeAll(where: { $0.data.id == oldId } )
-
-                // Undo Redo 削除
-                undoRedoManager.deleteAnnotation(annotation)
-                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
-                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-                    reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-                })
-                // ボタン　活性状態
-                undoButton.isEnabled = undoRedoManager.canUndo()
-                redoButton.isEnabled = undoRedoManager.canRedo()
+                
+                if let marker = project?.markers?.filter { $0.data.id == oldId }.first {
+                    // Undo Redo 削除
+                    undoRedoManager.deleteAnnotation(marker)
+                    undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                        // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                        reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                    })
+                    // ボタン　活性状態
+                    undoButton.isEnabled = undoRedoManager.canUndo()
+                    redoButton.isEnabled = undoRedoManager.canRedo()
+                    // JSONファイル　状態管理
+                    project?.markers?.removeAll(where: { $0.data.id == oldId } )
+                }
             }
         }
     }
@@ -422,7 +426,7 @@ class DrawingReportEditViewController: UIViewController {
                     annotation.page = annotationPage
                 }
                 // Undo Redo 更新
-                undoRedoManager.updateAnnotation(before: annotation, after: lineAnnotation)
+//                undoRedoManager.updateAnnotation(before: annotation, after: lineAnnotation)
                 undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                     // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                     self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -484,19 +488,21 @@ class DrawingReportEditViewController: UIViewController {
                 }
                 // 初期化
                 self.before = nil
-                // JSONファイル　状態管理
-                project?.markers?.removeAll(where: { $0.data.id == oldId } )
-                project?.markers?.append(marker)
                 
-                // Undo Redo 更新
-                undoRedoManager.updateAnnotation(before: before, after: after)
-                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
-                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-                    reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-                })
-                // ボタン　活性状態
-                undoButton.isEnabled = undoRedoManager.canUndo()
-                redoButton.isEnabled = undoRedoManager.canRedo()
+                if let before = project?.markers?.filter { $0.data.id == oldId }.first {
+                    // Undo Redo 更新
+                    undoRedoManager.updateAnnotation(before: before, after: marker)
+                    undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                        // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                        reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                    })
+                    // ボタン　活性状態
+                    undoButton.isEnabled = undoRedoManager.canUndo()
+                    redoButton.isEnabled = undoRedoManager.canRedo()
+                    // JSONファイル　状態管理
+                    project?.markers?.removeAll(where: { $0.data.id == oldId } )
+                    project?.markers?.append(marker)
+                }
             }
             // 損傷マーカー
             if let before = beforeImageAnnotation,
@@ -533,7 +539,7 @@ class DrawingReportEditViewController: UIViewController {
                 // 初期化
                 self.beforeImageAnnotation = nil
                 // Undo Redo 更新
-                undoRedoManager.updateAnnotation(before: before, after: after)
+//                undoRedoManager.updateAnnotation(before: before, after: after)
                 undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                     // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                     self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -577,7 +583,7 @@ class DrawingReportEditViewController: UIViewController {
                 // 初期化
                 self.beforeDrawingAnnotation = nil
                 // Undo Redo 更新
-                undoRedoManager.updateAnnotation(before: before, after: after)
+//                undoRedoManager.updateAnnotation(before: before, after: after)
                 undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                     // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                     self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -629,18 +635,22 @@ class DrawingReportEditViewController: UIViewController {
                 }
                 // 初期化
 //                self.before = nil
-                // JSONファイル　状態管理
-                project?.markers?.removeAll(where: { $0.data.id == oldId } )
-                project?.markers?.append(marker)
-                // Undo Redo 更新
-                undoRedoManager.updateAnnotation(before: before, after: after)
-                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
-                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-                    reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-                })
-                // ボタン　活性状態
-                undoButton.isEnabled = undoRedoManager.canUndo()
-                redoButton.isEnabled = undoRedoManager.canRedo()
+
+                if let before = project?.markers?.filter { $0.data.id == oldId }.first {
+                    
+                    // Undo Redo 更新
+                    undoRedoManager.updateAnnotation(before: before, after: marker)
+                    undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                        // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                        reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                    })
+                    // ボタン　活性状態
+                    undoButton.isEnabled = undoRedoManager.canUndo()
+                    redoButton.isEnabled = undoRedoManager.canRedo()
+                    // JSONファイル　状態管理
+                    project?.markers?.removeAll(where: { $0.data.id == oldId } )
+                    project?.markers?.append(marker)
+                }
             }
             // テキスト
             if let before = before,
@@ -670,7 +680,7 @@ class DrawingReportEditViewController: UIViewController {
                 // 初期化
 //                    self.before = nil
                 // Undo Redo 更新
-                undoRedoManager.updateAnnotation(before: before, after: after)
+//                undoRedoManager.updateAnnotation(before: before, after: after)
                 undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                     // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                     self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -717,7 +727,7 @@ class DrawingReportEditViewController: UIViewController {
                 // 初期化
 //                self.beforeImageAnnotation = nil
                 // Undo Redo 更新
-                undoRedoManager.updateAnnotation(before: before, after: after)
+//                undoRedoManager.updateAnnotation(before: before, after: after)
                 undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                     // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                     self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -761,7 +771,7 @@ class DrawingReportEditViewController: UIViewController {
                 // 初期化
 //                self.beforeDrawingAnnotation = nil
                 // Undo Redo 更新
-                undoRedoManager.updateAnnotation(before: before, after: after)
+//                undoRedoManager.updateAnnotation(before: before, after: after)
                 undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                     // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                     self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -891,7 +901,7 @@ class DrawingReportEditViewController: UIViewController {
             project?.markers?.append(marker)
             
             // Undo Redo
-            undoRedoManager.addAnnotation(annotation)
+            undoRedoManager.addAnnotation(marker)
             undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                 // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                 self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -941,19 +951,21 @@ class DrawingReportEditViewController: UIViewController {
                     }
                     // 初期化
                     self.before = nil
-                    // JSONファイル　状態管理
-                    project?.markers?.removeAll(where: { $0.data.id == oldId } )
-                    project?.markers?.append(marker)
-                    
-                    // Undo Redo 更新
-                    undoRedoManager.updateAnnotation(before: before, after: after)
-                    undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
-                        // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-                        reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-                    })
-                    // ボタン　活性状態
-                    undoButton.isEnabled = undoRedoManager.canUndo()
-                    redoButton.isEnabled = undoRedoManager.canRedo()
+
+                    if let before = project?.markers?.filter { $0.data.id == oldId }.first {
+                        // Undo Redo 更新
+                        undoRedoManager.updateAnnotation(before: before, after: marker)
+                        undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                            // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                            reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                        })
+                        // ボタン　活性状態
+                        undoButton.isEnabled = undoRedoManager.canUndo()
+                        redoButton.isEnabled = undoRedoManager.canRedo()
+                        // JSONファイル　状態管理
+                        project?.markers?.removeAll(where: { $0.data.id == oldId } )
+                        project?.markers?.append(marker)
+                    }
                 }
             }
         }
@@ -1719,7 +1731,7 @@ class DrawingReportEditViewController: UIViewController {
             page.addAnnotation(annotation)
             
             // Undo Redo
-            undoRedoManager.addAnnotation(annotation)
+//            undoRedoManager.addAnnotation(annotation)
             undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                 // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                 self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -1784,7 +1796,7 @@ class DrawingReportEditViewController: UIViewController {
             page.addAnnotation(lineAnnotation)
             
             // Undo Redo
-            undoRedoManager.addAnnotation(lineAnnotation)
+//            undoRedoManager.addAnnotation(lineAnnotation)
             undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                 // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                 self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -1832,7 +1844,7 @@ class DrawingReportEditViewController: UIViewController {
             page.addAnnotation(lineAnnotation)
             
             // Undo Redo
-            undoRedoManager.addAnnotation(lineAnnotation)
+//            undoRedoManager.addAnnotation(lineAnnotation)
             undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                 // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                 self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -1879,7 +1891,7 @@ class DrawingReportEditViewController: UIViewController {
             page.addAnnotation(newAnnotation)
             
             // Undo Redo
-            undoRedoManager.addAnnotation(newAnnotation)
+//            undoRedoManager.addAnnotation(newAnnotation)
             undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                 // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                 self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -1926,7 +1938,7 @@ class DrawingReportEditViewController: UIViewController {
             page.addAnnotation(newAnnotation)
             
             // Undo Redo
-            undoRedoManager.addAnnotation(newAnnotation)
+//            undoRedoManager.addAnnotation(newAnnotation)
             undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                 // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                 self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -1975,7 +1987,7 @@ class DrawingReportEditViewController: UIViewController {
             page.addAnnotation(freeText)
             
             // Undo Redo
-            undoRedoManager.addAnnotation(freeText)
+//            undoRedoManager.addAnnotation(freeText)
             undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                 // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                 self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -2033,7 +2045,7 @@ class DrawingReportEditViewController: UIViewController {
                 // 初期化
                 self.before = nil
                 // Undo Redo 更新
-                undoRedoManager.updateAnnotation(before: before, after: after)
+//                undoRedoManager.updateAnnotation(before: before, after: after)
                 undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                     // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                     self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -2067,7 +2079,7 @@ class DrawingReportEditViewController: UIViewController {
             // 対象のページへ注釈を追加
             page.addAnnotation(imageStamp)
             // Undo Redo
-            undoRedoManager.addAnnotation(imageStamp)
+//            undoRedoManager.addAnnotation(imageStamp)
             undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                 // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                 self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -2088,67 +2100,14 @@ class DrawingReportEditViewController: UIViewController {
     private var editingAnnotations: [Any]?
     
     // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-    func reloadPDFAnnotations(didUndoAnnotations: [Any]?) {
+    func reloadPDFAnnotations(didUndoAnnotations: [Marker]?) {
         print(#function)
-        // Undo Redo が可能なAnnotation　を削除する
-        DispatchQueue.main.async {
-            if let editingAnnotations = self.editingAnnotations {
-                guard let document = self.pdfView.document else { return }
-                for editingAnnotation in editingAnnotations {
-                    // pageを探す
-                    for i in 0..<document.pageCount {
-                        if let page = document.page(at: i) {
-                            if let editingAnnotation = editingAnnotation as? PDFAnnotation,
-                               let editingAnnotationPage = editingAnnotation.page {
-                                // page が同一か？
-                                if document.index(for: page) == document.index(for: editingAnnotationPage) {
-                                    // 対象のページの注釈を削除
-                                    editingAnnotationPage.removeAnnotation(editingAnnotation)
-                                    // iOS17対応　PDFAnnotationのpageが消えてしまう現象
-                                    editingAnnotation.page = editingAnnotationPage
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        // Undo Redo が可能なAnnotation　をUndoする
-        DispatchQueue.main.async {
-            self.editingAnnotations = nil
-            self.editingAnnotations = didUndoAnnotations
-            if let editingAnnotations = didUndoAnnotations {
-                guard let document = self.pdfView.document else { return }
-                for editingAnnotation in editingAnnotations {
-                    // pageを探す
-                    for i in 0..<document.pageCount {
-                        if let page = document.page(at: i) {
-                            if let editingAnnotation = editingAnnotation as? PDFAnnotation,
-                               let editingAnnotationPage = editingAnnotation.page {
-                                if let annotation = editingAnnotation as? DrawingAnnotation {
-                                    print(annotation.bounds)
-                                    print(annotation.path.bounds)
-                                    annotation.path = annotation.path.fit(into: annotation.bounds)
-                                    print(annotation.bounds)
-                                    print(annotation.path.bounds)
-                                    // page が同一か？
-                                    if document.index(for: page) == document.index(for: editingAnnotationPage) {
-                                        // 対象のページの注釈を追加
-                                        page.addAnnotation(annotation)
-                                    }
-                                } else {
-                                    // page が同一か？
-                                    if document.index(for: page) == document.index(for: editingAnnotationPage) {
-                                        // 対象のページの注釈を追加
-                                        page.addAnnotation(editingAnnotation)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        
+        project?.markers = didUndoAnnotations
+        // PDF 全てのpageに存在するAnnotationを削除する
+        deleteAllAnnotations()
+        // PDF 全てのpageに存在するAnnotationをJSONファイルから生成する
+        createAllAnnotations()
     }
     
     // Undo Redo ボタン

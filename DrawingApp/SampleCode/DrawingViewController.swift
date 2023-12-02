@@ -296,7 +296,7 @@ class DrawingViewController: UIViewController {
                 annotation.page = annotationPage
             }
             // Undo Redo 削除
-            undoRedoManager.deleteAnnotation(annotation)
+//            undoRedoManager.deleteAnnotation(annotation)
             undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                 // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                 self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -397,7 +397,7 @@ class DrawingViewController: UIViewController {
                     }
                     
                     // Undo Redo 更新
-                    undoRedoManager.updateAnnotation(before: annotation, after: lineAnnotation)
+//                    undoRedoManager.updateAnnotation(before: annotation, after: lineAnnotation)
                     undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                         // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                         self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -528,7 +528,7 @@ class DrawingViewController: UIViewController {
                 // 初期化
                 self.before = nil
                 // Undo Redo 更新
-                undoRedoManager.updateAnnotation(before: before, after: after)
+//                undoRedoManager.updateAnnotation(before: before, after: after)
                 undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                     // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                     self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -647,7 +647,7 @@ class DrawingViewController: UIViewController {
             // 対象のページへ注釈を追加
             page.addAnnotation(freeText)
             // Undo Redo
-            undoRedoManager.addAnnotation(freeText)
+//            undoRedoManager.addAnnotation(freeText)
             undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                 // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                 self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -700,7 +700,7 @@ class DrawingViewController: UIViewController {
                     // 初期化
                     self.before = nil
                     // Undo Redo 更新
-                    undoRedoManager.updateAnnotation(before: before, after: after)
+//                    undoRedoManager.updateAnnotation(before: before, after: after)
                     undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                         // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                         reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -1464,7 +1464,7 @@ class DrawingViewController: UIViewController {
             page.addAnnotation(annotation)
             
             // Undo Redo
-            undoRedoManager.addAnnotation(annotation)
+//            undoRedoManager.addAnnotation(annotation)
             undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                 // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                 self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -1525,7 +1525,7 @@ class DrawingViewController: UIViewController {
             page.addAnnotation(lineAnnotation)
             
             // Undo Redo
-            undoRedoManager.addAnnotation(lineAnnotation)
+//            undoRedoManager.addAnnotation(lineAnnotation)
             undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                 // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                 self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -1573,7 +1573,7 @@ class DrawingViewController: UIViewController {
             page.addAnnotation(lineAnnotation)
             
             // Undo Redo
-            undoRedoManager.addAnnotation(lineAnnotation)
+//            undoRedoManager.addAnnotation(lineAnnotation)
             undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                 // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                 self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -1620,7 +1620,7 @@ class DrawingViewController: UIViewController {
             page.addAnnotation(newAnnotation)
             
             // Undo Redo
-            undoRedoManager.addAnnotation(newAnnotation)
+//            undoRedoManager.addAnnotation(newAnnotation)
             undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                 // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                 self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -1667,7 +1667,7 @@ class DrawingViewController: UIViewController {
             page.addAnnotation(newAnnotation)
             
             // Undo Redo
-            undoRedoManager.addAnnotation(newAnnotation)
+//            undoRedoManager.addAnnotation(newAnnotation)
             undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                 // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                 self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -1716,7 +1716,7 @@ class DrawingViewController: UIViewController {
             page.addAnnotation(freeText)
             
             // Undo Redo
-            undoRedoManager.addAnnotation(freeText)
+//            undoRedoManager.addAnnotation(freeText)
             undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                 // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                 self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
@@ -1774,7 +1774,7 @@ class DrawingViewController: UIViewController {
                 // 初期化
                 self.before = nil
                 // Undo Redo 更新
-                undoRedoManager.updateAnnotation(before: before, after: after)
+//                undoRedoManager.updateAnnotation(before: before, after: after)
                 undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                     // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
                     self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
