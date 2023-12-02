@@ -113,9 +113,25 @@ class DrawingReportEditViewController: UIViewController {
                     // pageを探す
                     for i in 0..<document.pageCount {
                         if let page = document.page(at: i) {
-                            // PhotoAnnotation 作成
-                            let annotation = self.createMarkerAnnotation(marker: marker)
-                            
+                            if marker.data.annotationType == .photoAnnotation {
+                                // PhotoAnnotation 作成
+                                let annotation = self.createMarkerAnnotation(marker: marker)
+                                // page が同一か？
+                                if page.label == marker.data.pageLabel {
+                                    // 対象のページの注釈を追加
+                                    page.addAnnotation(annotation)
+                                }
+                            }
+                            if marker.data.annotationType == .drawingAnnotation {
+                                // DrawingAnnotation 作成
+                                if let annotation = self.createDrawingAnnotation(marker: marker) {
+                                    // page が同一か？
+                                    if page.label == marker.data.pageLabel {
+                                        // 対象のページの注釈を追加
+                                        page.addAnnotation(annotation)
+                                    }
+                                }
+                            }
                             //                                if let annotation = editingAnnotation as? DrawingAnnotation {
                             //                                    print(annotation.bounds)
                             //                                    print(annotation.path.bounds)
@@ -128,11 +144,6 @@ class DrawingReportEditViewController: UIViewController {
                             //                                        page.addAnnotation(annotation)
                             //                                    }
                             //                                } else {
-                            // page が同一か？
-                            if page.label == marker.data.pageLabel {
-                                // 対象のページの注釈を追加
-                                page.addAnnotation(annotation)
-                            }
                         }
                     }
                 }
@@ -457,20 +468,21 @@ class DrawingReportEditViewController: UIViewController {
             
             if let before = before,
                let contents = before.contents,
-               let contents = Int(contents), // TODO: 写真マーカーのみ使用
+//               let contents = Int(contents), // TODO: 写真マーカーのみ使用
                let oldId = before.userName,
                let page = before.page,
                // 選択しているAnnotation 移動中のAnnotation
                let currentlySelectedAnnotation = currentlySelectedAnnotation {
                 // 変更後
-                let marker = Marker(image: "",
-                                    data: Marker.MarkerInfo(text: contents,
+                let marker = Marker(imageId: "",
+                                    data: Marker.MarkerInfo(id: UUID().uuidString,
+                                                            annotationType: .pdfAnnotation, // TODO: photoAnnotation
                                                             size: selectedPhotoMarkerSize,
-                                                            color: ColorRGBA(color: before.color),
                                                             x: currentlySelectedAnnotation.bounds.origin.x,
                                                             y: currentlySelectedAnnotation.bounds.origin.y,
-                                                            id: UUID().uuidString,
-                                                            pageLabel: page.label)
+                                                            color: ColorRGBA(color: before.color),
+                                                            pageLabel: page.label,
+                                                            text: contents)
                 )
                 // PhotoAnnotation 作成
                 let after = currentlySelectedAnnotation//self.createMarkerAnnotation(marker: marker)
@@ -567,8 +579,8 @@ class DrawingReportEditViewController: UIViewController {
                 after.color = UIColor.orange.withAlphaComponent(0.5)
                 after.page = before.page
                 after.path = before.path
-                after.path = after.path.fit(into: after.bounds)//.moveCenter(to: currentlySelectedAnnotation.bounds.origin)
-                
+                after.path = after.path.fit(into: after.bounds)
+
                 // UUID
                 after.userName = UUID().uuidString
                 if let annotationPage = before.page {
@@ -603,21 +615,22 @@ class DrawingReportEditViewController: UIViewController {
             
             if let before = before,
                let contents = before.contents,
-               let contents = Int(contents), // TODO: 写真マーカーのみ使用
+//               let contents = Int(contents), // TODO: 写真マーカーのみ使用
                let oldId = before.userName,
                let page = before.page,
                // 選択しているAnnotation 移動中のAnnotation
                let currentlySelectedAnnotation = currentlySelectedAnnotation {
                 // 変更後
-                let marker = Marker(image: "",
-                                    data: Marker.MarkerInfo(text: contents,
+                let marker = Marker(imageId: "",
+                                    data: Marker.MarkerInfo(id: UUID().uuidString,
+                                                            annotationType: .pdfAnnotation, // TODO: photoAnnotation
                                                             size: selectedPhotoMarkerSize,
-                                                            color: ColorRGBA(color: selectedColor.withAlphaComponent(selectedAlpha.alpha)),
                                                             x: currentlySelectedAnnotation.bounds.origin.x,
                                                             y: currentlySelectedAnnotation.bounds.origin.y,
-                                                            id: UUID().uuidString,
-                                                            pageLabel: page.label)
-                )
+                                                            color: ColorRGBA(color: selectedColor.withAlphaComponent(selectedAlpha.alpha)),
+                                                            pageLabel: page.label,
+                                                            text: contents)
+                                    )
                 // PhotoAnnotation 作成
                 let after = currentlySelectedAnnotation//self.createMarkerAnnotation(marker: marker)
                 after.color = selectedColor.withAlphaComponent(selectedAlpha.alpha)
@@ -755,7 +768,7 @@ class DrawingReportEditViewController: UIViewController {
                 after.color = selectedColor.withAlphaComponent(selectedAlpha.alpha)
                 after.page = before.page
                 after.path = before.path
-                after.path = after.path.fit(into: after.bounds)//.moveCenter(to: after.bounds.origin)
+                after.path = after.path.fit(into: after.bounds)
 
                 // UUID
                 after.userName = UUID().uuidString
@@ -874,6 +887,47 @@ class DrawingReportEditViewController: UIViewController {
         return freeText
     }
     
+    // DrawingAnnotation 作成
+    func createDrawingAnnotation(marker: Marker) -> DrawingAnnotation? {
+        if let points = marker.data.points,
+           let lineWidth = marker.data.lineWidth,
+           let dashPattern = marker.data.dashPattern {
+            
+            let path = UIBezierPath(cgPath: convert(elements: points))
+            
+            let border = PDFBorder()
+            border.lineWidth = lineWidth
+            border.style = dashPattern == .pattern1 ? .solid : .dashed
+            border.dashPattern = dashPattern == .pattern1 ? nil : dashPattern.style(width: lineWidth)
+            
+            let bounds = CGRect(x: path.bounds.origin.x,
+                                y: path.bounds.origin.y,
+                                width: path.bounds.size.width,
+                                height: path.bounds.size.height)
+            path.lineCapStyle = .square
+            path.lineJoinStyle = .round
+            path.lineWidth = lineWidth
+            
+            if dashPattern == .pattern1 {
+                
+            } else {
+                // 第一引数 点線の大きさ, 点線間の間隔
+                // 第二引数 第一引数で指定した配列の要素数
+                // 第三引数 開始位置
+                path.setLineDash(dashPattern.style(width: lineWidth), count: dashPattern.style(width: lineWidth).count, phase: 0)
+            }
+            let annotation = DrawingAnnotation(bounds: bounds, forType: .ink, withProperties: nil)
+            annotation.color = marker.data.color.toUIColor()
+            annotation.border = border
+            // 効かない
+            // annotation.add(path)
+            annotation.path = path
+            //        page.addAnnotation(annotation)
+            return annotation
+        }
+        return nil
+    }
+
     // マーカーを追加する 写真
     func addMarkerAnotation() {
         // 現在開いているページを取得
@@ -881,15 +935,16 @@ class DrawingReportEditViewController: UIViewController {
            let point = point,
            let unusedNumber = unusedNumber {
             
-            let marker = Marker(image: "",
-                                data: Marker.MarkerInfo(text: unusedNumber,
+            let marker = Marker(imageId: "",
+                                data: Marker.MarkerInfo(id: UUID().uuidString,
+                                                        annotationType: .photoAnnotation,
                                                         size: selectedPhotoMarkerSize,
-                                                        color: ColorRGBA(color: selectedColor.withAlphaComponent(selectedAlpha.alpha)),
                                                         x: point.x,
                                                         y: point.y,
-                                                        id: UUID().uuidString,
-                                                        pageLabel: page.label)
-            )
+                                                        color: ColorRGBA(color: selectedColor.withAlphaComponent(selectedAlpha.alpha)),
+                                                        pageLabel: page.label,
+                                                        text: "\(unusedNumber)")
+                                )
             // PhotoAnnotation 作成
             let annotation = self.createMarkerAnnotation(marker: marker)
             //            // ページ
@@ -904,7 +959,7 @@ class DrawingReportEditViewController: UIViewController {
             undoRedoManager.addAnnotation(marker)
             undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
                 // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
             })
             // ボタン　活性状態
             undoButton.isEnabled = undoRedoManager.canUndo()
@@ -922,19 +977,20 @@ class DrawingReportEditViewController: UIViewController {
                 
                 if let before = before,
                    let contents = before.contents,
-                   let contents = Int(contents),
+//                   let contents = Int(contents), // TODO: 写真マーカーのみ使用
                    let oldId = before.userName,
                    let page = before.page {
                     // 変更後
-                    let marker = Marker(image: "",
-                                        data: Marker.MarkerInfo(text: contents,
+                    let marker = Marker(imageId: "",
+                                        data: Marker.MarkerInfo(id: UUID().uuidString,
+                                                                annotationType: .photoAnnotation,
                                                                 size: selectedPhotoMarkerSize,
-                                                                color: ColorRGBA(color: before.color),
                                                                 x: before.bounds.origin.x,
                                                                 y: before.bounds.origin.y,
-                                                                id: UUID().uuidString,
-                                                                pageLabel: page.label)
-                    )
+                                                                color: ColorRGBA(color: before.color),
+                                                                pageLabel: page.label,
+                                                                text: contents)
+                                        )
                     // PhotoAnnotation 作成
                     let after = self.createMarkerAnnotation(marker: marker)
                     
@@ -1721,27 +1777,103 @@ class DrawingReportEditViewController: UIViewController {
         }
     }
     
-    // 手書きや図形を追加する
-    func addDrawingAnotation(annotation: DrawingAnnotation) {
+    // 手書きを追加する
+    func addDrawingAnotation(path: UIBezierPath) {
         // 現在開いているページを取得
         if let page = self.pdfView.currentPage {
-            // UUID
-            annotation.userName = UUID().uuidString
-            // 対象のページへ注釈を追加
-            page.addAnnotation(annotation)
             
-            // Undo Redo
-//            undoRedoManager.addAnnotation(annotation)
-            undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
-                // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
-                self.reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
-            })
-            // ボタン　活性状態
-            undoButton.isEnabled = undoRedoManager.canUndo()
-            redoButton.isEnabled = undoRedoManager.canRedo()
+            let marker = Marker(imageId: "",
+                                data: Marker.MarkerInfo(id: UUID().uuidString,
+                                                        annotationType: .drawingAnnotation,
+                                                        size: selectedPhotoMarkerSize,
+                                                        x: path.bounds.origin.x,
+                                                        y: path.bounds.origin.y,
+                                                        color: ColorRGBA(color: selectedColor.withAlphaComponent(selectedAlpha.alpha)),
+                                                        pageLabel: page.label,
+                                                        text: "",
+                                                        points: convert(path: path.cgPath),
+                                                        lineWidth: path.lineWidth,
+                                                        dashPattern: dashPattern
+                                                        )
+            )
+            // DrawingAnnotation 作成
+            if let annotation = self.createDrawingAnnotation(marker: marker) {
+                // 対象のページへ注釈を追加
+                page.addAnnotation(annotation)
+                
+                // JSONファイル　状態管理
+                project?.markers?.append(marker)
+                
+                // Undo Redo
+                undoRedoManager.addAnnotation(marker)
+                undoRedoManager.showTeamMembers(completion: { didUndoAnnotations in
+                    // Undo Redo が可能なAnnotation　を削除して、更新後のAnnotationを表示させる
+                    reloadPDFAnnotations(didUndoAnnotations: didUndoAnnotations)
+                })
+                // ボタン　活性状態
+                undoButton.isEnabled = undoRedoManager.canUndo()
+                redoButton.isEnabled = undoRedoManager.canRedo()
+            }
         }
     }
     
+    func convert(path: CGPath) -> [PathElement] {
+        var elements = [PathElement]()
+        
+        path.applyWithBlock() { elem in
+            let elementType = elem.pointee.type
+            let n = numPoints(forType: elementType)
+            var points: Array<CGPoint>?
+            if n > 0 {
+                points = Array(UnsafeBufferPointer(start: elem.pointee.points, count: n))
+            }
+            elements.append(PathElement(type: Int(elementType.rawValue), points: points))
+        }
+        return elements
+    }
+
+    func convert(elements: [PathElement]) -> CGPath {
+        let path = CGMutablePath()
+        
+        for elem in elements {
+            switch elem.type {
+            case 0:
+                path.move(to: elem.points![0])
+            case 1:
+                path.addLine(to: elem.points![0])
+            case 2:
+                path.addQuadCurve(to: elem.points![1], control: elem.points![0])
+            case 3:
+                path.addCurve(to: elem.points![2], control1: elem.points![0], control2: elem.points![1])
+            case 4:
+                path.closeSubpath()
+            default:
+                break
+            }
+        }
+        return path
+    }
+
+    func numPoints(forType type: CGPathElementType) -> Int {
+        var n = 0
+        
+        switch type {
+        case .moveToPoint:
+            n = 1
+        case .addLineToPoint:
+            n = 1
+        case .addQuadCurveToPoint:
+            n = 2
+        case .addCurveToPoint:
+            n = 3
+        case .closeSubpath:
+            n = 0
+        default:
+            n = 0
+        }
+        return n
+    }
+
     // MARK: - 図形
     
     // 起点
@@ -2177,9 +2309,9 @@ class DrawingReportEditViewController: UIViewController {
 
 // 手書きのアノテーションを追加する処理
 extension DrawingReportEditViewController: DrawingManageAnnotationDelegate {
-    func addAnnotation(_ currentAnnotation: DrawingAnnotation) {
+    func addAnnotation(_ path: UIBezierPath) {
         
-        addDrawingAnotation(annotation: currentAnnotation)
+        addDrawingAnotation(path: path)
     }
 }
 
@@ -2279,7 +2411,7 @@ extension DrawingReportEditViewController: UIGestureRecognizerDelegate {
                     copy.bounds = annotation.bounds
                     copy.page = annotation.page
                     copy.path = currentlySelectedDrawingAnnotation!.path
-                    copy.path = copy.path.fit(into: copy.bounds)//.moveCenter(to: copy.bounds.origin)
+                    copy.path = copy.path.fit(into: copy.bounds)
                     // 長押しメニュー
                     showLongPressDialog(sender.location(in: pdfView), drawingMode: .drawing)
                 }
@@ -2540,7 +2672,7 @@ extension DrawingReportEditViewController: UIGestureRecognizerDelegate {
                         copy.bounds = annotation.bounds
                         copy.page = annotation.page
                         copy.path = currentlySelectedDrawingAnnotation!.path
-                        copy.path = copy.path.fit(into: copy.bounds)//.moveCenter(to: copy.bounds.origin)
+                        copy.path = copy.path.fit(into: copy.bounds)
                     }
                     else if let copy = annotation.copy() as? PDFAnnotation {
                         currentlySelectedAnnotation = annotation
@@ -2672,7 +2804,7 @@ enum Alpha: Int, CaseIterable {
 }
 
 // 破線のパターン
-enum DashPattern: Int, CaseIterable {
+enum DashPattern: Int, CaseIterable, Codable {
     case pattern1
     case pattern2
     case pattern3
@@ -2710,7 +2842,7 @@ enum DashPattern: Int, CaseIterable {
     }
 }
 
-enum DamagePattern: Int, CaseIterable {
+enum DamagePattern: Int, CaseIterable, Codable {
     case uki
     case sonota
     case hibiware
@@ -2737,6 +2869,13 @@ enum DamagePattern: Int, CaseIterable {
             return UIImage(named: "漏水")?.withRenderingMode(.alwaysTemplate) ?? UIImage()
         }
     }
+}
+// アノテーションの種類
+enum AnnotationType: Codable {
+    case photoAnnotation
+    case pdfAnnotation
+    case drawingAnnotation
+    case imageAnnotation
 }
 
 extension UIButton {

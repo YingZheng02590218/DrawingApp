@@ -7,27 +7,79 @@
 
 import Foundation
 import UIKit
+//import PDFKit
 
 // MARK: 状態管理 JSONファイル
+
 // プロジェクト
 struct Project: Codable {
     var version: String
     var markers: [Marker]?
 }
 
-// 写真マーカー
+struct PathElement: Codable {
+    var type: Int
+    var points: Array<CGPoint>?
+}
+
+// アノテーション　注釈
 struct Marker: Codable {
-    var image: String
+    var imageId: String // 写真マーカー　紐付けた撮影写真
     var data: MarkerInfo
-    
+
     struct MarkerInfo: Codable {
-        var text: Int
+        var id: String
+        var annotationType: AnnotationType
         var size: CGFloat
-        var color: ColorRGBA
         var x: CGFloat
         var y: CGFloat
-        var id: String
-        var pageLabel: String?
+        var color: ColorRGBA
+        var pageLabel: String? // PDFページ
+        var text: String // テキスト：表示する文字列　写真マーカー：通し番号
+        var damagePattern: DamagePattern? // 損傷マーカー：画像
+        // 手書き線
+        var points: [PathElement]?
+        var lineWidth: CGFloat?
+        var dashPattern: DashPattern?
+//        "strokeWidth": 17,
+//        "strokeColor": "rgba(0, 0, 0, 1)",
+//        "strokeDash": null,
+//        "points": [
+//            {
+//                "x": 143.5,
+//                "y": 247.5
+//            },
+//            {
+//                "x": 147,
+//                "y": 244.5
+//            },
+//            {
+//                "x": 247,
+//                "y": 223.5
+//            },
+//            {
+//                "x": 277,
+//                "y": 217.5
+//            },
+//            {
+//                "x": 312,
+//                "y": 213
+//            },
+//            {
+//                "x": 485.5,
+//                "y": 200
+//            },
+//            {
+//                "x": 572,
+//                "y": 199
+//            },
+//            {
+//                "x": 600.5,
+//                "y": 201
+//            }
+//        ],
+//        "close": false,
+//        "type": "normal",
     }
     //"image": "86ae9abd-9220-4f03-8c64-ab7eae074361",
     //"data": {

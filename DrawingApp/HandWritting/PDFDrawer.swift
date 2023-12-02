@@ -39,7 +39,7 @@ enum DrawingTool: Int {
 
 // 手書きのアノテーションを追加する処理
 protocol DrawingManageAnnotationDelegate: AnyObject {
-    func addAnnotation(_ currentAnnotation : DrawingAnnotation)
+    func addAnnotation(_ path: UIBezierPath)
 }
 
 class PDFDrawer {
@@ -161,8 +161,7 @@ extension PDFDrawer: DrawingGestureRecognizerDelegate {
                 // Final annotation
                 page.removeAnnotation(self.currentAnnotation!)
                 // このアノテーションをDrawingViewControllerへ渡してから、追加する
-                let finalAnnotation = createFinalAnnotation(path: path, page: page)
-                drawingManageAnnotationDelegate?.addAnnotation(finalAnnotation)
+                drawingManageAnnotationDelegate?.addAnnotation(path)
                 currentAnnotation = nil
             }
         }

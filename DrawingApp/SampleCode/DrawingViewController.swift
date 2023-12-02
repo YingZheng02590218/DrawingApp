@@ -1455,13 +1455,13 @@ class DrawingViewController: UIViewController {
     }
     
     // 手書きや図形を追加する
-    func addDrawingAnotation(annotation: DrawingAnnotation) {
+    func addDrawingAnotation(path: UIBezierPath) {
         // 現在開いているページを取得
         if let page = self.pdfView.currentPage {
-            // UUID
-            annotation.userName = UUID().uuidString
-            // 対象のページへ注釈を追加
-            page.addAnnotation(annotation)
+//            // UUID
+//            annotation.userName = UUID().uuidString
+//            // 対象のページへ注釈を追加
+//            page.addAnnotation(annotation)
             
             // Undo Redo
 //            undoRedoManager.addAnnotation(annotation)
@@ -2265,9 +2265,9 @@ class DrawingViewController: UIViewController {
 
 // 手書きのアノテーションを追加する処理
 extension DrawingViewController: DrawingManageAnnotationDelegate {
-    func addAnnotation(_ currentAnnotation: DrawingAnnotation) {
+    func addAnnotation(_ path: UIBezierPath) {
         
-        addDrawingAnotation(annotation: currentAnnotation)
+        addDrawingAnotation(path: path)
     }
 }
 
