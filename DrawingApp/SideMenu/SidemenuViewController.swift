@@ -46,7 +46,8 @@ class SidemenuViewController: UIViewController {
     }
     // アコーディオン
     private lazy var contents = [
-        SideMenuCell(isShown: true, title: .sidemenu, childCells: [.drawingReportRegister, .photoReportRegister, .pictureRegister, .project]),
+        SideMenuCell(isShown: true, title: .sidemenu, childCells: [.drawingReportRegister, .photoReportRegister, .pictureRegister]),
+        SideMenuCell(isShown: true, title: .project, childCells: [.projectCreate, .projectImport, .projectOverrite, .projectExport]),
     ]
     
     
@@ -59,6 +60,7 @@ class SidemenuViewController: UIViewController {
         tableView.dataSource = self
         tableView.delegate = self
         
+        tableView.register(UINib(nibName: "SidemenuTableViewHeaderFooterView", bundle: nil), forHeaderFooterViewReuseIdentifier: "SidemenuTableViewHeaderFooterView")
         tableView.register(UINib(nibName: "SidemenuTableViewCell", bundle: nil), forCellReuseIdentifier: "SidemenuTableViewCell")
         // TableView Headerの高さ
         tableView.sectionHeaderHeight = 60
@@ -211,7 +213,25 @@ extension SidemenuViewController: UITableViewDataSource, UITableViewDelegate {
         delegate?.sidemenuViewController(self, didSelectItemAt: indexPath)
     }
         
-
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        
+        let view = tableView.dequeueReusableHeaderFooterView(withIdentifier: "SidemenuTableViewHeaderFooterView")
+        if let headerView = view as? SidemenuTableViewHeaderFooterView {
+            headerView.setup(leftImage: "",//contents[section].title.getImageName(),
+                             title: contents[section].title.rawValue,
+                             isShown: contents[section].isShown,
+                             hasChild: contents[section].childCells.count == 0)
+            
+            switch contents[section].title {
+            default:
+                headerView.leftImageView.isHidden = false
+                headerView.titleLabel.font = UIFont.systemFont(ofSize: 17.0)
+                break
+            }
+            return headerView
+        }
+        return view
+    }
 }
 
 extension SidemenuViewController: UIGestureRecognizerDelegate {
@@ -231,13 +251,20 @@ enum SideMenu: String, CaseIterable {
     case photoReportRegister = "写真調書登録"
     case pictureRegister = "撮影写真登録"
     case project = "プロジェクト"
+    case projectCreate = "新規作成"
+    case projectImport = "読み込み"
+    case projectOverrite = "上書き保存"
+    case projectExport = "名前を付けて保存"
     
     func getRow() -> Int { // インスタンスメソッド
         switch self {
         case .drawingReportRegister: return 0
         case .photoReportRegister: return 1
         case .pictureRegister: return 2
-        case .project: return 3
+        case .projectCreate: return 0
+        case .projectImport: return 1
+        case .projectOverrite: return 2
+        case .projectExport: return 3
         default: return 0
         }
     }

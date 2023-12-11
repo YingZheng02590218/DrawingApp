@@ -62,6 +62,8 @@
 		F963ED762ABC4ECE00B41C99 /* 2023-Journals.pdf in Resources */ = {isa = PBXBuildFile; fileRef = F963ED752ABC4ECE00B41C99 /* 2023-Journals.pdf */; };
 		F963ED782AC2D65700B41C99 /* BackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F963ED772AC2D65700B41C99 /* BackupManager.swift */; };
 		F963ED7A2AC2D82900B41C99 /* PdfMaker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F963ED792AC2D82900B41C99 /* PdfMaker.swift */; };
+		F99A73B52B26B55D00CF11DA /* SidemenuTableViewHeaderFooterView.xib in Resources */ = {isa = PBXBuildFile; fileRef = F99A73B32B26B55D00CF11DA /* SidemenuTableViewHeaderFooterView.xib */; };
+		F99A73B62B26B55D00CF11DA /* SidemenuTableViewHeaderFooterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F99A73B42B26B55D00CF11DA /* SidemenuTableViewHeaderFooterView.swift */; };
 		F9DB92622B0B6797002BFE75 /* PhotoMarkerChooseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9DB92612B0B6797002BFE75 /* PhotoMarkerChooseViewController.swift */; };
 		F9DB92642B0B67B0002BFE75 /* PhotoMarkerChooseViewController.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F9DB92632B0B67B0002BFE75 /* PhotoMarkerChooseViewController.storyboard */; };
 		F9DFBDB82B16DF95002E441F /* JsonFileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9DFBDB72B16DF95002E441F /* JsonFileManager.swift */; };
@@ -138,6 +140,8 @@
 		F963ED772AC2D65700B41C99 /* BackupManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupManager.swift; sourceTree = "<group>"; };
 		F963ED792AC2D82900B41C99 /* PdfMaker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PdfMaker.swift; sourceTree = "<group>"; };
 		F963ED7B2AC2E05E00B41C99 /* DrawingApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DrawingApp.entitlements; sourceTree = "<group>"; };
+		F99A73B32B26B55D00CF11DA /* SidemenuTableViewHeaderFooterView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SidemenuTableViewHeaderFooterView.xib; sourceTree = "<group>"; };
+		F99A73B42B26B55D00CF11DA /* SidemenuTableViewHeaderFooterView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SidemenuTableViewHeaderFooterView.swift; sourceTree = "<group>"; };
 		F9DB92612B0B6797002BFE75 /* PhotoMarkerChooseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoMarkerChooseViewController.swift; sourceTree = "<group>"; };
 		F9DB92632B0B67B0002BFE75 /* PhotoMarkerChooseViewController.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = PhotoMarkerChooseViewController.storyboard; sourceTree = "<group>"; };
 		F9DFBDB72B16DF95002E441F /* JsonFileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JsonFileManager.swift; sourceTree = "<group>"; };
@@ -222,6 +226,8 @@
 				F96332CB2B0469BF003B424D /* WrappingMainViewController.swift */,
 				F96332CD2B046A58003B424D /* WrappingMainViewController.storyboard */,
 				F96332C52B03689B003B424D /* SidemenuViewController.swift */,
+				F99A73B42B26B55D00CF11DA /* SidemenuTableViewHeaderFooterView.swift */,
+				F99A73B32B26B55D00CF11DA /* SidemenuTableViewHeaderFooterView.xib */,
 				F96332C72B0369A2003B424D /* SidemenuTableViewCell.swift */,
 				F96332C82B0369A2003B424D /* SidemenuTableViewCell.xib */,
 			);
@@ -429,6 +435,7 @@
 				F963ED762ABC4ECE00B41C99 /* 2023-Journals.pdf in Resources */,
 				F940355D2B070BC600EB8C7E /* PhotoLisViewController.storyboard in Resources */,
 				F924861F2AF2575F007A1EC4 /* Colors.xcassets in Resources */,
+				F99A73B52B26B55D00CF11DA /* SidemenuTableViewHeaderFooterView.xib in Resources */,
 				F94035612B070F0700EB8C7E /* SegmentedControlPageViewController.storyboard in Resources */,
 				F96332DE2B05B1C9003B424D /* PDFThumbnailCell.xib in Resources */,
 				F940354C2B06186000EB8C7E /* DrawingReportEditViewController.storyboard in Resources */,
@@ -472,6 +479,7 @@
 				F940355B2B0709A600EB8C7E /* PhotoLisViewController.swift in Sources */,
 				F940354E2B0619D300EB8C7E /* PDFViewController.swift in Sources */,
 				F91345282ACA99870034AD03 /* ImageAnnotation.swift in Sources */,
+				F99A73B62B26B55D00CF11DA /* SidemenuTableViewHeaderFooterView.swift in Sources */,
 				F9DB92622B0B6797002BFE75 /* PhotoMarkerChooseViewController.swift in Sources */,
 				F94035542B061AA800EB8C7E /* PDFPageView.swift in Sources */,
 				F911B5DD2AF3334C00A645DA /* DrawingGestureRecognizer.swift in Sources */,

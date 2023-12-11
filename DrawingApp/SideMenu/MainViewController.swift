@@ -100,26 +100,40 @@ extension MainViewController: SidemenuViewControllerDelegate {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             if let presentingViewController = self.contentViewController.viewControllers.first as? SegmentedControlPageViewController {
-                
-                switch indexPath.row {
-                case SideMenu.drawingReportRegister.getRow(): // 図面調書登録
-                    // 保存先のディレクトリ
-                    presentingViewController.directory = .Zumen
-                    // ファイル選択画面を表示させる
-                    presentingViewController.showDocumentPicker()
-                    break
-                case SideMenu.photoReportRegister.getRow(): // 写真調書登録
-                    break
-                case SideMenu.pictureRegister.getRow(): // 撮影写真登録
-                    // 保存先のディレクトリ
-                    presentingViewController.directory = .Photos
-                    // ファイル選択画面を表示させる
-                    presentingViewController.showDocumentPicker()
-                    break
-                case SideMenu.project.getRow(): // プロジェクト
-                    break
-                default:
-                    break
+
+                if indexPath.section == 0 {
+                    
+                    switch indexPath.row {
+                    case SideMenu.drawingReportRegister.getRow(): // 図面調書登録
+                        // 保存先のディレクトリ
+                        presentingViewController.directory = .Zumen
+                        // ファイル選択画面を表示させる
+                        presentingViewController.showDocumentPicker()
+                        break
+                    case SideMenu.photoReportRegister.getRow(): // 写真調書登録
+                        break
+                    case SideMenu.pictureRegister.getRow(): // 撮影写真登録
+                        // 保存先のディレクトリ
+                        presentingViewController.directory = .Photos
+                        // ファイル選択画面を表示させる
+                        presentingViewController.showDocumentPicker()
+                        break
+                    default:
+                        break
+                    }
+                } else {
+                    switch indexPath.row {
+                    case SideMenu.projectCreate.getRow():
+                        break
+                    case SideMenu.projectImport.getRow():
+                        break
+                    case SideMenu.projectOverrite.getRow():
+                        break
+                    case SideMenu.projectExport.getRow():
+                        break
+                    default:
+                        break
+                    }
                 }
             }
         }
